@@ -19,12 +19,24 @@
         }
         
         .container {
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto;
             background: white;
             border-radius: 20px;
             padding: 30px;
             box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+        
+        @media (min-width: 768px) {
+            .container {
+                max-width: 750px;
+            }
+        }
+        
+        @media (min-width: 1024px) {
+            .container {
+                max-width: 900px;
+            }
         }
         
         h1 {
@@ -666,6 +678,8 @@
         
         let canvas, ctx;
         let isDraggingJack = false;
+        let draggingBowl = null;
+        let dragOffset = { x: 0, y: 0 };
         
         function updateEndsDropdown() {
             const format = document.getElementById('gameFormat').value;
@@ -735,12 +749,18 @@
             for (let i = 0; i < config.players; i++) {
                 const yourPlayerInput = document.getElementById(`yourPlayer${i}`);
                 
-                if (!yourPlayerInput || !yourPlayerInput.value) {
+                // Check if input exists and has a value
+                if (!yourPlayerInput) {
+                    alert('Player input field not found. Please try reselecting the game format.');
+                    return;
+                }
+                
+                if (!yourPlayerInput.value || yourPlayerInput.value.trim() === '') {
                     alert('Please enter all player names for your team');
                     return;
                 }
                 
-                yourPlayers.push(yourPlayerInput.value);
+                yourPlayers.push(yourPlayerInput.value.trim());
             }
             
             // Create new game
@@ -844,6 +864,18 @@
             // Clear canvas
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
+            // Draw ditch at bottom if jack length is long
+            if (gameState.jackLength === 'long') {
+                ctx.fillStyle = '#8B4513';
+                ctx.fillRect(0, canvas.height - 30, canvas.width, 30);
+                
+                // Add ditch label
+                ctx.fillStyle = 'white';
+                ctx.font = 'bold 12px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('DITCH', canvas.width / 2, canvas.height - 12);
+            }
+            
             // Draw concentric circles
             const centerX = canvas.width / 2;
             const centerY = canvas.height / 2;
@@ -881,26 +913,26 @@
         
         function drawJack(x, y) {
             ctx.beginPath();
-            ctx.arc(x, y, 8, 0, 2 * Math.PI);
+            ctx.arc(x, y, 10, 0, 2 * Math.PI);
             ctx.fillStyle = '#FFD700';
             ctx.fill();
             ctx.strokeStyle = '#FFA500';
-            ctx.lineWidth = 2;
+            ctx.lineWidth = 3;
             ctx.stroke();
         }
         
         function drawBowl(bowl) {
             ctx.beginPath();
-            ctx.arc(bowl.x, bowl.y, 12, 0, 2 * Math.PI);
+            ctx.arc(bowl.x, bowl.y, 18, 0, 2 * Math.PI);
             ctx.fillStyle = bowl.team === 'yours' ? '#4CAF50' : '#f44336';
             ctx.fill();
             ctx.strokeStyle = '#333';
-            ctx.lineWidth = 2;
+            ctx.lineWidth = 3;
             ctx.stroke();
             
             // Add hand indicator
             ctx.fillStyle = 'white';
-            ctx.font = 'bold 10px Arial';
+            ctx.font = 'bold 12px Arial';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText(bowl.hand === 'forehand' ? 'F' : 'B', bowl.x, bowl.y);
@@ -934,18 +966,106 @@
             return distance < 15;
         }
         
+        function isNearBowl(x, y, bowl) {
+            const dx = x - bowl.x;
+            const dy = y - bowl.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            return distance < 20;
+        }
+        
+        function constrainToCanvas(x, y, margin = 20) {
+            return {
+                x: Math.max(margin, Math.min(canvas.width - margin, x)),
+                y: Math.max(margin, Math.min(canvas.height - margin, y))
+            };
+        }
+        
         function handleMouseDown(e) {
             const coords = getCanvasCoordinates(e);
+            
+            // Check if clicking on jack
             if (isNearJack(coords.x, coords.y)) {
                 isDraggingJack = true;
                 e.preventDefault();
+                return;
+            }
+            
+            // Check if clicking on a bowl
+            const currentEndBowls = gameState.bowls.filter(b => b.end === gameState.currentEnd);
+            for (let bowl of currentEndBowls) {
+                if (isNearBowl(coords.x, coords.y, bowl)) {
+                    draggingBowl = bowl;
+                    dragOffset = {
+                        x: bowl.x - coords.x,
+                        y: bowl.y - coords.y
+                    };
+                    e.preventDefault();
+                    return;
+                }
             }
         }
         
         function handleMouseMove(e) {
             if (isDraggingJack) {
                 const coords = getCanvasCoordinates(e);
-                gameState.jackPosition = coords;
+                const constrained = constrainToCanvas(coords.x, coords.y, 15);
+                gameState.jackPosition = constrained;
+                saveCurrentGame();
+                drawGreen();
+                e.preventDefault();
+            } else if (draggingBowl) {
+                const coords = getCanvasCoordinates(e);
+                const newPos = constrainToCanvas(
+                    coords.x + dragOffset.x,
+                    coords.y + dragOffset.y,
+                    20
+                );
+                
+                draggingBowl.x = newPos.x;
+                draggingBowl.y = newPos.y;
+                
+                // Recalculate position data
+                const distanceFromJack = calculateDistance(newPos.x, newPos.y, gameState.jackPosition.x, gameState.jackPosition.y);
+                const distanceInFeet = pixelsToFeet(distanceFromJack);
+                
+                const jackY = gameState.jackPosition.y;
+                const bowlY = newPos.y;
+                let resultCategory = '';
+                
+                if (bowlY < jackY - 10) {
+                    resultCategory = 'Short';
+                } else if (Math.abs(bowlY - jackY) <= 10) {
+                    resultCategory = 'Jack High';
+                } else {
+                    resultCategory = 'Past';
+                }
+                
+                let distanceCategory = '';
+                if (distanceInFeet < 0.5) {
+                    distanceCategory = '< 0.5 ft';
+                } else if (distanceInFeet < 1) {
+                    distanceCategory = '0.5 ft - 1 ft';
+                } else if (distanceInFeet < 2) {
+                    distanceCategory = '1 ft - 2 ft';
+                } else if (distanceInFeet < 3) {
+                    distanceCategory = '2 ft - 3 ft';
+                } else {
+                    distanceCategory = '> 3 ft';
+                }
+                
+                draggingBowl.resultCategory = resultCategory;
+                draggingBowl.distanceCategory = distanceCategory;
+                draggingBowl.distanceInFeet = distanceInFeet;
+                
+                // Recalculate score if front end
+                if (draggingBowl.team === 'yours' && draggingBowl.scoreCategory) {
+                    const autoScore = calculateFrontEndScore(resultCategory, distanceCategory);
+                    draggingBowl.scoreValue = autoScore;
+                    draggingBowl.scoreCategory = resultCategory;
+                    draggingBowl.scoreDetail = distanceCategory;
+                }
+                
+                saveCurrentGame();
                 drawGreen();
                 e.preventDefault();
             }
@@ -953,6 +1073,7 @@
         
         function handleMouseUp(e) {
             isDraggingJack = false;
+            draggingBowl = null;
         }
         
         function handleTouchStart(e) {
@@ -968,12 +1089,21 @@
         }
         
         function handleCanvasClick(e) {
-            if (isDraggingJack) return;
+            // Don't place bowl if we were dragging
+            if (isDraggingJack || draggingBowl) return;
             
             const coords = getCanvasCoordinates(e);
             
             // Don't place bowl on jack
             if (isNearJack(coords.x, coords.y)) return;
+            
+            // Check if clicking on existing bowl (for dragging, not placing new)
+            const currentEndBowls = gameState.bowls.filter(b => b.end === gameState.currentEnd);
+            for (let bowl of currentEndBowls) {
+                if (isNearBowl(coords.x, coords.y, bowl)) {
+                    return; // Don't place new bowl on top of existing
+                }
+            }
             
             // Check if maximum bowls for this end has been reached
             const bowlsThisEnd = gameState.bowls.filter(b => b.end === gameState.currentEnd).length;
@@ -1429,6 +1559,35 @@
                 saveCurrentGame();
                 drawGreen();
                 updateDisplay();
+            }
+        }
+        
+        function captureScreenshot() {
+            try {
+                // Create a temporary canvas with better quality
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = canvas.width;
+                tempCanvas.height = canvas.height;
+                const tempCtx = tempCanvas.getContext('2d');
+                
+                // Copy current canvas
+                tempCtx.drawImage(canvas, 0, 0);
+                
+                // Convert to image and download
+                tempCanvas.toBlob(function(blob) {
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+                    const yourTeam = gameState.yourPlayers.join('-');
+                    const oppTeam = gameState.opponentPlayers[0];
+                    link.download = `${yourTeam}_vs_${oppTeam}_End${gameState.currentEnd}_${timestamp}.png`;
+                    link.href = url;
+                    link.click();
+                    URL.revokeObjectURL(url);
+                }, 'image/png');
+            } catch (error) {
+                alert('Screenshot capture failed. Please try again.');
+                console.error('Screenshot error:', error);
             }
         }
         
