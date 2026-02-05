@@ -1,0 +1,481 @@
+/* Bowls Performance Tracker - Analytics Styles */
+
+/* ===== ANALYTICS NAV TABS ===== */
+
+.analytics-tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 20px;
+  border-bottom: 2px solid var(--border);
+}
+
+.analytics-tab {
+  flex: 1;
+  padding: 12px 8px;
+  text-align: center;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text-secondary);
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  transition: all var(--transition);
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.analytics-tab.active {
+  color: var(--primary-light);
+  border-bottom-color: var(--primary-light);
+}
+
+.analytics-tab:hover {
+  color: var(--primary);
+}
+
+/* ===== PLAYER SELECTOR BAR ===== */
+
+.player-selector-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  padding: 10px;
+  background: var(--surface-alt);
+  border-radius: var(--radius-md);
+}
+
+.player-selector-bar label {
+  margin: 0;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.player-selector-bar select {
+  flex: 1;
+  padding: 8px;
+  font-size: 14px;
+}
+
+/* ===== STATS SUMMARY CARDS ===== */
+
+.stats-summary-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.stat-card {
+  background: var(--surface-alt);
+  padding: 15px 10px;
+  border-radius: var(--radius-lg);
+  text-align: center;
+  box-shadow: var(--shadow-card);
+}
+
+.stat-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 4px;
+}
+
+.stat-label {
+  font-size: 11px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-detail {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 15px;
+  padding: 8px 12px;
+  background: var(--surface-alt);
+  border-radius: var(--radius-sm);
+}
+
+/* Form indicators */
+.form-up { color: var(--success); font-weight: 700; }
+.form-down { color: var(--danger); font-weight: 700; }
+.form-steady { color: var(--text-secondary); font-weight: 700; }
+
+/* ===== CHARTS ===== */
+
+.charts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+.chart-container {
+  background: var(--surface-alt);
+  padding: 15px;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+
+.chart-container h4 {
+  color: var(--primary);
+  font-size: 13px;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.chart-container canvas {
+  width: 100% !important;
+  height: 200px !important;
+  border-radius: 0;
+}
+
+/* ===== COMPARISON ===== */
+
+.comparison-filters {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter-group label {
+  margin: 0;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.filter-group select {
+  width: auto;
+  padding: 8px 12px;
+  font-size: 13px;
+}
+
+.comparison-table-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin-bottom: 15px;
+}
+
+.comparison-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  min-width: 600px;
+}
+
+.comparison-table th {
+  background: var(--primary);
+  color: white;
+  padding: 10px 8px;
+  text-align: left;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.comparison-table td {
+  padding: 10px 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.comparison-table tr:hover {
+  background: var(--surface-alt);
+}
+
+.recommended-row {
+  background: #e8f5e9;
+}
+
+.recommended-row:hover {
+  background: #c8e6c9 !important;
+}
+
+.badge-recommended {
+  display: inline-block;
+  background: var(--success);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* ===== GAME HISTORY ===== */
+
+.history-filters {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.game-history-card {
+  background: var(--surface-alt);
+  padding: 15px;
+  border-radius: var(--radius-lg);
+  margin-bottom: 12px;
+  cursor: pointer;
+  transition: all var(--transition);
+  border: 2px solid transparent;
+  box-shadow: var(--shadow-card);
+}
+
+.game-history-card:hover {
+  border-color: var(--primary-light);
+  box-shadow: var(--shadow-sm);
+}
+
+.ghc-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.ghc-format {
+  font-weight: 700;
+  color: var(--primary);
+  font-size: 14px;
+}
+
+.ghc-date {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.ghc-teams {
+  font-size: 15px;
+  margin-bottom: 6px;
+}
+
+.ghc-tournament {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.ghc-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.ghc-stat {
+  text-align: center;
+}
+
+.ghc-stat-value {
+  display: block;
+  font-weight: 700;
+  color: var(--primary);
+  font-size: 16px;
+}
+
+.ghc-stat-label {
+  display: block;
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.ghc-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  margin-top: 8px;
+}
+
+.ghc-badge.completed {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.ghc-badge.in-progress {
+  background: #fff3e0;
+  color: #e65100;
+}
+
+/* ===== DRILL DOWN ===== */
+
+.drill-down {
+  padding-bottom: 20px;
+}
+
+.dd-header {
+  margin-bottom: 15px;
+}
+
+.dd-header h3 {
+  font-size: 18px;
+  margin-bottom: 8px;
+}
+
+.dd-meta {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.dd-notes {
+  background: #fff8e1;
+  padding: 12px;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  color: #5d4037;
+  margin-bottom: 20px;
+  border-left: 4px solid var(--warning);
+}
+
+.dd-player-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.dd-player-card {
+  background: var(--surface-alt);
+  padding: 12px;
+  border-radius: var(--radius-md);
+  text-align: center;
+}
+
+.dd-player-name {
+  font-weight: 700;
+  color: var(--primary);
+  font-size: 14px;
+  margin-bottom: 6px;
+}
+
+.dd-player-stats {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.dd-player-stats div {
+  margin-top: 3px;
+}
+
+.dd-end-list {
+  margin-top: 15px;
+}
+
+.dd-end-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+
+.dd-end-item.empty {
+  opacity: 0.5;
+}
+
+.dd-end-num {
+  font-weight: 700;
+  color: var(--primary);
+  min-width: 60px;
+}
+
+.dd-end-stats {
+  display: flex;
+  gap: 15px;
+  color: var(--text-secondary);
+}
+
+.dd-end-notes {
+  width: 100%;
+  font-style: italic;
+  color: var(--text-muted);
+  padding-left: 70px;
+  font-size: 12px;
+}
+
+/* ===== EXPORT SECTION ===== */
+
+.export-section {
+  margin-top: 20px;
+  padding: 15px;
+  background: var(--surface-alt);
+  border-radius: var(--radius-lg);
+}
+
+.export-section h4 {
+  color: var(--primary);
+  margin-bottom: 12px;
+}
+
+.export-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.export-buttons button {
+  font-size: 13px;
+  padding: 10px 12px;
+}
+
+/* ===== EMPTY STATE ===== */
+
+.analytics-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-secondary);
+}
+
+.analytics-empty p {
+  margin-bottom: 10px;
+  line-height: 1.5;
+}
+
+.analytics-loading {
+  text-align: center;
+  padding: 40px;
+  color: var(--text-secondary);
+}
+
+/* ===== RESPONSIVE CHARTS ===== */
+
+@media (max-width: 600px) {
+  .charts-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .stats-summary-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .ghc-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .comparison-filters {
+    flex-direction: column;
+  }
+
+  .export-buttons {
+    grid-template-columns: 1fr;
+  }
+
+  .dd-player-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
