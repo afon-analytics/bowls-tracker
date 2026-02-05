@@ -2,389 +2,70 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#1e3c72">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="BowlsTracker">
+    <meta name="description" content="Performance tracking application for lawn bowls selectors">
     <title>Bowls Performance Tracker</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-        
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-        }
-        
-        @media (min-width: 768px) {
-            .container {
-                max-width: 750px;
-            }
-        }
-        
-        @media (min-width: 1024px) {
-            .container {
-                max-width: 900px;
-            }
-        }
-        
-        h1 {
-            color: #1e3c72;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-        
-        .setup-screen, .game-screen {
-            display: none;
-        }
-        
-        .setup-screen.active, .game-screen.active {
-            display: block;
-        }
-        
-        .games-manager-screen {
-            display: none;
-        }
-        
-        .games-manager-screen.active {
-            display: block;
-        }
-        
-        .game-card {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 12px;
-            cursor: pointer;
-            transition: all 0.3s;
-            border: 2px solid transparent;
-        }
-        
-        .game-card:hover {
-            background: #e9ecef;
-            border-color: #2a5298;
-        }
-        
-        .game-card-title {
-            font-weight: 700;
-            color: #1e3c72;
-            margin-bottom: 4px;
-            font-size: 16px;
-            line-height: 1.3;
-        }
-        
-        .game-card-info {
-            color: #666;
-            font-size: 13px;
-            line-height: 1.3;
-            margin-top: 4px;
-        }
-        
-        .no-games {
-            text-align: center;
-            color: #666;
-            padding: 40px 20px;
-            font-style: italic;
-        }
-        
-        .form-group {
-            margin-bottom: 15px;
-        }
-        
-        label {
-            display: block;
-            margin-bottom: 6px;
-            font-weight: 600;
-            color: #333;
-        }
-        
-        input, select {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            font-size: 16px;
-        }
-        
-        input:focus, select:focus {
-            outline: none;
-            border-color: #2a5298;
-        }
-        
-        button {
-            background: #2a5298;
-            color: white;
-            border: none;
-            padding: 14px 28px;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-        
-        button:hover {
-            background: #1e3c72;
-        }
-        
-        button:active {
-            transform: scale(0.98);
-        }
-        
-        .btn-secondary {
-            background: #6c757d;
-        }
-        
-        .btn-secondary:hover {
-            background: #5a6268;
-        }
-        
-        .green-canvas {
-            background: #2d5016;
-            border-radius: 15px;
-            margin: 15px 0;
-            position: relative;
-            width: 100%;
-            aspect-ratio: 1;
-            max-width: 500px;
-            margin-left: auto;
-            margin-right: auto;
-            box-shadow: inset 0 4px 10px rgba(0,0,0,0.3);
-        }
-        
-        canvas {
-            width: 100%;
-            height: 100%;
-            border-radius: 15px;
-        }
-        
-        .controls {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin: 15px 0;
-        }
-        
-        .control-group {
-            background: #f8f9fa;
-            padding: 12px;
-            border-radius: 10px;
-        }
-        
-        .control-group h3 {
-            font-size: 13px;
-            color: #666;
-            margin-bottom: 8px;
-            text-transform: uppercase;
-        }
-        
-        .radio-group {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-        
-        .radio-btn {
-            flex: 1;
-            min-width: 80px;
-            padding: 10px;
-            background: white;
-            border: 2px solid #ddd;
-            border-radius: 6px;
-            cursor: pointer;
-            text-align: center;
-            transition: all 0.3s;
-        }
-        
-        .radio-btn.active {
-            background: #2a5298;
-            color: white;
-            border-color: #2a5298;
-        }
-        
-        .info-bar {
-            background: #f8f9fa;
-            padding: 12px;
-            border-radius: 10px;
-            margin-bottom: 15px;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 12px;
-        }
-        
-        .info-item {
-            text-align: center;
-        }
-        
-        .info-label {
-            font-size: 12px;
-            color: #666;
-            text-transform: uppercase;
-            margin-bottom: 5px;
-        }
-        
-        .info-value {
-            font-size: 18px;
-            font-weight: 700;
-            color: #1e3c72;
-        }
-        
-        h3 {
-            color: #1e3c72;
-            margin: 12px 0 8px 0;
-            font-size: 15px;
-        }
-        
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.5);
-            overflow: auto;
-        }
-        
-        .modal.active {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .modal-content {
-            background-color: white;
-            padding: 30px;
-            border-radius: 15px;
-            max-width: 500px;
-            width: 90%;
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-        
-        .modal-content h2 {
-            color: #1e3c72;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-        
-        textarea {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            font-size: 16px;
-            font-family: inherit;
-            resize: vertical;
-        }
-        
-        textarea:focus {
-            outline: none;
-            border-color: #2a5298;
-        }
-        
-        .scoring-section {
-            margin-bottom: 20px;
-        }
-        
-        .scoring-section h4 {
-            color: #1e3c72;
-            margin-bottom: 10px;
-            font-size: 14px;
-        }
-        
-        .scoring-options {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
-        
-        .scoring-btn {
-            padding: 12px;
-            background: white;
-            border: 2px solid #ddd;
-            border-radius: 6px;
-            cursor: pointer;
-            text-align: center;
-            transition: all 0.3s;
-            font-size: 14px;
-        }
-        
-        .scoring-btn:hover {
-            border-color: #2a5298;
-        }
-        
-        .scoring-btn.active {
-            background: #2a5298;
-            color: white;
-            border-color: #2a5298;
-        }
-        
-        .action-buttons {
-            display: flex;
-            gap: 10px;
-            margin-top: 20px;
-        }
-        
-        .action-buttons button {
-            flex: 1;
-        }
-        
-        .legend {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            margin: 15px 0;
-            flex-wrap: wrap;
-        }
-        
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .legend-circle {
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            border: 2px solid #333;
-        }
-        
-        @media (max-width: 600px) {
-            .controls {
-                grid-template-columns: 1fr;
-            }
-            
-            .container {
-                padding: 20px;
-            }
-        }
-    </style>
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/analytics.css">
 </head>
 <body>
     <div class="container">
-        <h1>🎯 Bowls Performance Tracker</h1>
-        
-        <!-- Setup Screen -->
-        <div class="setup-screen active">
+        <!-- Install Banner -->
+        <div id="installBanner" class="install-banner">
+            <span class="install-banner-text">Install Bowls Tracker for offline use</span>
+            <button onclick="installPWA()">Install</button>
+            <button class="btn-dismiss" onclick="dismissInstallBanner()">&times;</button>
+        </div>
+
+        <!-- Home Screen -->
+        <div id="homeScreen" class="screen active">
+            <h1>Bowls Performance Tracker</h1>
+            <div id="homeStatus" style="text-align: center; color: var(--primary-light); font-size: 14px; margin-bottom: 15px;"></div>
+
+            <div style="display: grid; gap: 12px; margin-bottom: 20px;">
+                <div class="game-card" onclick="navigateTo('track')" style="text-align: center;">
+                    <div style="font-size: 32px; margin-bottom: 8px;">&#127919;</div>
+                    <div class="game-card-title">Track New Game</div>
+                    <div class="game-card-info">Record bowls with interactive green visualization</div>
+                </div>
+                <div class="game-card" onclick="navigateTo('games')" style="text-align: center;">
+                    <div style="font-size: 32px; margin-bottom: 8px;">&#128203;</div>
+                    <div class="game-card-title">Open Games</div>
+                    <div class="game-card-info">Continue or manage in-progress games</div>
+                </div>
+                <div class="game-card" onclick="navigateTo('analytics')" style="text-align: center;">
+                    <div style="font-size: 32px; margin-bottom: 8px;">&#128202;</div>
+                    <div class="game-card-title">Analytics</div>
+                    <div class="game-card-info">Player stats, team comparison &amp; game history</div>
+                </div>
+            </div>
+
+            <div style="text-align: center; margin-top: 10px;">
+                <button class="btn-secondary btn-small" onclick="handleLoadDemoData()">Load Demo Data</button>
+                <span class="tooltip-trigger" tabindex="0">?
+                    <span class="tooltip-content">Load sample tournament data to explore analytics features</span>
+                </span>
+            </div>
+        </div>
+
+        <!-- Setup Screen (Track New Game) -->
+        <div id="setupScreen" class="screen">
+            <div class="breadcrumbs">
+                <a href="#" onclick="navigateTo('home'); return false;">Home</a> &rsaquo; New Game
+            </div>
+            <h2 style="margin-bottom: 20px;">New Game Setup</h2>
+
             <div class="form-group">
                 <label for="tournamentName">Tournament Name (Optional)</label>
                 <input type="text" id="tournamentName" placeholder="Enter tournament name">
             </div>
-            
+
             <div class="form-group">
                 <label for="gameFormat">Game Format</label>
                 <select id="gameFormat" onchange="updateEndsDropdown()">
@@ -396,7 +77,7 @@
                     <option value="fours">Fours (2 bowls each)</option>
                 </select>
             </div>
-            
+
             <div class="form-group" id="endsGroup" style="display: none;">
                 <label for="numberOfEnds">Number of Ends</label>
                 <select id="numberOfEnds">
@@ -405,37 +86,43 @@
                     <option value="21">21 Ends</option>
                 </select>
             </div>
-            
+
             <div id="yourTeamPlayers">
                 <h3>Your Team</h3>
                 <div class="form-group">
-                    <label for="yourPlayer1">Player Name</label>
-                    <input type="text" id="yourPlayer1" placeholder="Enter name">
+                    <label for="yourPlayer0">Player Name</label>
+                    <input type="text" id="yourPlayer0" placeholder="Enter name">
                 </div>
             </div>
-            
+
             <h3>Opponent Team</h3>
             <div class="form-group">
                 <label for="opponentTeamName">Team Name</label>
                 <input type="text" id="opponentTeamName" placeholder="Enter opponent team name">
             </div>
-            
-            <button onclick="startGame()">Start Game</button>
-            <button class="btn-secondary" onclick="showGamesManager()" style="margin-top: 10px;">View Open Games</button>
+
+            <button class="btn-block" onclick="startGame()">Start Game</button>
+            <button class="btn-secondary btn-block" onclick="navigateTo('games')" style="margin-top: 10px;">View Open Games</button>
         </div>
-        
+
         <!-- Games Manager Screen -->
-        <div class="games-manager-screen">
-            <h2 style="text-align: center; margin-bottom: 20px;">Open Games</h2>
-            <div id="gamesList" style="margin-bottom: 20px;">
-                <!-- Games will be listed here -->
+        <div id="gamesManagerScreen" class="screen">
+            <div class="breadcrumbs">
+                <a href="#" onclick="navigateTo('home'); return false;">Home</a> &rsaquo; Games
             </div>
-            <button onclick="showSetupScreen()">Start New Game</button>
-            <button class="btn-secondary" onclick="returnToCurrentGame()" style="margin-top: 10px;">Back to Current Game</button>
+            <h2 style="margin-bottom: 20px;">Open Games</h2>
+            <div id="gamesList" style="margin-bottom: 20px;"></div>
+            <button class="btn-block" onclick="showSetupScreen()">Start New Game</button>
+            <button class="btn-secondary btn-block" onclick="returnToCurrentGame()" style="margin-top: 10px;">Back to Current Game</button>
         </div>
-        
+
         <!-- Game Screen -->
-        <div class="game-screen">
+        <div id="gameScreen" class="screen">
+            <div class="breadcrumbs">
+                <a href="#" onclick="navigateTo('home'); return false;">Home</a> &rsaquo;
+                <a href="#" onclick="navigateTo('games'); return false;">Games</a> &rsaquo; Current Game
+            </div>
+
             <div class="info-bar">
                 <div class="info-item">
                     <div class="info-label">End</div>
@@ -454,7 +141,7 @@
                     <div class="info-value" id="currentBowl">1</div>
                 </div>
             </div>
-            
+
             <div class="controls">
                 <div class="control-group">
                     <h3>Mat Length</h3>
@@ -464,7 +151,7 @@
                         <div class="radio-btn" onclick="selectMatLength('long')">Long</div>
                     </div>
                 </div>
-                
+
                 <div class="control-group">
                     <h3>Jack Length</h3>
                     <div class="radio-group" id="jackLengthGroup">
@@ -474,14 +161,12 @@
                     </div>
                 </div>
             </div>
-            
+
             <div class="control-group" id="playerSelector" style="margin-bottom: 20px;">
                 <h3>Select Player</h3>
-                <div id="playerButtons" class="radio-group">
-                    <!-- Dynamically populated -->
-                </div>
+                <div id="playerButtons" class="radio-group"></div>
             </div>
-            
+
             <div class="legend">
                 <div class="legend-item">
                     <div class="legend-circle" style="background: #4CAF50;"></div>
@@ -496,19 +181,19 @@
                     <span>Jack</span>
                 </div>
             </div>
-            
+
             <div style="text-align: center; margin-bottom: 10px;">
-                <span style="font-weight: 600; color: #1e3c72;">⬆️ MAT END ⬆️</span>
+                <span style="font-weight: 600; color: var(--primary);">MAT END</span>
             </div>
-            
+
             <div class="green-canvas">
                 <canvas id="greenCanvas"></canvas>
             </div>
-            
+
             <div style="text-align: center; margin-top: 10px;">
-                <span style="font-weight: 600; color: #1e3c72;">⬇️ DITCH END ⬇️</span>
+                <span style="font-weight: 600; color: var(--primary);">DITCH END</span>
             </div>
-            
+
             <div class="controls">
                 <div class="control-group">
                     <h3>Team</h3>
@@ -517,7 +202,7 @@
                         <div class="radio-btn" onclick="selectTeam('opponent')">Opponent</div>
                     </div>
                 </div>
-                
+
                 <div class="control-group">
                     <h3>Delivery</h3>
                     <div class="radio-group" id="handGroup">
@@ -526,30 +211,58 @@
                     </div>
                 </div>
             </div>
-            
+
             <div class="control-group" style="margin-top: 20px;">
                 <h3>Bowl Notes</h3>
-                <textarea id="quickBowlNotes" rows="2" placeholder="Add notes for next bowl..." style="width: 100%; font-size: 14px;"></textarea>
+                <textarea id="quickBowlNotes" rows="2" placeholder="Add notes for next bowl..." style="font-size: 14px;"></textarea>
             </div>
-            
+
             <div class="action-buttons">
                 <button class="btn-secondary" onclick="undoLastBowl()">Undo Last</button>
-                <button onclick="showEndNotes()">End Notes & Next End</button>
+                <button onclick="showEndNotes()">End Notes &amp; Next End</button>
             </div>
-            
+
             <div class="action-buttons">
-                <button class="btn-secondary" onclick="showGamesManager()">Switch Game</button>
+                <button class="btn-secondary" onclick="navigateTo('games')">Switch Game</button>
                 <button class="btn-secondary" onclick="showEndGameDialog()">End Game</button>
             </div>
         </div>
-        
+
+        <!-- Analytics Screen -->
+        <div id="analyticsScreen" class="screen">
+            <div class="breadcrumbs">
+                <a href="#" onclick="navigateTo('home'); return false;">Home</a> &rsaquo; Analytics
+            </div>
+
+            <div class="analytics-tabs">
+                <div class="analytics-tab active" data-tab="player" onclick="setAnalyticsTab('player')">Players</div>
+                <div class="analytics-tab" data-tab="compare" onclick="setAnalyticsTab('compare')">Compare</div>
+                <div class="analytics-tab" data-tab="history" onclick="setAnalyticsTab('history')">History</div>
+            </div>
+
+            <div id="analyticsContent">
+                <div class="analytics-loading">Loading analytics...</div>
+            </div>
+
+            <!-- Export Section -->
+            <div class="export-section">
+                <h4>Export Data
+                    <span class="tooltip-trigger" tabindex="0">?
+                        <span class="tooltip-content">Download your data as CSV files compatible with Excel and Google Sheets</span>
+                    </span>
+                </h4>
+                <div class="export-buttons">
+                    <button class="btn-secondary btn-small" onclick="exportAllPlayerStats()">All Players</button>
+                    <button class="btn-secondary btn-small" onclick="exportTournamentSummary()">Tournament Summary</button>
+                </div>
+            </div>
+        </div>
+
         <!-- Bowl Scoring Modal -->
         <div id="bowlScoringModal" class="modal">
             <div class="modal-content">
                 <h2>Score Last Bowl</h2>
-                <div id="scoringOptions" style="margin: 20px 0;">
-                    <!-- Populated dynamically based on player position -->
-                </div>
+                <div id="scoringOptions" style="margin: 20px 0;"></div>
                 <div class="form-group">
                     <label for="bowlNotes">Bowl Notes (Optional)</label>
                     <textarea id="bowlNotes" rows="3" placeholder="Add notes about this bowl..."></textarea>
@@ -560,7 +273,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- End Notes Modal -->
         <div id="endNotesModal" class="modal">
             <div class="modal-content">
@@ -574,12 +287,12 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- End Game Modal -->
         <div id="endGameModal" class="modal">
             <div class="modal-content">
                 <h2>End Game</h2>
-                <p id="endGameSummary" style="margin-bottom: 20px; color: #666;"></p>
+                <p id="endGameSummary" style="margin-bottom: 20px; color: var(--text-secondary);"></p>
                 <div class="form-group">
                     <label for="gameNotes">Game Notes (Optional)</label>
                     <textarea id="gameNotes" rows="4" placeholder="Add final notes about this game..."></textarea>
@@ -590,1037 +303,42 @@
                 </div>
             </div>
         </div>
+
+        <!-- Onboarding Overlay -->
+        <div id="onboardingOverlay" class="onboarding-overlay">
+            <div class="onboarding-card" id="onboardingCard"></div>
+        </div>
     </div>
 
-    <script>
-        let allGames = []; // Store multiple games
-        let currentGameId = 0;
-        let pendingBowl = null; // Store bowl waiting for scoring
-        
-        let gameState = {
-            gameId: 0,
-            tournamentName: '',
-            format: 'singles',
-            yourPlayers: [],
-            opponentPlayers: [],
-            currentEnd: 1,
-            totalEnds: 21,
-            currentTeam: 'yours',
-            currentPlayerIndex: 0,
-            currentHand: 'forehand',
-            matLength: 'short',
-            jackLength: 'short',
-            bowlsPerPlayer: 4,
-            playersPerTeam: 1,
-            bowls: [],
-            endNotes: {},
-            gameNotes: '',
-            jackPosition: null
-        };
-        
-        // Scoring lookup table
-        const scoringTable = {
-            // Front End Scoring (Lead and Second)
-            'Short-< 0.5 ft': 4,
-            'Short-0.5 ft - 1 ft': 3,
-            'Short-1 ft - 2 ft': 2,
-            'Short-2 ft - 3 ft': 1,
-            'Short-> 3 ft': 0,
-            'Jack High-< 0.5 ft': 4,
-            'Jack High-0.5 ft - 1 ft': 3,
-            'Jack High-1 ft - 2 ft': 2,
-            'Jack High-2 ft - 3 ft': 1,
-            'Jack High-> 3 ft': 0,
-            'Past-< 0.5 ft': 4,
-            'Past-0.5 ft - 1 ft': 4,
-            'Past-1 ft - 2 ft': 3,
-            'Past-2 ft - 3 ft': 2,
-            'Past-> 3 ft': 1,
-            'Other-Score 0': 0,
-            'Other-Score 1': 1,
-            'Other-Score 2': 2,
-            'Other-Score 3': 3,
-            'Other-Score 4': 4,
-            'Bowl off Rink-Bowl off Rink': 0,
-            // Back End Scoring (Third and Skip)
-            'Draw shot-Very well played': 4,
-            'Draw shot-Good Effort': 3,
-            'Draw shot-Average attempt': 2,
-            'Draw shot-Below average': 1,
-            'Draw shot-Completely Ineffective': 0,
-            'Weight shot-Very well played': 4,
-            'Weight shot-Good Effort': 3,
-            'Weight shot-Average attempt': 2,
-            'Weight shot-Below average': 1,
-            'Weight shot-Completely Ineffective': 0,
-            'Draw Positional-Very well played': 4,
-            'Draw Positional-Good Effort': 3,
-            'Draw Positional-Average attempt': 2,
-            'Draw Positional-Below average': 1,
-            'Draw Positional-Completely Ineffective': 0,
-            'Draw to Respot-Very well played': 4,
-            'Draw to Respot-Good Effort': 3,
-            'Draw to Respot-Average attempt': 2,
-            'Draw to Respot-Below average': 1,
-            'Draw to Respot-Completely Ineffective': 0,
-            'Draw to Ditch-Very well played': 4,
-            'Draw to Ditch-Good Effort': 3,
-            'Draw to Ditch-Average attempt': 2,
-            'Draw to Ditch-Below average': 1,
-            'Draw to Ditch-Completely Ineffective': 0,
-            'Blocker-Very well played': 4,
-            'Blocker-Good Effort': 3,
-            'Blocker-Average attempt': 2,
-            'Blocker-Below average': 1,
-            'Blocker-Completely Ineffective': 0,
-            'No Bowl Thrown-': 0
-        };
-        
-        let canvas, ctx;
-        let isDraggingJack = false;
-        let draggingBowl = null;
-        let dragOffset = { x: 0, y: 0 };
-        
-        function updateEndsDropdown() {
-            const format = document.getElementById('gameFormat').value;
-            const endsGroup = document.getElementById('endsGroup');
-            
-            // Show ends dropdown for team formats (pairs, triples, fours)
-            if (format !== 'singles') {
-                endsGroup.style.display = 'block';
-            } else {
-                endsGroup.style.display = 'none';
-            }
-            
-            // Update player input fields based on format
-            updatePlayerInputs(format);
-        }
-        
-        function updatePlayerInputs(format) {
-            const positions = {
-                'singles': ['Player'],
-                'pairs4': ['Lead', 'Skip'],
-                'pairs3': ['Lead', 'Skip'],
-                'triples3': ['Lead', 'Second', 'Skip'],
-                'triples2': ['Lead', 'Second', 'Skip'],
-                'fours': ['Lead', 'Second', 'Third', 'Skip']
-            };
-            
-            const playerPositions = positions[format];
-            
-            // Your team - individual players
-            const yourTeamDiv = document.getElementById('yourTeamPlayers');
-            yourTeamDiv.innerHTML = '<h3>Your Team</h3>';
-            playerPositions.forEach((position, idx) => {
-                yourTeamDiv.innerHTML += `
-                    <div class="form-group">
-                        <label for="yourPlayer${idx}">${position}</label>
-                        <input type="text" id="yourPlayer${idx}" placeholder="Enter ${position.toLowerCase()} name">
-                    </div>
-                `;
-            });
-        }
-        
-        function startGame() {
-            const format = document.getElementById('gameFormat').value;
-            const numberOfEnds = document.getElementById('numberOfEnds').value;
-            const opponentTeamName = document.getElementById('opponentTeamName').value;
-            const tournamentName = document.getElementById('tournamentName').value;
-            
-            if (!opponentTeamName) {
-                alert('Please enter opponent team name');
-                return;
-            }
-            
-            const formatMap = {
-                'singles': { bowls: 4, players: 1, ends: 21 },
-                'pairs4': { bowls: 4, players: 2, ends: parseInt(numberOfEnds) },
-                'pairs3': { bowls: 3, players: 2, ends: parseInt(numberOfEnds) },
-                'triples3': { bowls: 3, players: 3, ends: parseInt(numberOfEnds) },
-                'triples2': { bowls: 2, players: 3, ends: parseInt(numberOfEnds) },
-                'fours': { bowls: 2, players: 4, ends: parseInt(numberOfEnds) }
-            };
-            
-            const config = formatMap[format];
-            
-            // Collect your team player names
-            const yourPlayers = [];
-            
-            for (let i = 0; i < config.players; i++) {
-                const yourPlayerInput = document.getElementById(`yourPlayer${i}`);
-                
-                // Check if input exists and has a value
-                if (!yourPlayerInput) {
-                    alert('Player input field not found. Please try reselecting the game format.');
-                    return;
-                }
-                
-                if (!yourPlayerInput.value || yourPlayerInput.value.trim() === '') {
-                    alert('Please enter all player names for your team');
-                    return;
-                }
-                
-                yourPlayers.push(yourPlayerInput.value.trim());
-            }
-            
-            // Create new game
-            gameState = {
-                gameId: currentGameId++,
-                tournamentName: tournamentName,
-                format: format,
-                yourPlayers: yourPlayers,
-                opponentPlayers: [opponentTeamName],
-                bowlsPerPlayer: config.bowls,
-                playersPerTeam: config.players,
-                totalEnds: config.ends,
-                currentEnd: 1,
-                currentPlayerIndex: 0,
-                currentTeam: 'yours',
-                currentHand: 'forehand',
-                matLength: 'short',
-                jackLength: 'short',
-                bowls: [],
-                endNotes: {},
-                gameNotes: '',
-                jackPosition: { x: 250, y: 250 }
-            };
-            
-            // Add to games array
-            allGames.push(gameState);
-            
-            document.querySelector('.setup-screen').classList.remove('active');
-            document.querySelector('.game-screen').classList.add('active');
-            
-            // Show/hide player selector based on format
-            if (config.players === 1) {
-                document.getElementById('playerSelector').style.display = 'none';
-            } else {
-                document.getElementById('playerSelector').style.display = 'block';
-                createPlayerButtons();
-            }
-            
-            initCanvas();
-            updateDisplay();
-        }
-        
-        function createPlayerButtons() {
-            const positionsByFormat = {
-                'singles': ['Player'],
-                'pairs4': ['Lead', 'Skip'],
-                'pairs3': ['Lead', 'Skip'],
-                'triples3': ['Lead', 'Second', 'Skip'],
-                'triples2': ['Lead', 'Second', 'Skip'],
-                'fours': ['Lead', 'Second', 'Third', 'Skip']
-            };
-            
-            const positions = positionsByFormat[gameState.format] || ['Lead', 'Second', 'Third', 'Skip'];
-            const playerButtonsDiv = document.getElementById('playerButtons');
-            playerButtonsDiv.innerHTML = '';
-            
-            for (let i = 0; i < gameState.playersPerTeam; i++) {
-                const btn = document.createElement('div');
-                btn.className = 'radio-btn' + (i === gameState.currentPlayerIndex ? ' active' : '');
-                btn.textContent = positions[i];
-                btn.onclick = () => selectPlayer(i);
-                playerButtonsDiv.appendChild(btn);
-            }
-        }
-        
-        function selectPlayer(index) {
-            gameState.currentPlayerIndex = index;
-            const buttons = document.querySelectorAll('#playerButtons .radio-btn');
-            buttons.forEach((btn, idx) => {
-                btn.classList.toggle('active', idx === index);
-            });
-            updateDisplay();
-        }
-        
-        function initCanvas() {
-            canvas = document.getElementById('greenCanvas');
-            ctx = canvas.getContext('2d');
-            
-            // Set canvas size
-            canvas.width = 500;
-            canvas.height = 500;
-            
-            // Set initial jack position (center)
-            if (!gameState.jackPosition) {
-                gameState.jackPosition = { x: 250, y: 250 };
-            }
-            
-            // Add event listeners
-            canvas.addEventListener('click', handleCanvasClick);
-            canvas.addEventListener('mousedown', handleMouseDown);
-            canvas.addEventListener('mousemove', handleMouseMove);
-            canvas.addEventListener('mouseup', handleMouseUp);
-            canvas.addEventListener('touchstart', handleTouchStart);
-            canvas.addEventListener('touchmove', handleTouchMove);
-            canvas.addEventListener('touchend', handleTouchEnd);
-            
-            drawGreen();
-        }
-        
-        function drawGreen() {
-            // Clear canvas
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            // Draw ditch at bottom if jack length is long
-            if (gameState.jackLength === 'long') {
-                ctx.fillStyle = '#8B4513';
-                ctx.fillRect(0, canvas.height - 30, canvas.width, 30);
-                
-                // Add ditch label
-                ctx.fillStyle = 'white';
-                ctx.font = 'bold 12px Arial';
-                ctx.textAlign = 'center';
-                ctx.fillText('DITCH', canvas.width / 2, canvas.height - 12);
-            }
-            
-            // Draw concentric circles
-            const centerX = canvas.width / 2;
-            const centerY = canvas.height / 2;
-            const maxRadius = Math.min(canvas.width, canvas.height) / 2 - 10;
-            
-            // Draw circles every ring (representing distance zones in feet)
-            for (let i = 5; i >= 1; i--) {
-                const radius = (maxRadius / 5) * i;
-                ctx.beginPath();
-                ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
-                ctx.strokeStyle = '#1a3810';
-                ctx.lineWidth = 1;
-                ctx.stroke();
-                
-                // Add distance labels in feet
-                if (i > 0) {
-                    ctx.fillStyle = '#4a7035';
-                    ctx.font = '12px Arial';
-                    ctx.textAlign = 'center';
-                    ctx.fillText(`${i}ft`, centerX, centerY - radius + 15);
-                }
-            }
-            
-            // Draw jack
-            if (gameState.jackPosition) {
-                drawJack(gameState.jackPosition.x, gameState.jackPosition.y);
-            }
-            
-            // Draw only bowls from current end
-            const currentEndBowls = gameState.bowls.filter(b => b.end === gameState.currentEnd);
-            currentEndBowls.forEach(bowl => {
-                drawBowl(bowl);
-            });
-        }
-        
-        function drawJack(x, y) {
-            ctx.beginPath();
-            ctx.arc(x, y, 10, 0, 2 * Math.PI);
-            ctx.fillStyle = '#FFD700';
-            ctx.fill();
-            ctx.strokeStyle = '#FFA500';
-            ctx.lineWidth = 3;
-            ctx.stroke();
-        }
-        
-        function drawBowl(bowl) {
-            ctx.beginPath();
-            ctx.arc(bowl.x, bowl.y, 18, 0, 2 * Math.PI);
-            ctx.fillStyle = bowl.team === 'yours' ? '#4CAF50' : '#f44336';
-            ctx.fill();
-            ctx.strokeStyle = '#333';
-            ctx.lineWidth = 3;
-            ctx.stroke();
-            
-            // Add hand indicator
-            ctx.fillStyle = 'white';
-            ctx.font = 'bold 12px Arial';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(bowl.hand === 'forehand' ? 'F' : 'B', bowl.x, bowl.y);
-        }
-        
-        function getCanvasCoordinates(e) {
-            const rect = canvas.getBoundingClientRect();
-            const scaleX = canvas.width / rect.width;
-            const scaleY = canvas.height / rect.height;
-            
-            let clientX, clientY;
-            
-            if (e.touches) {
-                clientX = e.touches[0].clientX;
-                clientY = e.touches[0].clientY;
-            } else {
-                clientX = e.clientX;
-                clientY = e.clientY;
-            }
-            
-            return {
-                x: (clientX - rect.left) * scaleX,
-                y: (clientY - rect.top) * scaleY
-            };
-        }
-        
-        function isNearJack(x, y) {
-            const dx = x - gameState.jackPosition.x;
-            const dy = y - gameState.jackPosition.y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-            return distance < 15;
-        }
-        
-        function isNearBowl(x, y, bowl) {
-            const dx = x - bowl.x;
-            const dy = y - bowl.y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-            return distance < 20;
-        }
-        
-        function constrainToCanvas(x, y, margin = 20) {
-            return {
-                x: Math.max(margin, Math.min(canvas.width - margin, x)),
-                y: Math.max(margin, Math.min(canvas.height - margin, y))
-            };
-        }
-        
-        function handleMouseDown(e) {
-            const coords = getCanvasCoordinates(e);
-            
-            // Check if clicking on jack
-            if (isNearJack(coords.x, coords.y)) {
-                isDraggingJack = true;
-                e.preventDefault();
-                return;
-            }
-            
-            // Check if clicking on a bowl
-            const currentEndBowls = gameState.bowls.filter(b => b.end === gameState.currentEnd);
-            for (let bowl of currentEndBowls) {
-                if (isNearBowl(coords.x, coords.y, bowl)) {
-                    draggingBowl = bowl;
-                    dragOffset = {
-                        x: bowl.x - coords.x,
-                        y: bowl.y - coords.y
-                    };
-                    e.preventDefault();
-                    return;
-                }
-            }
-        }
-        
-        function handleMouseMove(e) {
-            if (isDraggingJack) {
-                const coords = getCanvasCoordinates(e);
-                const constrained = constrainToCanvas(coords.x, coords.y, 15);
-                gameState.jackPosition = constrained;
-                saveCurrentGame();
-                drawGreen();
-                e.preventDefault();
-            } else if (draggingBowl) {
-                const coords = getCanvasCoordinates(e);
-                const newPos = constrainToCanvas(
-                    coords.x + dragOffset.x,
-                    coords.y + dragOffset.y,
-                    20
-                );
-                
-                draggingBowl.x = newPos.x;
-                draggingBowl.y = newPos.y;
-                
-                // Recalculate position data
-                const distanceFromJack = calculateDistance(newPos.x, newPos.y, gameState.jackPosition.x, gameState.jackPosition.y);
-                const distanceInFeet = pixelsToFeet(distanceFromJack);
-                
-                const jackY = gameState.jackPosition.y;
-                const bowlY = newPos.y;
-                let resultCategory = '';
-                
-                if (bowlY < jackY - 10) {
-                    resultCategory = 'Short';
-                } else if (Math.abs(bowlY - jackY) <= 10) {
-                    resultCategory = 'Jack High';
-                } else {
-                    resultCategory = 'Past';
-                }
-                
-                let distanceCategory = '';
-                if (distanceInFeet < 0.5) {
-                    distanceCategory = '< 0.5 ft';
-                } else if (distanceInFeet < 1) {
-                    distanceCategory = '0.5 ft - 1 ft';
-                } else if (distanceInFeet < 2) {
-                    distanceCategory = '1 ft - 2 ft';
-                } else if (distanceInFeet < 3) {
-                    distanceCategory = '2 ft - 3 ft';
-                } else {
-                    distanceCategory = '> 3 ft';
-                }
-                
-                draggingBowl.resultCategory = resultCategory;
-                draggingBowl.distanceCategory = distanceCategory;
-                draggingBowl.distanceInFeet = distanceInFeet;
-                
-                // Recalculate score if front end
-                if (draggingBowl.team === 'yours' && draggingBowl.scoreCategory) {
-                    const autoScore = calculateFrontEndScore(resultCategory, distanceCategory);
-                    draggingBowl.scoreValue = autoScore;
-                    draggingBowl.scoreCategory = resultCategory;
-                    draggingBowl.scoreDetail = distanceCategory;
-                }
-                
-                saveCurrentGame();
-                drawGreen();
-                e.preventDefault();
-            }
-        }
-        
-        function handleMouseUp(e) {
-            isDraggingJack = false;
-            draggingBowl = null;
-        }
-        
-        function handleTouchStart(e) {
-            handleMouseDown(e);
-        }
-        
-        function handleTouchMove(e) {
-            handleMouseMove(e);
-        }
-        
-        function handleTouchEnd(e) {
-            handleMouseUp(e);
-        }
-        
-        function handleCanvasClick(e) {
-            // Don't place bowl if we were dragging
-            if (isDraggingJack || draggingBowl) return;
-            
-            const coords = getCanvasCoordinates(e);
-            
-            // Don't place bowl on jack
-            if (isNearJack(coords.x, coords.y)) return;
-            
-            // Check if clicking on existing bowl (for dragging, not placing new)
-            const currentEndBowls = gameState.bowls.filter(b => b.end === gameState.currentEnd);
-            for (let bowl of currentEndBowls) {
-                if (isNearBowl(coords.x, coords.y, bowl)) {
-                    return; // Don't place new bowl on top of existing
-                }
-            }
-            
-            // Check if maximum bowls for this end has been reached
-            const bowlsThisEnd = gameState.bowls.filter(b => b.end === gameState.currentEnd).length;
-            const maxBowlsPerEnd = gameState.bowlsPerPlayer * gameState.playersPerTeam * 2; // Both teams
-            
-            if (bowlsThisEnd >= maxBowlsPerEnd) {
-                alert(`Maximum ${maxBowlsPerEnd} bowls reached for this end. Click "End Notes & Next End" to continue.`);
-                return;
-            }
-            
-            // Get current player name
-            const currentPlayerName = gameState.currentTeam === 'yours' 
-                ? gameState.yourPlayers[gameState.currentPlayerIndex]
-                : gameState.opponentPlayers[0]; // Opponent is just team name
-            
-            // Calculate distance from jack and determine position
-            const distanceFromJack = calculateDistance(coords.x, coords.y, gameState.jackPosition.x, gameState.jackPosition.y);
-            const distanceInFeet = pixelsToFeet(distanceFromJack);
-            
-            // Determine if short, jack high, or past based on Y position
-            const jackY = gameState.jackPosition.y;
-            const bowlY = coords.y;
-            let resultCategory = '';
-            
-            // Mat is at top (y=0), ditch is at bottom (y=500)
-            // Bowls towards mat (lower y than jack) = Short
-            // Bowls towards ditch (higher y than jack) = Past
-            if (bowlY < jackY - 10) {
-                resultCategory = 'Short';
-            } else if (Math.abs(bowlY - jackY) <= 10) {
-                resultCategory = 'Jack High';
-            } else {
-                resultCategory = 'Past';
-            }
-            
-            // Determine distance category
-            let distanceCategory = '';
-            if (distanceInFeet < 0.5) {
-                distanceCategory = '< 0.5 ft';
-            } else if (distanceInFeet < 1) {
-                distanceCategory = '0.5 ft - 1 ft';
-            } else if (distanceInFeet < 2) {
-                distanceCategory = '1 ft - 2 ft';
-            } else if (distanceInFeet < 3) {
-                distanceCategory = '2 ft - 3 ft';
-            } else {
-                distanceCategory = '> 3 ft';
-            }
-            
-            // Get notes from quick notes field
-            const quickNotes = document.getElementById('quickBowlNotes').value;
-            
-            // Create bowl object
-            const bowl = {
-                x: coords.x,
-                y: coords.y,
-                team: gameState.currentTeam,
-                hand: gameState.currentHand,
-                matLength: gameState.matLength,
-                jackLength: gameState.jackLength,
-                end: gameState.currentEnd,
-                player: currentPlayerName,
-                playerIndex: gameState.currentTeam === 'yours' ? gameState.currentPlayerIndex : 0,
-                notes: quickNotes,
-                resultCategory: resultCategory,
-                distanceCategory: distanceCategory,
-                distanceInFeet: distanceInFeet,
-                scoreCategory: '',
-                scoreDetail: '',
-                scoreValue: 0
-            };
-            
-            // Only show modal if bowl is very far (> 5ft) to ask if it's off rink
-            if (distanceInFeet > 5) {
-                pendingBowl = bowl;
-                showOffRinkModal();
-            } else {
-                // Auto-score and save for your team
-                if (gameState.currentTeam === 'yours') {
-                    const positionsByFormat = {
-                        'singles': ['Player'],
-                        'pairs4': ['Lead', 'Skip'],
-                        'pairs3': ['Lead', 'Skip'],
-                        'triples3': ['Lead', 'Second', 'Skip'],
-                        'triples2': ['Lead', 'Second', 'Skip'],
-                        'fours': ['Lead', 'Second', 'Third', 'Skip']
-                    };
-                    const positions = positionsByFormat[gameState.format] || ['Lead', 'Second', 'Third', 'Skip'];
-                    const currentPosition = positions[gameState.currentPlayerIndex];
-                    const isFrontEnd = currentPosition === 'Lead' || currentPosition === 'Second';
-                    
-                    if (isFrontEnd) {
-                        // Front end - auto calculate score
-                        const autoScore = calculateFrontEndScore(bowl.resultCategory, bowl.distanceCategory);
-                        bowl.scoreCategory = bowl.resultCategory;
-                        bowl.scoreDetail = bowl.distanceCategory;
-                        bowl.scoreValue = autoScore;
-                    }
-                    // Back end scoring would be manual later - for now just save position
-                }
-                
-                gameState.bowls.push(bowl);
-                
-                // Clear quick notes
-                document.getElementById('quickBowlNotes').value = '';
-                
-                // Auto-advance to next player for your team
-                if (gameState.currentTeam === 'yours') {
-                    advanceToNextPlayer();
-                }
-                
-                saveCurrentGame();
-                drawGreen();
-                updateDisplay();
-            }
-        }
-        
-        function advanceToNextPlayer() {
-            // Count bowls for current player in current end
-            const currentPlayerBowls = gameState.bowls.filter(b => 
-                b.end === gameState.currentEnd && 
-                b.team === 'yours' && 
-                b.playerIndex === gameState.currentPlayerIndex
-            ).length;
-            
-            // If current player has bowled all their bowls, move to next player
-            if (currentPlayerBowls >= gameState.bowlsPerPlayer) {
-                // Find next player who hasn't finished
-                let nextPlayerIndex = (gameState.currentPlayerIndex + 1) % gameState.playersPerTeam;
-                let attempts = 0;
-                
-                while (attempts < gameState.playersPerTeam) {
-                    const nextPlayerBowls = gameState.bowls.filter(b => 
-                        b.end === gameState.currentEnd && 
-                        b.team === 'yours' && 
-                        b.playerIndex === nextPlayerIndex
-                    ).length;
-                    
-                    if (nextPlayerBowls < gameState.bowlsPerPlayer) {
-                        gameState.currentPlayerIndex = nextPlayerIndex;
-                        
-                        // Update button display
-                        const buttons = document.querySelectorAll('#playerButtons .radio-btn');
-                        buttons.forEach((btn, idx) => {
-                            btn.classList.toggle('active', idx === nextPlayerIndex);
-                        });
-                        
-                        break;
-                    }
-                    
-                    nextPlayerIndex = (nextPlayerIndex + 1) % gameState.playersPerTeam;
-                    attempts++;
-                }
-            }
-        }
-        
-        function showOffRinkModal() {
-            const modal = document.getElementById('bowlScoringModal');
-            const scoringOptions = document.getElementById('scoringOptions');
-            
-            scoringOptions.innerHTML = `
-                <div style="text-align: center; padding: 20px;">
-                    <h3 style="color: #1e3c72; margin-bottom: 15px;">Bowl appears to be off the rink</h3>
-                    <p style="color: #666; margin-bottom: 20px;">Distance: ${pendingBowl.distanceInFeet.toFixed(2)} ft from jack</p>
-                    <div class="scoring-options">
-                        <div class="scoring-btn" onclick="confirmOffRink()">Bowl Off Rink</div>
-                        <div class="scoring-btn" onclick="confirmOnRink()">Bowl On Rink</div>
-                    </div>
-                </div>
-            `;
-            
-            modal.classList.add('active');
-        }
-        
-        function confirmOffRink() {
-            if (!pendingBowl) return;
-            
-            pendingBowl.scoreCategory = 'Bowl off Rink';
-            pendingBowl.scoreDetail = 'Bowl off Rink';
-            pendingBowl.scoreValue = 0;
-            pendingBowl.resultCategory = 'Off Rink';
-            
-            gameState.bowls.push(pendingBowl);
-            pendingBowl = null;
-            
-            // Clear quick notes
-            document.getElementById('quickBowlNotes').value = '';
-            
-            // Auto-advance to next player
-            if (gameState.currentTeam === 'yours') {
-                advanceToNextPlayer();
-            }
-            
-            saveCurrentGame();
-            closeBowlScoringModal();
-            drawGreen();
-            updateDisplay();
-        }
-        
-        function confirmOnRink() {
-            if (!pendingBowl) return;
-            
-            // Auto-score for front end
-            if (gameState.currentTeam === 'yours') {
-                const positionsByFormat = {
-                    'singles': ['Player'],
-                    'pairs4': ['Lead', 'Skip'],
-                    'pairs3': ['Lead', 'Skip'],
-                    'triples3': ['Lead', 'Second', 'Skip'],
-                    'triples2': ['Lead', 'Second', 'Skip'],
-                    'fours': ['Lead', 'Second', 'Third', 'Skip']
-                };
-                const positions = positionsByFormat[gameState.format] || ['Lead', 'Second', 'Third', 'Skip'];
-                const currentPosition = positions[gameState.currentPlayerIndex];
-                const isFrontEnd = currentPosition === 'Lead' || currentPosition === 'Second';
-                
-                if (isFrontEnd) {
-                    const autoScore = calculateFrontEndScore(pendingBowl.resultCategory, pendingBowl.distanceCategory);
-                    pendingBowl.scoreCategory = pendingBowl.resultCategory;
-                    pendingBowl.scoreDetail = pendingBowl.distanceCategory;
-                    pendingBowl.scoreValue = autoScore;
-                }
-            }
-            
-            gameState.bowls.push(pendingBowl);
-            pendingBowl = null;
-            
-            // Clear quick notes
-            document.getElementById('quickBowlNotes').value = '';
-            
-            // Auto-advance to next player
-            if (gameState.currentTeam === 'yours') {
-                advanceToNextPlayer();
-            }
-            
-            saveCurrentGame();
-            closeBowlScoringModal();
-            drawGreen();
-            updateDisplay();
-        }
-        
-        function calculateDistance(x1, y1, x2, y2) {
-            return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
-        }
-        
-        function pixelsToFeet(pixels) {
-            // Canvas is 500px, representing ~5 feet radius
-            // So 1 foot = 100 pixels approximately (based on the 5 rings)
-            return pixels / 100;
-        }
-        
-        function saveCurrentGame() {
-            // Update the game in allGames array
-            const index = allGames.findIndex(g => g.gameId === gameState.gameId);
-            if (index !== -1) {
-                allGames[index] = JSON.parse(JSON.stringify(gameState));
-            }
-        }
-        
-        function showGamesManager() {
-            // Save current game before showing manager
-            if (gameState.gameId !== undefined) {
-                saveCurrentGame();
-            }
-            
-            // Hide all screens
-            document.querySelector('.setup-screen').classList.remove('active');
-            document.querySelector('.game-screen').classList.remove('active');
-            document.querySelector('.games-manager-screen').classList.add('active');
-            
-            // Populate games list
-            const gamesList = document.getElementById('gamesList');
-            gamesList.innerHTML = '';
-            
-            if (allGames.length === 0) {
-                gamesList.innerHTML = '<div class="no-games">No open games. Start a new game to begin.</div>';
-            } else {
-                allGames.forEach((game, idx) => {
-                    const yourTeam = game.yourPlayers.join(', ');
-                    const oppTeam = game.opponentPlayers[0];
-                    const tournament = game.tournamentName ? `<div style="font-size: 12px; color: #999; margin-top: 4px;">🏆 ${game.tournamentName}</div>` : '';
-                    
-                    const card = document.createElement('div');
-                    card.className = 'game-card';
-                    card.onclick = () => loadGame(idx);
-                    card.innerHTML = `
-                        <div class="game-card-title">${yourTeam} vs ${oppTeam}</div>
-                        ${tournament}
-                        <div class="game-card-info">End ${game.currentEnd} of ${game.totalEnds} • ${game.bowls.length} bowls recorded</div>
-                    `;
-                    gamesList.appendChild(card);
-                });
-            }
-        }
-        
-        function loadGame(gameIndex) {
-            gameState = JSON.parse(JSON.stringify(allGames[gameIndex]));
-            
-            // Hide games manager, show game screen
-            document.querySelector('.games-manager-screen').classList.remove('active');
-            document.querySelector('.game-screen').classList.add('active');
-            
-            // Update UI
-            if (gameState.playersPerTeam === 1) {
-                document.getElementById('playerSelector').style.display = 'none';
-            } else {
-                document.getElementById('playerSelector').style.display = 'block';
-                createPlayerButtons();
-            }
-            
-            drawGreen();
-            updateDisplay();
-        }
-        
-        function showSetupScreen() {
-            document.querySelector('.games-manager-screen').classList.remove('active');
-            document.querySelector('.setup-screen').classList.add('active');
-            
-            // Reset form
-            document.getElementById('gameFormat').value = 'singles';
-            document.getElementById('opponentTeamName').value = '';
-            updateEndsDropdown();
-        }
-        
-        function returnToCurrentGame() {
-            if (gameState.gameId === undefined) {
-                alert('No active game. Please start or select a game.');
-                return;
-            }
-            
-            document.querySelector('.games-manager-screen').classList.remove('active');
-            document.querySelector('.game-screen').classList.add('active');
-        }
-        
-        function showBowlScoringModal() {
-            // This function is now only used for the off-rink modal
-            // The actual modal display is handled by showOffRinkModal()
-        }
-        
-        function calculateFrontEndScore(resultCategory, distanceCategory) {
-            const key = resultCategory + '-' + distanceCategory;
-            return scoringTable[key] || 0;
-        }
-        
-        function closeBowlScoringModal() {
-            document.getElementById('bowlScoringModal').classList.remove('active');
-            document.getElementById('bowlNotes').value = '';
-            pendingBowl = null;
-        }
-        
-        function showEndNotes() {
-            const bowlsThisEnd = gameState.bowls.filter(b => b.end === gameState.currentEnd).length;
-            const maxBowlsPerEnd = gameState.bowlsPerPlayer * gameState.playersPerTeam * 2;
-            
-            if (bowlsThisEnd < maxBowlsPerEnd) {
-                if (!confirm(`Only ${bowlsThisEnd} of ${maxBowlsPerEnd} bowls recorded for this end. Continue to next end?`)) {
-                    return;
-                }
-            }
-            
-            document.getElementById('endNotesNumber').textContent = gameState.currentEnd;
-            document.getElementById('endNotes').value = gameState.endNotes[gameState.currentEnd] || '';
-            document.getElementById('endNotesModal').classList.add('active');
-        }
-        
-        function saveEndNotes() {
-            gameState.endNotes[gameState.currentEnd] = document.getElementById('endNotes').value;
-            document.getElementById('endNotesModal').classList.remove('active');
-            nextEnd();
-        }
-        
-        function showEndGameDialog() {
-            const yourTeam = gameState.yourPlayers.join(', ');
-            const oppTeam = gameState.opponentPlayers[0];
-            
-            document.getElementById('endGameSummary').textContent = 
-                `${yourTeam} vs ${oppTeam} - End ${gameState.currentEnd} of ${gameState.totalEnds}`;
-            document.getElementById('gameNotes').value = gameState.gameNotes || '';
-            document.getElementById('endGameModal').classList.add('active');
-        }
-        
-        function confirmEndGame() {
-            gameState.gameNotes = document.getElementById('gameNotes').value;
-            saveCurrentGame();
-            document.getElementById('endGameModal').classList.remove('active');
-            showGamesManager();
-        }
-        
-        function closeEndGameModal() {
-            document.getElementById('endGameModal').classList.remove('active');
-        }
-        
-        function selectTeam(team) {
-            gameState.currentTeam = team;
-            const buttons = document.querySelectorAll('#teamGroup .radio-btn');
-            buttons.forEach((btn, idx) => {
-                btn.classList.toggle('active', (idx === 0 && team === 'yours') || (idx === 1 && team === 'opponent'));
-            });
-            updateDisplay();
-        }
-        
-        function selectHand(hand) {
-            gameState.currentHand = hand;
-            const buttons = document.querySelectorAll('#handGroup .radio-btn');
-            buttons.forEach((btn, idx) => {
-                btn.classList.toggle('active', (idx === 0 && hand === 'forehand') || (idx === 1 && hand === 'backhand'));
-            });
-        }
-        
-        function selectMatLength(length) {
-            gameState.matLength = length;
-            const buttons = document.querySelectorAll('#matLengthGroup .radio-btn');
-            buttons.forEach((btn, idx) => {
-                btn.classList.toggle('active', 
-                    (idx === 0 && length === 'short') || 
-                    (idx === 1 && length === 'medium') || 
-                    (idx === 2 && length === 'long')
-                );
-            });
-        }
-        
-        function selectJackLength(length) {
-            gameState.jackLength = length;
-            const buttons = document.querySelectorAll('#jackLengthGroup .radio-btn');
-            buttons.forEach((btn, idx) => {
-                btn.classList.toggle('active', 
-                    (idx === 0 && length === 'short') || 
-                    (idx === 1 && length === 'medium') || 
-                    (idx === 2 && length === 'long')
-                );
-            });
-        }
-        
-        function updateDisplay() {
-            document.getElementById('currentEnd').textContent = `${gameState.currentEnd}/${gameState.totalEnds}`;
-            
-            const teamName = gameState.currentTeam === 'yours' ? 'Your Team' : 'Opponent';
-            document.getElementById('currentTeam').textContent = teamName;
-            
-            const currentPlayerName = gameState.currentTeam === 'yours' 
-                ? gameState.yourPlayers[gameState.currentPlayerIndex]
-                : gameState.opponentPlayers[0]; // Opponent is just the team name
-            document.getElementById('currentPlayer').textContent = currentPlayerName;
-            
-            const bowlsThisEnd = gameState.bowls.filter(b => b.end === gameState.currentEnd).length;
-            const maxBowlsPerEnd = gameState.bowlsPerPlayer * gameState.playersPerTeam * 2;
-            document.getElementById('currentBowl').textContent = `${bowlsThisEnd}/${maxBowlsPerEnd}`;
-        }
-        
-        function undoLastBowl() {
-            if (gameState.bowls.length > 0) {
-                gameState.bowls.pop();
-                saveCurrentGame();
-                drawGreen();
-                updateDisplay();
-            }
-        }
-        
-        function captureScreenshot() {
-            try {
-                // Create a temporary canvas with better quality
-                const tempCanvas = document.createElement('canvas');
-                tempCanvas.width = canvas.width;
-                tempCanvas.height = canvas.height;
-                const tempCtx = tempCanvas.getContext('2d');
-                
-                // Copy current canvas
-                tempCtx.drawImage(canvas, 0, 0);
-                
-                // Convert to image and download
-                tempCanvas.toBlob(function(blob) {
-                    const url = URL.createObjectURL(blob);
-                    const link = document.createElement('a');
-                    const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
-                    const yourTeam = gameState.yourPlayers.join('-');
-                    const oppTeam = gameState.opponentPlayers[0];
-                    link.download = `${yourTeam}_vs_${oppTeam}_End${gameState.currentEnd}_${timestamp}.png`;
-                    link.href = url;
-                    link.click();
-                    URL.revokeObjectURL(url);
-                }, 'image/png');
-            } catch (error) {
-                alert('Screenshot capture failed. Please try again.');
-                console.error('Screenshot error:', error);
-            }
-        }
-        
-        function nextEnd() {
-            if (gameState.currentEnd >= gameState.totalEnds) {
-                alert(`Game complete! You've finished all ${gameState.totalEnds} ends.`);
-                showEndGameDialog();
-                return;
-            }
-            
-            gameState.currentEnd++;
-            // Reset jack to center for new end
-            gameState.jackPosition = { x: 250, y: 250 };
-            saveCurrentGame();
-            drawGreen();
-            updateDisplay();
-        }
-        
-        function resetGame() {
-            if (confirm('Start a new game? This will clear all data.')) {
-                gameState.bowls = [];
-                gameState.currentEnd = 1;
-                gameState.currentPlayerIndex = 0;
-                gameState.jackPosition = { x: 250, y: 250 };
-                document.querySelector('.game-screen').classList.remove('active');
-                document.querySelector('.setup-screen').classList.add('active');
-                
-                // Reset form fields
-                document.getElementById('gameFormat').value = 'singles';
-                document.getElementById('opponentTeamName').value = '';
-                updateEndsDropdown();
-            }
-        }
-    </script>
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <div class="nav-item active" data-view="home" onclick="navigateTo('home')">
+            <span class="nav-icon">&#127968;</span>
+            <span>Home</span>
+        </div>
+        <div class="nav-item" data-view="track" onclick="navigateTo('track')">
+            <span class="nav-icon">&#127919;</span>
+            <span>Track</span>
+        </div>
+        <div class="nav-item" data-view="games" onclick="navigateTo('games')">
+            <span class="nav-icon">&#128203;</span>
+            <span>Games</span>
+        </div>
+        <div class="nav-item" data-view="analytics" onclick="navigateTo('analytics')">
+            <span class="nav-icon">&#128202;</span>
+            <span>Analytics</span>
+        </div>
+    </nav>
+
+    <!-- FAB for new game -->
+    <button class="fab" id="fabNewGame" onclick="navigateTo('track')" title="New Game">+</button>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    <script src="js/db.js"></script>
+    <script src="js/demo-data.js"></script>
+    <script src="js/analytics.js"></script>
+    <script src="js/export.js"></script>
+    <script src="js/app.js"></script>
 </body>
 </html>
