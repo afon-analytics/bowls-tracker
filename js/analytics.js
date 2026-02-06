@@ -9,12 +9,18 @@ function invalidateAnalyticsCache() {
 
 // ===== DATA AGGREGATION =====
 
-async function getPlayerStats(playerName) {
-  const cacheKey = 'player_' + playerName;
+async function getPlayerStats(playerName, filterGameId) {
+  const cacheKey = 'player_' + playerName + (filterGameId ? '_game_' + filterGameId : '');
   if (analyticsCache[cacheKey]) return analyticsCache[cacheKey];
 
-  const allBowls = await getAllBowls();
+  let allBowls = await getAllBowls();
   const allGames = await getAllGames();
+
+  // Filter by game if specified
+  if (filterGameId) {
+    allBowls = allBowls.filter(b => b.gameId === filterGameId);
+  }
+
   const playerBowls = allBowls.filter(b => b.playerId === playerName && b.team === 'yours');
 
   if (playerBowls.length === 0) return null;
@@ -47,7 +53,7 @@ async function getPlayerStats(playerName) {
   };
   playerBowls.forEach(b => {
     const dist = b.distance || b.distanceInFeet || 0;
-    // Convert feet to cm roughly (1ft ≈ 30cm)
+    // Convert feet to cm roughly (1ft ~ 30cm)
     const distCm = dist * 30;
     let zone;
     if (distCm < 20) zone = 'Close (<20cm)';
@@ -64,13 +70,21 @@ async function getPlayerStats(playerName) {
     distanceSuccessRates[zone] = data.total > 0 ? (data.good / data.total * 100) : 0;
   }
 
-  // Bowl distribution (short/medium/long)
+  // Bowl distribution (short/medium/long distance)
   const bowlDistribution = { short: 0, medium: 0, long: 0 };
   playerBowls.forEach(b => {
     const dist = b.distance || b.distanceInFeet || 0;
     if (dist < 0.67) bowlDistribution.short++;
     else if (dist < 1.67) bowlDistribution.medium++;
     else bowlDistribution.long++;
+  });
+
+  // Hand distribution (backhand vs forehand)
+  const handDistribution = { forehand: 0, backhand: 0 };
+  playerBowls.forEach(b => {
+    const hand = b.hand || 'forehand';
+    if (hand === 'backhand') handDistribution.backhand++;
+    else handDistribution.forehand++;
   });
 
   // Per-game performance (trend data)
@@ -146,6 +160,7 @@ async function getPlayerStats(playerName) {
     scoreDistribution,
     distanceSuccessRates,
     bowlDistribution,
+    handDistribution,
     gamePerformance,
     bestEnd,
     worstEnd,
@@ -197,6 +212,7 @@ async function getGameSummaries() {
       tournamentName: game.tournamentName || '',
       gameNumber: game.gameNumber || 0,
       format: game.format,
+      gameType: game.gameType || 'game',
       date: game.date,
       players: game.players || game.yourPlayers || [],
       opponentName: (game.opponentPlayers || [])[0] || '',
@@ -251,16 +267,30 @@ async function renderPlayerDashboard(container) {
     return;
   }
 
+  // Get all games for game filter
+  const allGames = await getAllGames();
+
   const currentPlayer = players[0];
   const stats = await getPlayerStats(currentPlayer);
 
   container.innerHTML = `
     <div class="player-selector-bar">
       <label for="analyticsPlayerSelect">Player:</label>
-      <select id="analyticsPlayerSelect" onchange="switchPlayerDashboard(this.value)">
+      <select id="analyticsPlayerSelect" onchange="applyPlayerFilters()">
         ${players.map(p => `<option value="${p}" ${p === currentPlayer ? 'selected' : ''}>${p}</option>`).join('')}
       </select>
+      <label for="analyticsGameFilter" style="margin-left: 10px;">Game:</label>
+      <select id="analyticsGameFilter" onchange="applyPlayerFilters()">
+        <option value="all">All Games</option>
+        ${allGames.map(g => {
+          const players = (g.players || g.yourPlayers || []).join(', ');
+          const opp = (g.opponentPlayers || [])[0] || '';
+          const label = `${players} vs ${opp}`;
+          return `<option value="${g.id}">${label}</option>`;
+        }).join('')}
+      </select>
     </div>
+    <div id="activeFilters" class="active-filters" style="display:none;"></div>
     <div id="playerDashboardContent">
       ${renderPlayerStatsHTML(stats)}
     </div>
@@ -300,15 +330,27 @@ function renderPlayerStatsHTML(stats) {
       </div>
       <div class="stat-card">
         <div class="stat-value">${stats.consistency.toFixed(2)}</div>
-        <div class="stat-label">Consistency (SD)</div>
+        <div class="stat-label">Consistency
+          <span class="tooltip-trigger" tabindex="0">?
+            <span class="tooltip-content">Standard deviation of scores. Lower = more consistent. 0 means every bowl scored the same.</span>
+          </span>
+        </div>
       </div>
       <div class="stat-card">
         <div class="stat-value">${stats.clutchAvg.toFixed(2)}</div>
-        <div class="stat-label">Clutch Avg</div>
+        <div class="stat-label">Clutch
+          <span class="tooltip-trigger" tabindex="0">?
+            <span class="tooltip-content">Average score in the final 3 ends of each game - measures performance under pressure in close, deciding moments.</span>
+          </span>
+        </div>
       </div>
       <div class="stat-card">
         <div class="stat-value">${formIndicator}</div>
-        <div class="stat-label">Form</div>
+        <div class="stat-label">Form
+          <span class="tooltip-trigger" tabindex="0">?
+            <span class="tooltip-content">Recent performance trend. Compares the most recent game average to the overall average. Rising = improving, Declining = dropping off.</span>
+          </span>
+        </div>
       </div>
     </div>
     <div class="stat-detail">Position(s): ${positionText}</div>
@@ -322,7 +364,11 @@ function renderPlayerStatsHTML(stats) {
         <canvas id="distanceSuccessChart"></canvas>
       </div>
       <div class="chart-container">
-        <h4>Bowl Distribution</h4>
+        <h4>Hand Preference (Backhand vs Forehand)</h4>
+        <canvas id="handDistributionChart"></canvas>
+      </div>
+      <div class="chart-container">
+        <h4>Bowl Distance Distribution</h4>
         <canvas id="bowlDistributionChart"></canvas>
       </div>
       <div class="chart-container">
@@ -391,7 +437,31 @@ function renderPlayerCharts(stats) {
     });
   }
 
-  // Bowl Distribution Pie Chart
+  // Hand Distribution Chart (Backhand vs Forehand)
+  const handCtx = document.getElementById('handDistributionChart');
+  if (handCtx) {
+    const total = stats.handDistribution.forehand + stats.handDistribution.backhand;
+    const fhPct = total > 0 ? ((stats.handDistribution.forehand / total) * 100).toFixed(1) : 0;
+    const bhPct = total > 0 ? ((stats.handDistribution.backhand / total) * 100).toFixed(1) : 0;
+
+    new Chart(handCtx, {
+      type: 'doughnut',
+      data: {
+        labels: [`Forehand (${fhPct}%)`, `Backhand (${bhPct}%)`],
+        datasets: [{
+          data: [stats.handDistribution.forehand, stats.handDistribution.backhand],
+          backgroundColor: ['#2a5298', '#f44336']
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom' } }
+      }
+    });
+  }
+
+  // Bowl Distance Distribution Pie Chart
   const distPieCtx = document.getElementById('bowlDistributionChart');
   if (distPieCtx) {
     new Chart(distPieCtx, {
@@ -435,8 +505,16 @@ function renderPlayerCharts(stats) {
   }
 }
 
-async function switchPlayerDashboard(playerName) {
-  const stats = await getPlayerStats(playerName);
+async function applyPlayerFilters() {
+  const playerSelect = document.getElementById('analyticsPlayerSelect');
+  const gameFilter = document.getElementById('analyticsGameFilter');
+  if (!playerSelect) return;
+
+  const playerName = playerSelect.value;
+  const gameId = gameFilter ? gameFilter.value : 'all';
+  const filterGameId = gameId !== 'all' ? gameId : undefined;
+
+  const stats = await getPlayerStats(playerName, filterGameId);
   const content = document.getElementById('playerDashboardContent');
   if (content) {
     // Destroy existing charts
@@ -444,6 +522,25 @@ async function switchPlayerDashboard(playerName) {
     content.innerHTML = renderPlayerStatsHTML(stats);
     setTimeout(() => renderPlayerCharts(stats), 100);
   }
+
+  // Show active filters
+  const activeFiltersEl = document.getElementById('activeFilters');
+  if (activeFiltersEl) {
+    if (filterGameId) {
+      const gameOption = gameFilter.options[gameFilter.selectedIndex];
+      activeFiltersEl.style.display = 'block';
+      activeFiltersEl.innerHTML = `Showing: <strong>${playerName}</strong> in <strong>${gameOption.text}</strong>`;
+    } else {
+      activeFiltersEl.style.display = 'none';
+    }
+  }
+}
+
+async function switchPlayerDashboard(playerName) {
+  // Legacy - now uses applyPlayerFilters
+  const select = document.getElementById('analyticsPlayerSelect');
+  if (select) select.value = playerName;
+  await applyPlayerFilters();
 }
 
 // ===== TEAM COMPARISON =====
@@ -522,9 +619,21 @@ function renderComparisonTable(stats, threshold) {
             <th>Games</th>
             <th>Bowls</th>
             <th>Avg Score</th>
-            <th>Consistency</th>
-            <th>Clutch</th>
-            <th>Status</th>
+            <th>Consistency
+              <span class="tooltip-trigger tooltip-header" tabindex="0">?
+                <span class="tooltip-content">Standard deviation of scores. Lower value = more consistent player.</span>
+              </span>
+            </th>
+            <th>Clutch
+              <span class="tooltip-trigger tooltip-header" tabindex="0">?
+                <span class="tooltip-content">Average score in the final 3 ends of each game.</span>
+              </span>
+            </th>
+            <th>Status
+              <span class="tooltip-trigger tooltip-header" tabindex="0">?
+                <span class="tooltip-content">Selection recommendation based on average score (2.5+ threshold) and recent form trend (rising/steady/declining).</span>
+              </span>
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -709,7 +818,7 @@ function renderGameCards(summaries) {
   return summaries.map(s => `
     <div class="game-history-card" onclick="showGameDrillDown('${s.id}')">
       <div class="ghc-header">
-        <div class="ghc-format">${formatName(s.format)}</div>
+        <div class="ghc-format">${formatName(s.format)}${s.gameType === 'trial' ? ' <span class="badge-trial">Trial</span>' : ''}</div>
         <div class="ghc-date">${formatDate(s.date)}</div>
       </div>
       <div class="ghc-teams">
@@ -794,6 +903,7 @@ async function showGameDrillDown(gameId) {
 
   const players = game.players || game.yourPlayers || [];
   const opponentName = (game.opponentPlayers || [])[0] || 'Opponent';
+  const playerNames = Object.keys(playerBreakdown);
 
   container.innerHTML = `
     <div class="drill-down">
@@ -808,8 +918,16 @@ async function showGameDrillDown(gameId) {
       </div>
       ${game.notes || game.gameNotes ? `<div class="dd-notes">${game.notes || game.gameNotes}</div>` : ''}
 
+      <div class="dd-filter-bar">
+        <label for="ddPlayerFilter">Filter by Player:</label>
+        <select id="ddPlayerFilter" onchange="filterDrillDownByPlayer('${gameId}')">
+          <option value="all">All Players</option>
+          ${playerNames.map(p => `<option value="${p}">${p}</option>`).join('')}
+        </select>
+      </div>
+
       <h4>Player Performance</h4>
-      <div class="dd-player-grid">
+      <div class="dd-player-grid" id="ddPlayerGrid">
         ${Object.entries(playerBreakdown).map(([name, data]) => `
           <div class="dd-player-card">
             <div class="dd-player-name">${name}</div>
@@ -826,7 +944,7 @@ async function showGameDrillDown(gameId) {
         <canvas id="endProgressionChart"></canvas>
       </div>
 
-      <div class="dd-end-list">
+      <div class="dd-end-list" id="ddEndList">
         ${endData.map(e => `
           <div class="dd-end-item ${e.bowlCount === 0 ? 'empty' : ''}">
             <div class="dd-end-num">End ${e.end}</div>
@@ -842,35 +960,118 @@ async function showGameDrillDown(gameId) {
     </div>
   `;
 
-  setTimeout(() => {
-    const ctx = document.getElementById('endProgressionChart');
-    if (ctx && typeof Chart !== 'undefined') {
-      new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: endData.map(e => `End ${e.end}`),
-          datasets: [{
-            label: 'Avg Score per End',
-            data: endData.map(e => e.avgScore.toFixed(2)),
-            borderColor: '#2a5298',
-            backgroundColor: 'rgba(42, 82, 152, 0.1)',
-            fill: true,
-            tension: 0.3,
-            pointRadius: 4,
-            pointBackgroundColor: '#2a5298'
-          }]
+  setTimeout(() => renderEndProgressionChart(endData), 100);
+}
+
+function renderEndProgressionChart(endData) {
+  const ctx = document.getElementById('endProgressionChart');
+  if (ctx && typeof Chart !== 'undefined') {
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: endData.map(e => `End ${e.end}`),
+        datasets: [{
+          label: 'Avg Score per End',
+          data: endData.map(e => e.avgScore.toFixed(2)),
+          borderColor: '#2a5298',
+          backgroundColor: 'rgba(42, 82, 152, 0.1)',
+          fill: true,
+          tension: 0.3,
+          pointRadius: 4,
+          pointBackgroundColor: '#2a5298'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: { beginAtZero: true, max: 4, title: { display: true, text: 'Score' } }
         },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: {
-            y: { beginAtZero: true, max: 4, title: { display: true, text: 'Score' } }
-          },
-          plugins: { legend: { display: false } }
-        }
-      });
-    }
-  }, 100);
+        plugins: { legend: { display: false } }
+      }
+    });
+  }
+}
+
+async function filterDrillDownByPlayer(gameId) {
+  const selectedPlayer = document.getElementById('ddPlayerFilter').value;
+  const bowls = await getBowlsByGame(gameId);
+  const game = await getGame(gameId);
+  if (!game) return;
+
+  let yourBowls = bowls.filter(b => b.team === 'yours');
+  if (selectedPlayer !== 'all') {
+    yourBowls = yourBowls.filter(b => (b.playerId || b.playerName || b.player) === selectedPlayer);
+  }
+
+  const totalEnds = game.endCount || game.totalEnds || 21;
+
+  // Rebuild player cards
+  const playerBreakdown = {};
+  yourBowls.forEach(b => {
+    const name = b.playerId || b.playerName || b.player;
+    if (!playerBreakdown[name]) playerBreakdown[name] = { total: 0, count: 0, bowls: [] };
+    playerBreakdown[name].total += (b.scoreValue || b.score || 0);
+    playerBreakdown[name].count++;
+    playerBreakdown[name].bowls.push(b);
+  });
+
+  const playerGrid = document.getElementById('ddPlayerGrid');
+  if (playerGrid) {
+    playerGrid.innerHTML = Object.entries(playerBreakdown).map(([name, data]) => {
+      // Show hand breakdown for individual player
+      const fhCount = data.bowls.filter(b => b.hand === 'forehand').length;
+      const bhCount = data.bowls.filter(b => b.hand === 'backhand').length;
+      return `
+        <div class="dd-player-card">
+          <div class="dd-player-name">${name}</div>
+          <div class="dd-player-stats">
+            <div>${data.count} bowls</div>
+            <div>Avg: ${(data.total / data.count).toFixed(2)}</div>
+            <div>FH: ${fhCount} | BH: ${bhCount}</div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // Rebuild end-by-end data
+  const endData = [];
+  for (let e = 1; e <= totalEnds; e++) {
+    const endBowls = yourBowls.filter(b => (b.endNumber || b.end) === e);
+    const endScore = endBowls.reduce((s, b) => s + (b.scoreValue || b.score || 0), 0);
+    const endCount = endBowls.length;
+    endData.push({
+      end: e,
+      totalScore: endScore,
+      avgScore: endCount > 0 ? endScore / endCount : 0,
+      bowlCount: endCount,
+      notes: game.endNotes?.[e] || ''
+    });
+  }
+
+  const endList = document.getElementById('ddEndList');
+  if (endList) {
+    endList.innerHTML = endData.map(e => `
+      <div class="dd-end-item ${e.bowlCount === 0 ? 'empty' : ''}">
+        <div class="dd-end-num">End ${e.end}</div>
+        <div class="dd-end-stats">
+          <span>${e.bowlCount} bowls</span>
+          <span>Total: ${e.totalScore}</span>
+          <span>Avg: ${e.avgScore.toFixed(1)}</span>
+        </div>
+        ${e.notes ? `<div class="dd-end-notes">${e.notes}</div>` : ''}
+      </div>
+    `).join('');
+  }
+
+  // Re-render chart
+  const chartCanvas = document.getElementById('endProgressionChart');
+  if (chartCanvas) {
+    const existing = Chart.getChart(chartCanvas);
+    if (existing) existing.destroy();
+  }
+  setTimeout(() => renderEndProgressionChart(endData), 50);
 }
 
 // ===== UTILITY FUNCTIONS =====

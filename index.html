@@ -62,6 +62,14 @@
             <h2 style="margin-bottom: 20px;">New Game Setup</h2>
 
             <div class="form-group">
+                <label>Game Type</label>
+                <div class="radio-group" id="gameTypeGroup">
+                    <div class="radio-btn active" onclick="selectGameType('game')">Game</div>
+                    <div class="radio-btn" onclick="selectGameType('trial')">Trial</div>
+                </div>
+            </div>
+
+            <div class="form-group">
                 <label for="tournamentName">Tournament Name (Optional)</label>
                 <input type="text" id="tournamentName" placeholder="Enter tournament name">
             </div>
@@ -88,17 +96,20 @@
             </div>
 
             <div id="yourTeamPlayers">
-                <h3>Your Team</h3>
+                <h3 id="yourTeamLabel">Your Team</h3>
                 <div class="form-group">
                     <label for="yourPlayer0">Player Name</label>
                     <input type="text" id="yourPlayer0" placeholder="Enter name">
                 </div>
             </div>
 
-            <h3>Opponent Team</h3>
-            <div class="form-group">
-                <label for="opponentTeamName">Team Name</label>
-                <input type="text" id="opponentTeamName" placeholder="Enter opponent team name">
+            <div id="opponentTeamSection">
+                <h3 id="opponentTeamLabel">Opponent Team</h3>
+                <div class="form-group">
+                    <label for="opponentTeamName">Team Name</label>
+                    <input type="text" id="opponentTeamName" placeholder="Enter opponent team name">
+                </div>
+                <div id="awayTeamPlayers" style="display: none;"></div>
             </div>
 
             <button class="btn-block" onclick="startGame()">Start Game</button>
@@ -217,6 +228,12 @@
                 <textarea id="quickBowlNotes" rows="2" placeholder="Add notes for next bowl..." style="font-size: 14px;"></textarea>
             </div>
 
+            <div class="jack-controls">
+                <button class="btn-secondary btn-small" id="moveJackBtn" onclick="toggleMoveJackMode()">Move Jack</button>
+                <button class="btn-secondary btn-small" id="jackInDitchBtn" onclick="toggleJackInDitch()">Jack in Ditch</button>
+                <button class="btn-secondary btn-small" onclick="captureScreenshot()">Screenshot</button>
+            </div>
+
             <div class="action-buttons">
                 <button class="btn-secondary" onclick="undoLastBowl()">Undo Last</button>
                 <button onclick="showEndNotes()">End Notes &amp; Next End</button>
@@ -300,6 +317,26 @@
                 <div class="action-buttons">
                     <button onclick="confirmEndGame()">End Game</button>
                     <button class="btn-secondary" onclick="closeEndGameModal()">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Back-End Scoring Modal (Third & Skip) -->
+        <div id="backEndScoringModal" class="modal">
+            <div class="modal-content">
+                <h2 id="backEndScoringTitle">Score Bowl</h2>
+                <p id="backEndScoringPlayer" style="text-align: center; color: var(--text-secondary); margin-bottom: 15px;"></p>
+                <div id="backEndShotType" style="margin-bottom: 15px;">
+                    <h4 style="color: var(--primary); margin-bottom: 8px;">Shot Type</h4>
+                    <div class="scoring-options" id="shotTypeOptions"></div>
+                </div>
+                <div id="backEndQuality" style="margin-bottom: 15px;">
+                    <h4 style="color: var(--primary); margin-bottom: 8px;">Quality</h4>
+                    <div class="scoring-options" id="qualityOptions"></div>
+                </div>
+                <div class="action-buttons">
+                    <button onclick="confirmBackEndScore()">Save Score</button>
+                    <button class="btn-secondary" onclick="skipBackEndScore()">Skip</button>
                 </div>
             </div>
         </div>
