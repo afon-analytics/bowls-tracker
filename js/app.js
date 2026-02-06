@@ -10,13 +10,21 @@ let draggingBowl = null;
 let dragOffset = { x: 0, y: 0 };
 let currentView = 'home';
 let deferredInstallPrompt = null;
+let selectedGameType = 'game'; // 'game' or 'trial'
+let moveJackMode = false;
+let jackInDitchMode = false;
+let backEndPendingBowl = null;
+let selectedShotType = '';
+let selectedQuality = '';
 
 let gameState = {
   gameId: 0,
   tournamentName: '',
   format: 'singles',
+  gameType: 'game', // 'game' or 'trial'
   yourPlayers: [],
   opponentPlayers: [],
+  awayPlayers: [], // For trial mode - individual away team players
   currentEnd: 1,
   totalEnds: 21,
   currentTeam: 'yours',
@@ -29,7 +37,10 @@ let gameState = {
   bowls: [],
   endNotes: {},
   gameNotes: '',
-  jackPosition: null
+  jackPosition: null,
+  jackOriginalPosition: null,
+  jackMoved: false,
+  jackInDitch: false
 };
 
 // Scoring lookup table
@@ -56,6 +67,16 @@ const scoringTable = {
   'Blocker-Below average': 1, 'Blocker-Completely Ineffective': 0,
   'No Bowl Thrown-': 0
 };
+
+// Back-end shot types and quality options
+const SHOT_TYPES = ['Draw shot', 'Weight shot', 'Draw Positional', 'Draw to Respot', 'Draw to Ditch', 'Blocker'];
+const QUALITY_OPTIONS = [
+  { label: 'Very well played', value: 'Very well played', score: 4 },
+  { label: 'Good Effort', value: 'Good Effort', score: 3 },
+  { label: 'Average attempt', value: 'Average attempt', score: 2 },
+  { label: 'Below average', value: 'Below average', score: 1 },
+  { label: 'Completely Ineffective', value: 'Completely Ineffective', score: 0 }
+];
 
 // ===== APP INITIALIZATION =====
 
@@ -291,6 +312,65 @@ async function handleLoadDemoData() {
   }
 }
 
+// ===== GAME TYPE SELECTION =====
+
+function selectGameType(type) {
+  selectedGameType = type;
+  const buttons = document.querySelectorAll('#gameTypeGroup .radio-btn');
+  buttons.forEach((btn, idx) => {
+    btn.classList.toggle('active', (idx === 0 && type === 'game') || (idx === 1 && type === 'trial'));
+  });
+
+  // Update labels
+  const yourLabel = document.getElementById('yourTeamLabel');
+  const oppLabel = document.getElementById('opponentTeamLabel');
+  if (type === 'trial') {
+    if (yourLabel) yourLabel.textContent = 'Home Team';
+    if (oppLabel) oppLabel.textContent = 'Away Team';
+  } else {
+    if (yourLabel) yourLabel.textContent = 'Your Team';
+    if (oppLabel) oppLabel.textContent = 'Opponent Team';
+  }
+
+  // Show/hide away team player inputs
+  updateAwayTeamInputs();
+}
+
+function updateAwayTeamInputs() {
+  const awayDiv = document.getElementById('awayTeamPlayers');
+  if (!awayDiv) return;
+
+  if (selectedGameType === 'trial') {
+    awayDiv.style.display = 'block';
+    const format = document.getElementById('gameFormat').value;
+    const positions = getPositionsForFormat(format);
+    awayDiv.innerHTML = '';
+    positions.forEach((position, idx) => {
+      awayDiv.innerHTML += `
+        <div class="form-group">
+          <label for="awayPlayer${idx}">${position}</label>
+          <input type="text" id="awayPlayer${idx}" placeholder="Enter ${position.toLowerCase()} name">
+        </div>
+      `;
+    });
+  } else {
+    awayDiv.style.display = 'none';
+    awayDiv.innerHTML = '';
+  }
+}
+
+function getPositionsForFormat(format) {
+  const positions = {
+    'singles': ['Player'],
+    'pairs4': ['Lead', 'Skip'],
+    'pairs3': ['Lead', 'Skip'],
+    'triples3': ['Lead', 'Second', 'Skip'],
+    'triples2': ['Lead', 'Second', 'Skip'],
+    'fours': ['Lead', 'Second', 'Third', 'Skip']
+  };
+  return positions[format] || ['Player'];
+}
+
 // ===== GAME SETUP =====
 
 function updateEndsDropdown() {
@@ -304,21 +384,14 @@ function updateEndsDropdown() {
   }
 
   updatePlayerInputs(format);
+  updateAwayTeamInputs();
 }
 
 function updatePlayerInputs(format) {
-  const positions = {
-    'singles': ['Player'],
-    'pairs4': ['Lead', 'Skip'],
-    'pairs3': ['Lead', 'Skip'],
-    'triples3': ['Lead', 'Second', 'Skip'],
-    'triples2': ['Lead', 'Second', 'Skip'],
-    'fours': ['Lead', 'Second', 'Third', 'Skip']
-  };
-
-  const playerPositions = positions[format];
+  const playerPositions = getPositionsForFormat(format);
   const yourTeamDiv = document.getElementById('yourTeamPlayers');
-  yourTeamDiv.innerHTML = '<h3>Your Team</h3>';
+  const label = selectedGameType === 'trial' ? 'Home Team' : 'Your Team';
+  yourTeamDiv.innerHTML = `<h3 id="yourTeamLabel">${label}</h3>`;
   playerPositions.forEach((position, idx) => {
     yourTeamDiv.innerHTML += `
       <div class="form-group">
@@ -327,6 +400,15 @@ function updatePlayerInputs(format) {
       </div>
     `;
   });
+}
+
+function getPlayerInitials(name) {
+  if (!name) return '?';
+  const parts = name.trim().split(/\s+/);
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
+  return parts[0].substring(0, 2).toUpperCase();
 }
 
 async function startGame() {
@@ -365,6 +447,19 @@ async function startGame() {
     yourPlayers.push(input.value.trim());
   }
 
+  // For trial mode, collect away team players
+  let awayPlayers = [];
+  if (selectedGameType === 'trial') {
+    for (let i = 0; i < config.players; i++) {
+      const input = document.getElementById(`awayPlayer${i}`);
+      if (!input || !input.value || input.value.trim() === '') {
+        alert('Please enter all player names for the away team');
+        return;
+      }
+      awayPlayers.push(input.value.trim());
+    }
+  }
+
   const gameId = generateId();
 
   gameState = {
@@ -372,9 +467,11 @@ async function startGame() {
     id: gameId,
     tournamentName: tournamentName,
     format: format,
+    gameType: selectedGameType,
     yourPlayers: yourPlayers,
     players: yourPlayers,
     opponentPlayers: [opponentTeamName],
+    awayPlayers: awayPlayers,
     bowlsPerPlayer: config.bowls,
     playersPerTeam: config.players,
     totalEnds: config.ends,
@@ -389,6 +486,9 @@ async function startGame() {
     endNotes: {},
     gameNotes: '',
     jackPosition: { x: 250, y: 250 },
+    jackOriginalPosition: null,
+    jackMoved: false,
+    jackInDitch: false,
     completed: false,
     date: new Date().toISOString()
   };
@@ -403,35 +503,44 @@ async function startGame() {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById('gameScreen').classList.add('active');
 
-  if (config.players === 1) {
+  if (config.players === 1 && selectedGameType !== 'trial') {
     document.getElementById('playerSelector').style.display = 'none';
   } else {
     document.getElementById('playerSelector').style.display = 'block';
     createPlayerButtons();
   }
 
+  // Update team labels for trial mode
+  updateTeamLabels();
+
   initCanvas();
   updateDisplay();
 }
 
-function createPlayerButtons() {
-  const positionsByFormat = {
-    'singles': ['Player'],
-    'pairs4': ['Lead', 'Skip'],
-    'pairs3': ['Lead', 'Skip'],
-    'triples3': ['Lead', 'Second', 'Skip'],
-    'triples2': ['Lead', 'Second', 'Skip'],
-    'fours': ['Lead', 'Second', 'Third', 'Skip']
-  };
+function updateTeamLabels() {
+  const teamBtns = document.querySelectorAll('#teamGroup .radio-btn');
+  if (gameState.gameType === 'trial') {
+    if (teamBtns[0]) teamBtns[0].textContent = 'Home';
+    if (teamBtns[1]) teamBtns[1].textContent = 'Away';
+  } else {
+    if (teamBtns[0]) teamBtns[0].textContent = 'Yours';
+    if (teamBtns[1]) teamBtns[1].textContent = 'Opponent';
+  }
+}
 
-  const positions = positionsByFormat[gameState.format] || ['Lead', 'Second', 'Third', 'Skip'];
+function createPlayerButtons() {
+  const positions = getPositionsForFormat(gameState.format);
   const playerButtonsDiv = document.getElementById('playerButtons');
   playerButtonsDiv.innerHTML = '';
 
-  for (let i = 0; i < gameState.playersPerTeam; i++) {
+  // Determine which players to show based on team
+  const isTrialAway = gameState.gameType === 'trial' && gameState.currentTeam === 'opponent';
+  const players = isTrialAway ? gameState.awayPlayers : gameState.yourPlayers;
+
+  for (let i = 0; i < (isTrialAway ? gameState.awayPlayers.length : gameState.playersPerTeam); i++) {
     const btn = document.createElement('div');
     btn.className = 'radio-btn' + (i === gameState.currentPlayerIndex ? ' active' : '');
-    btn.textContent = positions[i];
+    btn.textContent = positions[i] || `Player ${i + 1}`;
     btn.onclick = () => selectPlayer(i);
     playerButtonsDiv.appendChild(btn);
   }
@@ -466,6 +575,11 @@ function initCanvas() {
   canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
   canvas.addEventListener('touchend', handleTouchEnd);
 
+  // Reset jack modes
+  moveJackMode = false;
+  jackInDitchMode = false;
+  updateJackButtonStates();
+
   drawGreen();
 }
 
@@ -473,9 +587,11 @@ function drawGreen() {
   if (!ctx) return;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  if (gameState.jackLength === 'long') {
+  // Draw ditch area
+  const ditchHeight = 30;
+  if (gameState.jackLength === 'long' || gameState.jackInDitch) {
     ctx.fillStyle = '#8B4513';
-    ctx.fillRect(0, canvas.height - 30, canvas.width, 30);
+    ctx.fillRect(0, canvas.height - ditchHeight, canvas.width, ditchHeight);
     ctx.fillStyle = 'white';
     ctx.font = 'bold 12px Arial';
     ctx.textAlign = 'center';
@@ -500,12 +616,28 @@ function drawGreen() {
     ctx.fillText(`${i}ft`, centerX, centerY - radius + 15);
   }
 
+  // Draw jack
   if (gameState.jackPosition) {
     drawJack(gameState.jackPosition.x, gameState.jackPosition.y);
   }
 
+  // Draw bowls for current end
   const currentEndBowls = gameState.bowls.filter(b => b.end === gameState.currentEnd);
   currentEndBowls.forEach(bowl => drawBowl(bowl));
+
+  // Draw move jack mode indicator
+  if (moveJackMode) {
+    ctx.strokeStyle = '#FFD700';
+    ctx.lineWidth = 3;
+    ctx.setLineDash([10, 5]);
+    ctx.strokeRect(5, 5, canvas.width - 10, canvas.height - 10);
+    ctx.setLineDash([]);
+
+    ctx.fillStyle = 'rgba(255, 215, 0, 0.8)';
+    ctx.font = 'bold 14px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('TAP TO PLACE JACK', canvas.width / 2, 25);
+  }
 }
 
 function drawJack(x, y) {
@@ -513,25 +645,48 @@ function drawJack(x, y) {
   ctx.arc(x, y, 10, 0, 2 * Math.PI);
   ctx.fillStyle = '#FFD700';
   ctx.fill();
-  ctx.strokeStyle = '#FFA500';
+  ctx.strokeStyle = gameState.jackInDitch ? '#8B4513' : '#FFA500';
   ctx.lineWidth = 3;
   ctx.stroke();
+
+  // Mark if jack has been moved
+  if (gameState.jackMoved) {
+    ctx.fillStyle = '#FFA500';
+    ctx.font = 'bold 8px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('M', x, y);
+  }
 }
 
 function drawBowl(bowl) {
+  const isYours = bowl.team === 'yours';
+  const isTrialMode = gameState.gameType === 'trial';
+
   ctx.beginPath();
   ctx.arc(bowl.x, bowl.y, 18, 0, 2 * Math.PI);
-  ctx.fillStyle = bowl.team === 'yours' ? '#4CAF50' : '#f44336';
+
+  if (isTrialMode) {
+    // In trial mode, both teams get distinct colors
+    ctx.fillStyle = isYours ? '#4CAF50' : '#2196F3'; // Green for home, blue for away
+  } else {
+    ctx.fillStyle = isYours ? '#4CAF50' : '#f44336';
+  }
   ctx.fill();
-  ctx.strokeStyle = '#333';
+
+  // Hand indicator via border color
+  const isForehand = bowl.hand === 'forehand';
+  ctx.strokeStyle = isForehand ? '#1B5E20' : '#B71C1C'; // Dark green for FH, dark red for BH
   ctx.lineWidth = 3;
   ctx.stroke();
 
+  // Display player initials
+  const initials = getPlayerInitials(bowl.player);
   ctx.fillStyle = 'white';
-  ctx.font = 'bold 12px Arial';
+  ctx.font = 'bold 11px Arial';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText(bowl.hand === 'forehand' ? 'F' : 'B', bowl.x, bowl.y);
+  ctx.fillText(initials, bowl.x, bowl.y);
 }
 
 function getCanvasCoordinates(e) {
@@ -574,6 +729,8 @@ function constrainToCanvas(x, y, margin = 20) {
 }
 
 function handleMouseDown(e) {
+  if (moveJackMode) return; // In move jack mode, use click instead
+
   const coords = getCanvasCoordinates(e);
 
   if (isNearJack(coords.x, coords.y)) {
@@ -647,6 +804,21 @@ function handleCanvasClick(e) {
 
   const coords = getCanvasCoordinates(e);
 
+  // Move Jack Mode - reposition the jack
+  if (moveJackMode) {
+    const constrained = constrainToCanvas(coords.x, coords.y, 15);
+    if (!gameState.jackOriginalPosition) {
+      gameState.jackOriginalPosition = { ...gameState.jackPosition };
+    }
+    gameState.jackPosition = constrained;
+    gameState.jackMoved = true;
+    moveJackMode = false;
+    updateJackButtonStates();
+    persistCurrentGame();
+    drawGreen();
+    return;
+  }
+
   if (isNearJack(coords.x, coords.y)) return;
 
   const currentEndBowls = gameState.bowls.filter(b => b.end === gameState.currentEnd);
@@ -662,9 +834,15 @@ function handleCanvasClick(e) {
     return;
   }
 
-  const currentPlayerName = gameState.currentTeam === 'yours'
-    ? gameState.yourPlayers[gameState.currentPlayerIndex]
-    : gameState.opponentPlayers[0];
+  // Determine current player name
+  let currentPlayerName;
+  if (gameState.currentTeam === 'yours') {
+    currentPlayerName = gameState.yourPlayers[gameState.currentPlayerIndex];
+  } else if (gameState.gameType === 'trial') {
+    currentPlayerName = gameState.awayPlayers[gameState.currentPlayerIndex] || gameState.opponentPlayers[0];
+  } else {
+    currentPlayerName = gameState.opponentPlayers[0];
+  }
 
   const distanceFromJack = calculateDistance(coords.x, coords.y, gameState.jackPosition.x, gameState.jackPosition.y);
   const distanceInFeet = pixelsToFeet(distanceFromJack);
@@ -684,7 +862,7 @@ function handleCanvasClick(e) {
     jackLength: gameState.jackLength,
     end: gameState.currentEnd,
     player: currentPlayerName,
-    playerIndex: gameState.currentTeam === 'yours' ? gameState.currentPlayerIndex : 0,
+    playerIndex: gameState.currentPlayerIndex,
     notes: quickNotes,
     resultCategory, distanceCategory, distanceInFeet,
     scoreCategory: '', scoreDetail: '', scoreValue: 0
@@ -694,35 +872,140 @@ function handleCanvasClick(e) {
     pendingBowl = bowl;
     showOffRinkModal();
   } else {
-    if (gameState.currentTeam === 'yours') {
-      const positionsByFormat = {
-        'singles': ['Player'], 'pairs4': ['Lead', 'Skip'], 'pairs3': ['Lead', 'Skip'],
-        'triples3': ['Lead', 'Second', 'Skip'], 'triples2': ['Lead', 'Second', 'Skip'],
-        'fours': ['Lead', 'Second', 'Third', 'Skip']
-      };
-      const positions = positionsByFormat[gameState.format] || ['Lead', 'Second', 'Third', 'Skip'];
+    const shouldTrack = gameState.currentTeam === 'yours' || gameState.gameType === 'trial';
+
+    if (shouldTrack) {
+      const positions = getPositionsForFormat(gameState.format);
       const currentPosition = positions[gameState.currentPlayerIndex];
       const isFrontEnd = currentPosition === 'Lead' || currentPosition === 'Second';
+      const isBackEnd = currentPosition === 'Third' || currentPosition === 'Skip';
 
       if (isFrontEnd) {
         const autoScore = calculateFrontEndScore(bowl.resultCategory, bowl.distanceCategory);
         bowl.scoreCategory = bowl.resultCategory;
         bowl.scoreDetail = bowl.distanceCategory;
         bowl.scoreValue = autoScore;
+      } else if (isBackEnd) {
+        // Show scoring popup for Third & Skip
+        backEndPendingBowl = bowl;
+        showBackEndScoringModal(currentPlayerName, currentPosition);
+        return; // Don't add bowl yet - wait for scoring
       }
     }
 
-    gameState.bowls.push(bowl);
-    document.getElementById('quickBowlNotes').value = '';
-
-    if (gameState.currentTeam === 'yours') {
-      advanceToNextPlayer();
-    }
-
-    persistCurrentGame();
-    drawGreen();
-    updateDisplay();
+    addBowlToGame(bowl);
   }
+}
+
+function addBowlToGame(bowl) {
+  gameState.bowls.push(bowl);
+  document.getElementById('quickBowlNotes').value = '';
+
+  const shouldAdvance = gameState.currentTeam === 'yours' || gameState.gameType === 'trial';
+  if (shouldAdvance) {
+    advanceToNextPlayer();
+  }
+
+  persistCurrentGame();
+  drawGreen();
+  updateDisplay();
+}
+
+// ===== JACK MOVEMENT =====
+
+function toggleMoveJackMode() {
+  moveJackMode = !moveJackMode;
+  updateJackButtonStates();
+  drawGreen();
+}
+
+function toggleJackInDitch() {
+  gameState.jackInDitch = !gameState.jackInDitch;
+
+  if (gameState.jackInDitch) {
+    // Move jack to ditch area
+    if (!gameState.jackOriginalPosition && !gameState.jackMoved) {
+      gameState.jackOriginalPosition = { ...gameState.jackPosition };
+    }
+    gameState.jackPosition = { x: gameState.jackPosition.x, y: canvas.height - 15 };
+    gameState.jackMoved = true;
+  }
+
+  updateJackButtonStates();
+  persistCurrentGame();
+  drawGreen();
+}
+
+function updateJackButtonStates() {
+  const moveBtn = document.getElementById('moveJackBtn');
+  const ditchBtn = document.getElementById('jackInDitchBtn');
+
+  if (moveBtn) {
+    moveBtn.classList.toggle('btn-active', moveJackMode);
+    moveBtn.textContent = moveJackMode ? 'Tap Green...' : 'Move Jack';
+  }
+  if (ditchBtn) {
+    ditchBtn.classList.toggle('btn-active', gameState.jackInDitch);
+    ditchBtn.textContent = gameState.jackInDitch ? 'Jack on Green' : 'Jack in Ditch';
+  }
+}
+
+// ===== BACK-END SCORING (Third & Skip) =====
+
+function showBackEndScoringModal(playerName, position) {
+  selectedShotType = '';
+  selectedQuality = '';
+
+  document.getElementById('backEndScoringTitle').textContent = `Score ${position}'s Bowl`;
+  document.getElementById('backEndScoringPlayer').textContent = playerName;
+
+  // Render shot type options
+  const shotTypeDiv = document.getElementById('shotTypeOptions');
+  shotTypeDiv.innerHTML = SHOT_TYPES.map(type =>
+    `<div class="scoring-btn" onclick="selectShotType(this, '${type}')">${type}</div>`
+  ).join('');
+
+  // Render quality options
+  const qualityDiv = document.getElementById('qualityOptions');
+  qualityDiv.innerHTML = QUALITY_OPTIONS.map(q =>
+    `<div class="scoring-btn" onclick="selectQualityOption(this, '${q.value}', ${q.score})">${q.label} (${q.score})</div>`
+  ).join('');
+
+  document.getElementById('backEndScoringModal').classList.add('active');
+}
+
+function selectShotType(el, type) {
+  selectedShotType = type;
+  document.querySelectorAll('#shotTypeOptions .scoring-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function selectQualityOption(el, value, score) {
+  selectedQuality = value;
+  document.querySelectorAll('#qualityOptions .scoring-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function confirmBackEndScore() {
+  if (!backEndPendingBowl) return;
+
+  if (selectedShotType && selectedQuality) {
+    const key = selectedShotType + '-' + selectedQuality;
+    backEndPendingBowl.scoreCategory = selectedShotType;
+    backEndPendingBowl.scoreDetail = selectedQuality;
+    backEndPendingBowl.scoreValue = scoringTable[key] || 0;
+  }
+
+  document.getElementById('backEndScoringModal').classList.remove('active');
+  addBowlToGame(backEndPendingBowl);
+  backEndPendingBowl = null;
+}
+
+function skipBackEndScore() {
+  if (!backEndPendingBowl) return;
+  document.getElementById('backEndScoringModal').classList.remove('active');
+  addBowlToGame(backEndPendingBowl);
+  backEndPendingBowl = null;
 }
 
 // ===== GAME LOGIC HELPERS =====
@@ -749,20 +1032,25 @@ function calculateFrontEndScore(resultCategory, distanceCategory) {
 }
 
 function advanceToNextPlayer() {
+  const team = gameState.currentTeam;
+  const maxPlayers = gameState.gameType === 'trial' && team === 'opponent'
+    ? gameState.awayPlayers.length
+    : gameState.playersPerTeam;
+
   const currentPlayerBowls = gameState.bowls.filter(b =>
     b.end === gameState.currentEnd &&
-    b.team === 'yours' &&
+    b.team === team &&
     b.playerIndex === gameState.currentPlayerIndex
   ).length;
 
   if (currentPlayerBowls >= gameState.bowlsPerPlayer) {
-    let nextPlayerIndex = (gameState.currentPlayerIndex + 1) % gameState.playersPerTeam;
+    let nextPlayerIndex = (gameState.currentPlayerIndex + 1) % maxPlayers;
     let attempts = 0;
 
-    while (attempts < gameState.playersPerTeam) {
+    while (attempts < maxPlayers) {
       const nextPlayerBowls = gameState.bowls.filter(b =>
         b.end === gameState.currentEnd &&
-        b.team === 'yours' &&
+        b.team === team &&
         b.playerIndex === nextPlayerIndex
       ).length;
 
@@ -775,7 +1063,7 @@ function advanceToNextPlayer() {
         break;
       }
 
-      nextPlayerIndex = (nextPlayerIndex + 1) % gameState.playersPerTeam;
+      nextPlayerIndex = (nextPlayerIndex + 1) % maxPlayers;
       attempts++;
     }
   }
@@ -801,7 +1089,7 @@ async function persistCurrentGame() {
       ...b,
       id: b.id || generateId(),
       gameId: gameState.gameId || gameState.id,
-      playerId: b.team === 'yours' ? b.player : 'opponent',
+      playerId: b.team === 'yours' ? b.player : (gameState.gameType === 'trial' ? b.player : 'opponent'),
       playerName: b.player,
       endNumber: b.end,
       distance: b.distanceInFeet,
@@ -844,12 +1132,13 @@ function showGamesManager() {
       const tournament = game.tournamentName
         ? `<div style="font-size: 12px; color: #999; margin-top: 4px;">${game.tournamentName}</div>`
         : '';
+      const typeLabel = game.gameType === 'trial' ? ' <span class="badge-trial">Trial</span>' : '';
 
       const card = document.createElement('div');
       card.className = 'game-card';
       card.onclick = () => loadGame(idx);
       card.innerHTML = `
-        <div class="game-card-title">${yourTeam} vs ${oppTeam}</div>
+        <div class="game-card-title">${yourTeam} vs ${oppTeam}${typeLabel}</div>
         ${tournament}
         <div class="game-card-info">End ${game.currentEnd} of ${game.totalEnds || game.endCount} &bull; ${(game.bowls || []).length} bowls recorded</div>
       `;
@@ -864,13 +1153,14 @@ function loadGame(gameIndex) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById('gameScreen').classList.add('active');
 
-  if (gameState.playersPerTeam === 1) {
+  if (gameState.playersPerTeam === 1 && gameState.gameType !== 'trial') {
     document.getElementById('playerSelector').style.display = 'none';
   } else {
     document.getElementById('playerSelector').style.display = 'block';
     createPlayerButtons();
   }
 
+  updateTeamLabels();
   initCanvas();
   updateDisplay();
 }
@@ -882,6 +1172,8 @@ function showSetupScreen() {
   document.getElementById('gameFormat').value = 'singles';
   document.getElementById('opponentTeamName').value = '';
   document.getElementById('tournamentName').value = '';
+  selectedGameType = 'game';
+  selectGameType('game');
   updateEndsDropdown();
 }
 
@@ -926,7 +1218,7 @@ function confirmOffRink() {
   pendingBowl = null;
   document.getElementById('quickBowlNotes').value = '';
 
-  if (gameState.currentTeam === 'yours') advanceToNextPlayer();
+  if (gameState.currentTeam === 'yours' || gameState.gameType === 'trial') advanceToNextPlayer();
 
   persistCurrentGame();
   closeBowlScoringModal();
@@ -937,13 +1229,10 @@ function confirmOffRink() {
 function confirmOnRink() {
   if (!pendingBowl) return;
 
-  if (gameState.currentTeam === 'yours') {
-    const positionsByFormat = {
-      'singles': ['Player'], 'pairs4': ['Lead', 'Skip'], 'pairs3': ['Lead', 'Skip'],
-      'triples3': ['Lead', 'Second', 'Skip'], 'triples2': ['Lead', 'Second', 'Skip'],
-      'fours': ['Lead', 'Second', 'Third', 'Skip']
-    };
-    const positions = positionsByFormat[gameState.format] || ['Lead', 'Second', 'Third', 'Skip'];
+  const shouldTrack = gameState.currentTeam === 'yours' || gameState.gameType === 'trial';
+
+  if (shouldTrack) {
+    const positions = getPositionsForFormat(gameState.format);
     const currentPosition = positions[gameState.currentPlayerIndex];
     const isFrontEnd = currentPosition === 'Lead' || currentPosition === 'Second';
 
@@ -959,7 +1248,7 @@ function confirmOnRink() {
   pendingBowl = null;
   document.getElementById('quickBowlNotes').value = '';
 
-  if (gameState.currentTeam === 'yours') advanceToNextPlayer();
+  if (shouldTrack) advanceToNextPlayer();
 
   persistCurrentGame();
   closeBowlScoringModal();
@@ -1025,10 +1314,17 @@ function closeEndGameModal() {
 
 function selectTeam(team) {
   gameState.currentTeam = team;
+  gameState.currentPlayerIndex = 0;
   const buttons = document.querySelectorAll('#teamGroup .radio-btn');
   buttons.forEach((btn, idx) => {
     btn.classList.toggle('active', (idx === 0 && team === 'yours') || (idx === 1 && team === 'opponent'));
   });
+
+  // Rebuild player buttons for trial mode (different players per team)
+  if (gameState.gameType === 'trial') {
+    createPlayerButtons();
+  }
+
   updateDisplay();
 }
 
@@ -1064,13 +1360,23 @@ function updateDisplay() {
   if (endEl) endEl.textContent = `${gameState.currentEnd}/${gameState.totalEnds}`;
 
   const teamEl = document.getElementById('currentTeam');
-  if (teamEl) teamEl.textContent = gameState.currentTeam === 'yours' ? 'Your Team' : 'Opponent';
+  if (teamEl) {
+    if (gameState.gameType === 'trial') {
+      teamEl.textContent = gameState.currentTeam === 'yours' ? 'Home' : 'Away';
+    } else {
+      teamEl.textContent = gameState.currentTeam === 'yours' ? 'Your Team' : 'Opponent';
+    }
+  }
 
   const playerEl = document.getElementById('currentPlayer');
   if (playerEl) {
-    playerEl.textContent = gameState.currentTeam === 'yours'
-      ? gameState.yourPlayers[gameState.currentPlayerIndex]
-      : gameState.opponentPlayers[0];
+    if (gameState.currentTeam === 'yours') {
+      playerEl.textContent = gameState.yourPlayers[gameState.currentPlayerIndex];
+    } else if (gameState.gameType === 'trial') {
+      playerEl.textContent = gameState.awayPlayers[gameState.currentPlayerIndex] || gameState.opponentPlayers[0];
+    } else {
+      playerEl.textContent = gameState.opponentPlayers[0];
+    }
   }
 
   const bowlEl = document.getElementById('currentBowl');
@@ -1100,8 +1406,13 @@ function nextEnd() {
   gameState.currentEnd++;
   gameState.currentPlayerIndex = 0;
   gameState.jackPosition = { x: 250, y: 250 };
+  gameState.jackOriginalPosition = null;
+  gameState.jackMoved = false;
+  gameState.jackInDitch = false;
+  moveJackMode = false;
   persistCurrentGame();
   createPlayerButtons();
+  updateJackButtonStates();
   drawGreen();
   updateDisplay();
 }

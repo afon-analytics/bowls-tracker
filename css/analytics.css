@@ -46,6 +46,7 @@
   padding: 10px;
   background: var(--surface-alt);
   border-radius: var(--radius-md);
+  flex-wrap: wrap;
 }
 
 .player-selector-bar label {

@@ -766,6 +766,86 @@ canvas {
   min-width: auto;
 }
 
+/* ===== JACK CONTROLS ===== */
+
+.jack-controls {
+  display: flex;
+  gap: 8px;
+  margin: 10px 0;
+  flex-wrap: wrap;
+}
+
+.jack-controls button {
+  flex: 1;
+  min-width: 100px;
+}
+
+.btn-active {
+  background: var(--warning) !important;
+  color: #333 !important;
+}
+
+/* ===== TRIAL BADGE ===== */
+
+.badge-trial {
+  display: inline-block;
+  background: #2196F3;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  vertical-align: middle;
+}
+
+/* ===== ACTIVE FILTERS ===== */
+
+.active-filters {
+  padding: 8px 12px;
+  background: #e3f2fd;
+  color: #1565C0;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  margin-bottom: 15px;
+}
+
+/* ===== DRILL-DOWN FILTER BAR ===== */
+
+.dd-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 15px;
+  padding: 10px;
+  background: var(--surface-alt);
+  border-radius: var(--radius-md);
+}
+
+.dd-filter-bar label {
+  margin: 0;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.dd-filter-bar select {
+  flex: 1;
+  padding: 8px;
+  font-size: 14px;
+}
+
+/* ===== TOOLTIP IN TABLE HEADERS ===== */
+
+.tooltip-header {
+  vertical-align: middle;
+  background: rgba(255,255,255,0.3);
+  color: white;
+}
+
+.tooltip-header .tooltip-content {
+  color: white;
+  background: var(--text-primary);
+}
+
 /* ===== MIGRATION BANNER ===== */
 
 .migration-banner {
