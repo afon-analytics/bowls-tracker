@@ -2,7 +2,7 @@
   "name": "Bowls Performance Tracker",
   "short_name": "BowlsTracker",
   "description": "Performance tracking application for lawn bowls selectors",
-  "start_url": "/",
+  "start_url": ".",
   "display": "standalone",
   "orientation": "portrait",
   "theme_color": "#1e3c72",

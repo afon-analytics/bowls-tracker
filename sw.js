@@ -1,21 +1,24 @@
-const CACHE_VERSION = 'bowls-tracker-v1';
+const CACHE_VERSION = 'bowls-tracker-v2';
 const STATIC_CACHE = CACHE_VERSION + '-static';
 const DYNAMIC_CACHE = CACHE_VERSION + '-dynamic';
 
+// Determine base path dynamically from service worker location
+const SW_BASE = self.location.pathname.replace(/sw\.js$/, '');
+
 const PRECACHE_URLS = [
-  '/',
-  '/index.html',
-  '/offline.html',
-  '/manifest.json',
-  '/css/main.css',
-  '/css/analytics.css',
-  '/js/db.js',
-  '/js/app.js',
-  '/js/analytics.js',
-  '/js/export.js',
-  '/js/demo-data.js',
-  '/icons/icon-192.png',
-  '/icons/icon-512.png'
+  SW_BASE,
+  SW_BASE + 'index.html',
+  SW_BASE + 'offline.html',
+  SW_BASE + 'manifest.json',
+  SW_BASE + 'css/main.css',
+  SW_BASE + 'css/analytics.css',
+  SW_BASE + 'js/db.js',
+  SW_BASE + 'js/app.js',
+  SW_BASE + 'js/analytics.js',
+  SW_BASE + 'js/export.js',
+  SW_BASE + 'js/demo-data.js',
+  SW_BASE + 'icons/icon-192.png',
+  SW_BASE + 'icons/icon-512.png'
 ];
 
 // Install: pre-cache critical resources
@@ -72,7 +75,7 @@ self.addEventListener('fetch', event => {
   }
 
   // HTML: network-first
-  if (request.headers.get('accept')?.includes('text/html') || url.pathname === '/' || url.pathname.endsWith('.html')) {
+  if (request.headers.get('accept')?.includes('text/html') || url.pathname === SW_BASE || url.pathname.endsWith('.html')) {
     event.respondWith(networkFirst(request));
     return;
   }
@@ -95,7 +98,7 @@ async function networkFirst(request) {
     if (cachedResponse) return cachedResponse;
     // Return offline page for navigation requests
     if (request.headers.get('accept')?.includes('text/html')) {
-      return caches.match('/offline.html');
+      return caches.match(SW_BASE + 'offline.html');
     }
     return new Response('Offline', { status: 503 });
   }
