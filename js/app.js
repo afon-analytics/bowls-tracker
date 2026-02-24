@@ -5,6 +5,7 @@ let allGames = [];
 let currentGameId = 0;
 let pendingBowl = null;
 let canvas, ctx;
+const CANVAS_SIZE = 500; // logical coordinate space (bowls stored in 0-CANVAS_SIZE)
 let isDraggingJack = false;
 let draggingBowl = null;
 let dragOffset = { x: 0, y: 0 };
@@ -557,11 +558,20 @@ function selectPlayer(index) {
 
 // ===== CANVAS & DRAWING =====
 
+function resizeCanvas() {
+  if (!canvas) return;
+  const container = canvas.parentElement;
+  const size = container.clientWidth;
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = size * dpr;
+  canvas.height = size * dpr;
+  if (ctx) drawGreen();
+}
+
 function initCanvas() {
   canvas = document.getElementById('greenCanvas');
   ctx = canvas.getContext('2d');
-  canvas.width = 500;
-  canvas.height = 500;
+  resizeCanvas();
 
   if (!gameState.jackPosition) {
     gameState.jackPosition = { x: 250, y: 250 };
@@ -585,22 +595,27 @@ function initCanvas() {
 
 function drawGreen() {
   if (!ctx) return;
+  // Clear the actual pixel buffer before applying any transform
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Scale context so all drawing uses the logical CANVAS_SIZE coordinate space
+  ctx.save();
+  ctx.scale(canvas.width / CANVAS_SIZE, canvas.height / CANVAS_SIZE);
 
   // Draw ditch area
   const ditchHeight = 30;
   if (gameState.jackLength === 'long' || gameState.jackInDitch) {
     ctx.fillStyle = '#8B4513';
-    ctx.fillRect(0, canvas.height - ditchHeight, canvas.width, ditchHeight);
+    ctx.fillRect(0, CANVAS_SIZE - ditchHeight, CANVAS_SIZE, ditchHeight);
     ctx.fillStyle = 'white';
     ctx.font = 'bold 12px Arial';
     ctx.textAlign = 'center';
-    ctx.fillText('DITCH', canvas.width / 2, canvas.height - 12);
+    ctx.fillText('DITCH', CANVAS_SIZE / 2, CANVAS_SIZE - 12);
   }
 
-  const centerX = canvas.width / 2;
-  const centerY = canvas.height / 2;
-  const maxRadius = Math.min(canvas.width, canvas.height) / 2 - 10;
+  const centerX = CANVAS_SIZE / 2;
+  const centerY = CANVAS_SIZE / 2;
+  const maxRadius = CANVAS_SIZE / 2 - 10;
 
   for (let i = 5; i >= 1; i--) {
     const radius = (maxRadius / 5) * i;
@@ -630,14 +645,16 @@ function drawGreen() {
     ctx.strokeStyle = '#FFD700';
     ctx.lineWidth = 3;
     ctx.setLineDash([10, 5]);
-    ctx.strokeRect(5, 5, canvas.width - 10, canvas.height - 10);
+    ctx.strokeRect(5, 5, CANVAS_SIZE - 10, CANVAS_SIZE - 10);
     ctx.setLineDash([]);
 
     ctx.fillStyle = 'rgba(255, 215, 0, 0.8)';
     ctx.font = 'bold 14px Arial';
     ctx.textAlign = 'center';
-    ctx.fillText('TAP TO PLACE JACK', canvas.width / 2, 25);
+    ctx.fillText('TAP TO PLACE JACK', CANVAS_SIZE / 2, 25);
   }
+
+  ctx.restore();
 }
 
 function drawJack(x, y) {
@@ -691,8 +708,9 @@ function drawBowl(bowl) {
 
 function getCanvasCoordinates(e) {
   const rect = canvas.getBoundingClientRect();
-  const scaleX = canvas.width / rect.width;
-  const scaleY = canvas.height / rect.height;
+  // Map screen pixels to logical CANVAS_SIZE coordinate space
+  const scaleX = CANVAS_SIZE / rect.width;
+  const scaleY = CANVAS_SIZE / rect.height;
 
   let clientX, clientY;
   if (e.touches) {
@@ -723,8 +741,8 @@ function isNearBowl(x, y, bowl) {
 
 function constrainToCanvas(x, y, margin = 20) {
   return {
-    x: Math.max(margin, Math.min(canvas.width - margin, x)),
-    y: Math.max(margin, Math.min(canvas.height - margin, y))
+    x: Math.max(margin, Math.min(CANVAS_SIZE - margin, x)),
+    y: Math.max(margin, Math.min(CANVAS_SIZE - margin, y))
   };
 }
 
@@ -927,7 +945,7 @@ function toggleJackInDitch() {
     if (!gameState.jackOriginalPosition && !gameState.jackMoved) {
       gameState.jackOriginalPosition = { ...gameState.jackPosition };
     }
-    gameState.jackPosition = { x: gameState.jackPosition.x, y: canvas.height - 15 };
+    gameState.jackPosition = { x: gameState.jackPosition.x, y: CANVAS_SIZE - 15 };
     gameState.jackMoved = true;
   }
 
@@ -1441,6 +1459,11 @@ function captureScreenshot() {
     console.error('Screenshot error:', error);
   }
 }
+
+// Resize canvas when window size or orientation changes
+window.addEventListener('resize', () => {
+  if (canvas) resizeCanvas();
+});
 
 // Initialize app when DOM is ready
 document.addEventListener('DOMContentLoaded', initApp);
