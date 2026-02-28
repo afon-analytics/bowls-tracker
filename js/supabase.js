@@ -22,8 +22,8 @@ async function supabaseLogin(email, password) {
 
   // Look up the player row to get role
   const { data: player, error: pErr } = await db.from('players')
-    .select('*')
-    .eq('auth_id', data.user.id)
+    .select('role, name')
+    .eq('user_id', data.user.id)
     .single();
 
   if (pErr && pErr.code !== 'PGRST116') {
@@ -52,8 +52,8 @@ async function checkSession() {
     currentUser = session.user;
 
     const { data: player } = await db.from('players')
-      .select('*')
-      .eq('auth_id', session.user.id)
+      .select('role, name')
+      .eq('user_id', session.user.id)
       .single();
 
     playerRecord = player || null;
@@ -628,18 +628,33 @@ function showAuthenticatedUI(role) {
     }
   }
 
-  // Show tier banner
+  // Show/hide tier banner (managers see it, selectors don't need it)
   const tierBanner = document.getElementById('tierBanner');
-  if (tierBanner) tierBanner.style.display = 'flex';
+  if (tierBanner) {
+    tierBanner.style.display = (role === 'manager' || !role) ? 'flex' : 'none';
+  }
 
   updateSyncIndicator();
+
+  // Apply role-based UI visibility
+  applyRoleVisibility(role);
 
   // Route based on role
   if (role === 'manager') {
     navigateTo('manager');
   } else {
-    navigateTo('home');
+    // Selector goes straight to bowl entry
+    navigateTo('track');
   }
+}
+
+function applyRoleVisibility(role) {
+  const isSelector = role === 'selector';
+
+  // Show/hide elements with class 'role-manager-only'
+  document.querySelectorAll('.role-manager-only').forEach(el => {
+    el.style.display = isSelector ? 'none' : '';
+  });
 }
 
 // Enter key triggers login

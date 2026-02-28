@@ -212,6 +212,15 @@ function dismissInstallBanner() {
 // ===== NAVIGATION =====
 
 function navigateTo(view) {
+  // Role-based guard: selectors can only access track, games, and home
+  if (typeof userRole !== 'undefined' && userRole === 'selector') {
+    const selectorAllowed = ['track', 'games', 'home'];
+    if (!selectorAllowed.includes(view)) {
+      console.warn('[App] Selector role blocked from view:', view);
+      view = 'track';
+    }
+  }
+
   currentView = view;
 
   // Hide all screens
