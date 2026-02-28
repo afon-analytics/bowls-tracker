@@ -1,10 +1,10 @@
 {
-  "name": "Bowls Performance Tracker",
-  "short_name": "BowlsTracker",
-  "description": "Performance tracking application for lawn bowls selectors",
+  "name": "BowlsTrack",
+  "short_name": "BowlsTrack",
+  "description": "Multi-tier performance tracking for lawn bowls selectors and team managers",
   "start_url": ".",
   "display": "standalone",
-  "orientation": "portrait",
+  "orientation": "any",
   "theme_color": "#1e3c72",
   "background_color": "#ffffff",
   "icons": [

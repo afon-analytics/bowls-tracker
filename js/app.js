@@ -1,5 +1,5 @@
-// Bowls Performance Tracker - Main Application Logic
-// Adapted for IndexedDB persistence
+// BowlsTrack - Main Application Logic
+// Multi-tier PoC for lawn bowls performance tracking
 
 let allGames = [];
 let currentGameId = 0;
@@ -13,18 +13,30 @@ let deferredInstallPrompt = null;
 let selectedGameType = 'game'; // 'game' or 'trial'
 let moveJackMode = false;
 let jackInDitchMode = false;
+let deadBowlMode = false;
 let backEndPendingBowl = null;
 let selectedShotType = '';
 let selectedQuality = '';
+let selectedMatchStructure = 'traditional';
+let currentTier = 'essential'; // essential, personal, club, elite
+let trendChartInstance = null;
+let effectivenessChartInstance = null;
 
 let gameState = {
   gameId: 0,
   tournamentName: '',
   format: 'singles',
   gameType: 'game', // 'game' or 'trial'
+  matchStructure: 'traditional', // 'traditional' or 'sets'
+  numberOfSets: 2,
+  endsPerSet: 7,
+  tieBreakEnds: 1,
+  currentSet: 1,
+  setScores: [], // [{yours: shots, opponent: shots}]
+  endScores: [], // [{yours: shots, opponent: shots, end: n}]
   yourPlayers: [],
   opponentPlayers: [],
-  awayPlayers: [], // For trial mode - individual away team players
+  awayPlayers: [],
   currentEnd: 1,
   totalEnds: 21,
   currentTeam: 'yours',
@@ -184,6 +196,18 @@ function navigateTo(view) {
       document.getElementById('analyticsScreen').classList.add('active');
       renderAnalytics('player');
       setAnalyticsTab('player');
+      break;
+    case 'manager':
+      document.getElementById('managerScreen').classList.add('active');
+      initManagerView();
+      break;
+    case 'elite':
+      document.getElementById('eliteScreen').classList.add('active');
+      initEliteView();
+      break;
+    case 'tiers':
+      document.getElementById('tiersScreen').classList.add('active');
+      updateTierButtons();
       break;
   }
 
@@ -371,13 +395,56 @@ function getPositionsForFormat(format) {
   return positions[format] || ['Player'];
 }
 
+// ===== MATCH STRUCTURE =====
+
+function selectMatchStructure(structure) {
+  selectedMatchStructure = structure;
+  const buttons = document.querySelectorAll('#matchStructureGroup .radio-btn');
+  buttons.forEach((btn, idx) => {
+    btn.classList.toggle('active', (idx === 0 && structure === 'traditional') || (idx === 1 && structure === 'sets'));
+  });
+
+  const endsGroup = document.getElementById('endsGroup');
+  const setFormatGroup = document.getElementById('setFormatGroup');
+
+  if (structure === 'sets') {
+    endsGroup.style.display = 'none';
+    setFormatGroup.style.display = 'block';
+    updateSetFormatPreview();
+  } else {
+    setFormatGroup.style.display = 'none';
+    updateEndsDropdown();
+  }
+}
+
+function updateSetFormatPreview() {
+  const sets = parseInt(document.getElementById('numberOfSets').value);
+  const ends = parseInt(document.getElementById('endsPerSet').value);
+  const tb = parseInt(document.getElementById('tieBreakEnds').value);
+  const total = sets * ends + tb;
+  const preview = document.getElementById('setFormatPreview');
+  if (preview) {
+    preview.textContent = `Format: ${sets} sets \u00D7 ${ends} ends + ${tb} end tie-break (${total} ends max)`;
+  }
+}
+
+// Attach listeners for set format dropdowns
+document.addEventListener('DOMContentLoaded', () => {
+  ['numberOfSets', 'endsPerSet', 'tieBreakEnds'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('change', updateSetFormatPreview);
+  });
+});
+
 // ===== GAME SETUP =====
 
 function updateEndsDropdown() {
   const format = document.getElementById('gameFormat').value;
   const endsGroup = document.getElementById('endsGroup');
 
-  if (format !== 'singles') {
+  if (selectedMatchStructure === 'sets') {
+    endsGroup.style.display = 'none';
+  } else if (format !== 'singles') {
     endsGroup.style.display = 'block';
   } else {
     endsGroup.style.display = 'none';
@@ -462,20 +529,41 @@ async function startGame() {
 
   const gameId = generateId();
 
+  // Calculate total ends based on match structure
+  let totalEnds = config.ends;
+  let matchStructure = selectedMatchStructure;
+  let numberOfSets = 2;
+  let endsPerSet = 7;
+  let tieBreakEnds = 1;
+
+  if (matchStructure === 'sets') {
+    numberOfSets = parseInt(document.getElementById('numberOfSets').value);
+    endsPerSet = parseInt(document.getElementById('endsPerSet').value);
+    tieBreakEnds = parseInt(document.getElementById('tieBreakEnds').value);
+    totalEnds = numberOfSets * endsPerSet + tieBreakEnds;
+  }
+
   gameState = {
     gameId: gameId,
     id: gameId,
     tournamentName: tournamentName,
     format: format,
     gameType: selectedGameType,
+    matchStructure: matchStructure,
+    numberOfSets: numberOfSets,
+    endsPerSet: endsPerSet,
+    tieBreakEnds: tieBreakEnds,
+    currentSet: 1,
+    setScores: [],
+    endScores: [],
     yourPlayers: yourPlayers,
     players: yourPlayers,
     opponentPlayers: [opponentTeamName],
     awayPlayers: awayPlayers,
     bowlsPerPlayer: config.bowls,
     playersPerTeam: config.players,
-    totalEnds: config.ends,
-    endCount: config.ends,
+    totalEnds: totalEnds,
+    endCount: totalEnds,
     currentEnd: 1,
     currentPlayerIndex: 0,
     currentTeam: 'yours',
@@ -662,13 +750,21 @@ function drawJack(x, y) {
 function drawBowl(bowl) {
   const isYours = bowl.team === 'yours';
   const isTrialMode = gameState.gameType === 'trial';
+  const isDead = bowl.isDead;
+
+  ctx.save();
+
+  if (isDead) {
+    ctx.globalAlpha = 0.35;
+  }
 
   ctx.beginPath();
   ctx.arc(bowl.x, bowl.y, 18, 0, 2 * Math.PI);
 
-  if (isTrialMode) {
-    // In trial mode, both teams get distinct colors
-    ctx.fillStyle = isYours ? '#4CAF50' : '#2196F3'; // Green for home, blue for away
+  if (isDead) {
+    ctx.fillStyle = '#999';
+  } else if (isTrialMode) {
+    ctx.fillStyle = isYours ? '#4CAF50' : '#2196F3';
   } else {
     ctx.fillStyle = isYours ? '#4CAF50' : '#f44336';
   }
@@ -676,9 +772,15 @@ function drawBowl(bowl) {
 
   // Hand indicator via border color
   const isForehand = bowl.hand === 'forehand';
-  ctx.strokeStyle = isForehand ? '#1B5E20' : '#B71C1C'; // Dark green for FH, dark red for BH
+  if (isDead) {
+    ctx.strokeStyle = '#666';
+    ctx.setLineDash([4, 3]);
+  } else {
+    ctx.strokeStyle = isForehand ? '#1B5E20' : '#B71C1C';
+  }
   ctx.lineWidth = 3;
   ctx.stroke();
+  ctx.setLineDash([]);
 
   // Display player initials
   const initials = getPlayerInitials(bowl.player);
@@ -687,6 +789,20 @@ function drawBowl(bowl) {
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(initials, bowl.x, bowl.y);
+
+  // Dead bowl X marker
+  if (isDead) {
+    ctx.strokeStyle = '#C62828';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(bowl.x - 8, bowl.y - 8);
+    ctx.lineTo(bowl.x + 8, bowl.y + 8);
+    ctx.moveTo(bowl.x + 8, bowl.y - 8);
+    ctx.lineTo(bowl.x - 8, bowl.y + 8);
+    ctx.stroke();
+  }
+
+  ctx.restore();
 }
 
 function getCanvasCoordinates(e) {
@@ -820,6 +936,27 @@ function handleCanvasClick(e) {
   }
 
   if (isNearJack(coords.x, coords.y)) return;
+
+  // Dead bowl mode - mark nearest bowl as dead
+  if (deadBowlMode) {
+    const currentEndBowls = gameState.bowls.filter(b => b.end === gameState.currentEnd);
+    for (let bowl of currentEndBowls) {
+      if (isNearBowl(coords.x, coords.y, bowl)) {
+        bowl.isDead = !bowl.isDead;
+        if (bowl.isDead) {
+          bowl.scoreValue = 0;
+        }
+        deadBowlMode = false;
+        const btn = document.getElementById('deadBowlBtn');
+        if (btn) { btn.classList.remove('btn-active'); btn.textContent = 'Dead Bowl'; }
+        persistCurrentGame();
+        drawGreen();
+        updateDisplay();
+        return;
+      }
+    }
+    return;
+  }
 
   const currentEndBowls = gameState.bowls.filter(b => b.end === gameState.currentEnd);
   for (let bowl of currentEndBowls) {
@@ -1279,6 +1416,26 @@ function showEndNotes() {
 
   document.getElementById('endNotesNumber').textContent = gameState.currentEnd;
   document.getElementById('endNotes').value = gameState.endNotes[gameState.currentEnd] || '';
+
+  // Show end score summary
+  const endScore = calculateEndScore(gameState.currentEnd);
+  const summaryEl = document.getElementById('endScoreSummary');
+  if (summaryEl) {
+    const totalScore = calculateGameScore();
+    let setInfo = '';
+    if (gameState.matchStructure === 'sets') {
+      setInfo = ` | Set ${gameState.currentSet || 1}`;
+    }
+    summaryEl.innerHTML = `
+      <div style="font-size: 20px; font-weight: 700; color: var(--primary);">
+        End Score: ${endScore.yours} - ${endScore.opponent}
+      </div>
+      <div style="font-size: 13px; color: var(--text-secondary); margin-top: 4px;">
+        Total: ${totalScore.yours} - ${totalScore.opponent}${setInfo}
+      </div>
+    `;
+  }
+
   document.getElementById('endNotesModal').classList.add('active');
 }
 
@@ -1359,13 +1516,21 @@ function updateDisplay() {
   const endEl = document.getElementById('currentEnd');
   if (endEl) endEl.textContent = `${gameState.currentEnd}/${gameState.totalEnds}`;
 
-  const teamEl = document.getElementById('currentTeam');
-  if (teamEl) {
-    if (gameState.gameType === 'trial') {
-      teamEl.textContent = gameState.currentTeam === 'yours' ? 'Home' : 'Away';
-    } else {
-      teamEl.textContent = gameState.currentTeam === 'yours' ? 'Your Team' : 'Opponent';
-    }
+  // Set info for set format games
+  const setItem = document.getElementById('setInfoItem');
+  const setEl = document.getElementById('currentSet');
+  if (setItem && gameState.matchStructure === 'sets') {
+    setItem.style.display = '';
+    if (setEl) setEl.textContent = `${gameState.currentSet || 1}/${gameState.numberOfSets || 2}`;
+  } else if (setItem) {
+    setItem.style.display = 'none';
+  }
+
+  // Score display
+  const scoreEl = document.getElementById('currentScore');
+  if (scoreEl) {
+    const scores = calculateGameScore();
+    scoreEl.textContent = `${scores.yours}-${scores.opponent}`;
   }
 
   const playerEl = document.getElementById('currentPlayer');
@@ -1385,6 +1550,86 @@ function updateDisplay() {
     const maxBowlsPerEnd = gameState.bowlsPerPlayer * gameState.playersPerTeam * 2;
     bowlEl.textContent = `${bowlsThisEnd}/${maxBowlsPerEnd}`;
   }
+
+  // Update scoreboard
+  updateScoreboard();
+
+  // Show dead bowl legend if any dead bowls
+  const deadLegend = document.getElementById('deadBowlLegend');
+  if (deadLegend) {
+    const hasDeadBowls = gameState.bowls.some(b => b.isDead);
+    deadLegend.style.display = hasDeadBowls ? 'flex' : 'none';
+  }
+
+  // Update scoreboard team names
+  const st1 = document.getElementById('scoreTeam1');
+  const st2 = document.getElementById('scoreTeam2');
+  if (st1) st1.textContent = gameState.gameType === 'trial' ? 'Home' : 'Your Team';
+  if (st2) st2.textContent = gameState.gameType === 'trial' ? 'Away' : 'Opposition';
+}
+
+// ===== SCORING CALCULATIONS =====
+
+function calculateGameScore() {
+  let yours = 0;
+  let opponent = 0;
+
+  // Sum scored bowls per team
+  const yourBowls = gameState.bowls.filter(b => b.team === 'yours' && !b.isDead);
+  const oppBowls = gameState.bowls.filter(b => b.team === 'opponent' && !b.isDead);
+
+  yourBowls.forEach(b => { yours += (b.scoreValue || 0); });
+  oppBowls.forEach(b => { opponent += (b.scoreValue || 0); });
+
+  return { yours, opponent };
+}
+
+function calculateEndScore(endNum) {
+  const endBowls = gameState.bowls.filter(b => b.end === endNum && !b.isDead);
+  let yours = 0;
+  let opponent = 0;
+
+  endBowls.filter(b => b.team === 'yours').forEach(b => { yours += (b.scoreValue || 0); });
+  endBowls.filter(b => b.team === 'opponent').forEach(b => { opponent += (b.scoreValue || 0); });
+
+  return { yours, opponent };
+}
+
+function updateScoreboard() {
+  const container = document.getElementById('scoreboardEnds');
+  if (!container) return;
+
+  let html = '';
+  for (let e = 1; e <= gameState.currentEnd; e++) {
+    const score = calculateEndScore(e);
+    let cls = 'score-draw';
+    if (score.yours > score.opponent) cls = 'score-win';
+    else if (score.opponent > score.yours) cls = 'score-lose';
+
+    // Add set separator
+    if (gameState.matchStructure === 'sets' && gameState.endsPerSet) {
+      if (e > 1 && (e - 1) % gameState.endsPerSet === 0) {
+        html += `<div style="width:2px; background: var(--primary); margin: 0 2px; border-radius: 1px;"></div>`;
+      }
+    }
+
+    html += `<div class="scoreboard-end">
+      <div class="scoreboard-end-num">E${e}</div>
+      <div class="scoreboard-end-score ${cls}">${score.yours}-${score.opponent}</div>
+    </div>`;
+  }
+  container.innerHTML = html;
+}
+
+// ===== DEAD BOWL =====
+
+function toggleDeadBowlMode() {
+  deadBowlMode = !deadBowlMode;
+  const btn = document.getElementById('deadBowlBtn');
+  if (btn) {
+    btn.classList.toggle('btn-active', deadBowlMode);
+    btn.textContent = deadBowlMode ? 'Tap Bowl...' : 'Dead Bowl';
+  }
 }
 
 function undoLastBowl() {
@@ -1397,11 +1642,54 @@ function undoLastBowl() {
 }
 
 function nextEnd() {
+  // Check for set format transitions
+  if (gameState.matchStructure === 'sets') {
+    const endsInCurrentSet = ((gameState.currentEnd - 1) % gameState.endsPerSet) + 1;
+
+    if (endsInCurrentSet >= gameState.endsPerSet) {
+      // Set complete - calculate set score
+      const setStartEnd = (gameState.currentSet - 1) * gameState.endsPerSet + 1;
+      let setYours = 0, setOpp = 0;
+      for (let e = setStartEnd; e <= gameState.currentEnd; e++) {
+        const es = calculateEndScore(e);
+        setYours += es.yours;
+        setOpp += es.opponent;
+      }
+
+      if (!gameState.setScores) gameState.setScores = [];
+      gameState.setScores.push({ yours: setYours, opponent: setOpp, set: gameState.currentSet });
+
+      const setsWon = gameState.setScores.filter(s => s.yours > s.opponent).length;
+      const setsLost = gameState.setScores.filter(s => s.opponent > s.yours).length;
+
+      alert(`Set ${gameState.currentSet} complete! Score: ${setYours} - ${setOpp}\nSets: ${setsWon} - ${setsLost}`);
+
+      if (gameState.currentSet >= gameState.numberOfSets) {
+        // All sets played - check if tie-break needed
+        if (setsWon === setsLost && gameState.tieBreakEnds > 0) {
+          alert('Sets are level! Tie-break begins.');
+          gameState.currentSet++;
+        } else {
+          alert(`Match complete! Sets: ${setsWon} - ${setsLost}`);
+          showEndGameDialog();
+          return;
+        }
+      } else {
+        gameState.currentSet++;
+      }
+    }
+  }
+
   if (gameState.currentEnd >= gameState.totalEnds) {
     alert(`Game complete! You've finished all ${gameState.totalEnds} ends.`);
     showEndGameDialog();
     return;
   }
+
+  // Record end score
+  const endScore = calculateEndScore(gameState.currentEnd);
+  if (!gameState.endScores) gameState.endScores = [];
+  gameState.endScores.push({ ...endScore, end: gameState.currentEnd });
 
   gameState.currentEnd++;
   gameState.currentPlayerIndex = 0;
@@ -1410,6 +1698,11 @@ function nextEnd() {
   gameState.jackMoved = false;
   gameState.jackInDitch = false;
   moveJackMode = false;
+  deadBowlMode = false;
+
+  const deadBtn = document.getElementById('deadBowlBtn');
+  if (deadBtn) { deadBtn.classList.remove('btn-active'); deadBtn.textContent = 'Dead Bowl'; }
+
   persistCurrentGame();
   createPlayerButtons();
   updateJackButtonStates();
@@ -1441,6 +1734,578 @@ function captureScreenshot() {
     console.error('Screenshot error:', error);
   }
 }
+
+// ===== TIER SYSTEM =====
+
+function selectTier(tier) {
+  currentTier = tier;
+  const tierNames = { essential: 'Essential', personal: 'Personal', club: 'Club', elite: 'Elite' };
+  const tierLabels = { essential: 'Free Tier', personal: '\u00A310/month', club: '\u00A340/month', elite: '\u00A350/month' };
+
+  const badge = document.getElementById('tierBadge');
+  const label = document.getElementById('tierLabel');
+  if (badge) {
+    badge.textContent = tierNames[tier].toUpperCase();
+    badge.className = `tier-badge`;
+    badge.style.background = `var(--tier-${tier === 'essential' ? '1' : tier === 'personal' ? '2' : tier === 'club' ? '3' : '4'})`;
+  }
+  if (label) label.textContent = tierLabels[tier];
+
+  updateTierButtons();
+  navigateTo('home');
+}
+
+function updateTierButtons() {
+  const tiers = ['essential', 'personal', 'club', 'elite'];
+  tiers.forEach((t, i) => {
+    const btn = document.getElementById(`tierBtn${i + 1}`);
+    if (btn) {
+      if (t === currentTier) {
+        btn.textContent = 'Current Plan';
+        btn.className = 'btn-block btn-small btn-success';
+      } else {
+        btn.textContent = 'Select';
+        btn.className = 'btn-block btn-small btn-secondary';
+      }
+    }
+  });
+}
+
+// ===== TEAM MANAGER VIEW (Tier 3+) =====
+
+function initManagerView() {
+  refreshManagerView();
+  populateManagerPlayerSelects();
+}
+
+function setManagerTab(tab) {
+  document.querySelectorAll('[data-mtab]').forEach(t => t.classList.remove('active'));
+  const activeTab = document.querySelector(`[data-mtab="${tab}"]`);
+  if (activeTab) activeTab.classList.add('active');
+
+  document.getElementById('managerLive').style.display = tab === 'live' ? 'block' : 'none';
+  document.getElementById('managerPlayers').style.display = tab === 'players' ? 'block' : 'none';
+  document.getElementById('managerComparison').style.display = tab === 'comparison' ? 'block' : 'none';
+}
+
+function refreshManagerView() {
+  const rinksDiv = document.getElementById('managerRinks');
+  if (!rinksDiv) return;
+
+  const openGames = allGames.filter(g => !g.completed);
+
+  if (openGames.length === 0) {
+    rinksDiv.innerHTML = '<div class="no-games">No active games. Start tracking from the Selector App to see live data here.</div>';
+    return;
+  }
+
+  rinksDiv.innerHTML = openGames.map(game => {
+    const yourTeam = (game.yourPlayers || []).join(', ');
+    const oppTeam = (game.opponentPlayers || [])[0] || 'Opposition';
+    const bowls = game.bowls || [];
+    const end = game.currentEnd || 1;
+    const totalEnds = game.totalEnds || 21;
+
+    // Calculate total scores
+    let yourScore = 0, oppScore = 0;
+    bowls.filter(b => b.team === 'yours' && !b.isDead).forEach(b => yourScore += (b.scoreValue || 0));
+    bowls.filter(b => b.team === 'opponent' && !b.isDead).forEach(b => oppScore += (b.scoreValue || 0));
+
+    // Mini scoreboard
+    let miniEnds = '';
+    for (let e = 1; e <= Math.min(end, 15); e++) {
+      const eBowls = bowls.filter(b => b.end === e && !b.isDead);
+      let ey = 0, eo = 0;
+      eBowls.filter(b => b.team === 'yours').forEach(b => ey += (b.scoreValue || 0));
+      eBowls.filter(b => b.team === 'opponent').forEach(b => eo += (b.scoreValue || 0));
+      const cls = ey > eo ? 'score-win' : eo > ey ? 'score-lose' : 'score-draw';
+      miniEnds += `<div class="rink-mini-end ${cls}">${ey}-${eo}</div>`;
+    }
+
+    const setInfo = game.matchStructure === 'sets' ? ` | Set ${game.currentSet || 1}` : '';
+    const typeLabel = game.gameType === 'trial' ? ' <span class="badge-trial">Trial</span>' : '';
+
+    return `<div class="rink-card">
+      <div class="rink-card-header">
+        <div class="rink-card-title">${yourTeam} vs ${oppTeam}${typeLabel}</div>
+        <div class="rink-card-status">End ${end}/${totalEnds}${setInfo}</div>
+      </div>
+      <div class="rink-card-score">${yourScore} - ${oppScore}</div>
+      <div class="rink-card-players">${game.format || 'singles'} | ${bowls.length} bowls recorded</div>
+      <div class="rink-mini-scoreboard">${miniEnds}</div>
+    </div>`;
+  }).join('');
+}
+
+async function populateManagerPlayerSelects() {
+  const allBowls = await getAllBowls();
+  const playerNames = [...new Set(allBowls.filter(b => b.team === 'yours').map(b => b.playerId || b.playerName || b.player))].filter(Boolean);
+
+  const selects = ['managerPlayerSelect', 'comparePlayer1', 'comparePlayer2'];
+  selects.forEach(id => {
+    const sel = document.getElementById(id);
+    if (!sel) return;
+    const firstOpt = sel.options[0];
+    sel.innerHTML = '';
+    sel.appendChild(firstOpt);
+    playerNames.forEach(name => {
+      const opt = document.createElement('option');
+      opt.value = name;
+      opt.textContent = name;
+      sel.appendChild(opt);
+    });
+  });
+}
+
+async function loadManagerPlayerStats() {
+  const playerName = document.getElementById('managerPlayerSelect').value;
+  const container = document.getElementById('managerPlayerStats');
+  if (!playerName || !container) { container.innerHTML = ''; return; }
+
+  const stats = await getPlayerStats(playerName);
+  if (!stats) { container.innerHTML = '<p style="color: var(--text-secondary);">No data found for this player.</p>'; return; }
+
+  const rating = getPerformanceRating(stats.avgScore);
+
+  container.innerHTML = `
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-top: 12px;">
+      <div class="game-card" style="text-align: center; cursor: default;">
+        <div style="font-size: 12px; color: var(--text-secondary);">Avg Score</div>
+        <div style="font-size: 22px; font-weight: 700; color: var(--primary);">${stats.avgScore.toFixed(2)}</div>
+        <div class="star-rating">${rating.stars}</div>
+      </div>
+      <div class="game-card" style="text-align: center; cursor: default;">
+        <div style="font-size: 12px; color: var(--text-secondary);">Games</div>
+        <div style="font-size: 22px; font-weight: 700; color: var(--primary);">${stats.gamesPlayed}</div>
+      </div>
+      <div class="game-card" style="text-align: center; cursor: default;">
+        <div style="font-size: 12px; color: var(--text-secondary);">Bowls</div>
+        <div style="font-size: 22px; font-weight: 700; color: var(--primary);">${stats.totalBowls}</div>
+      </div>
+      <div class="game-card" style="text-align: center; cursor: default;">
+        <div style="font-size: 12px; color: var(--text-secondary);">Consistency</div>
+        <div style="font-size: 22px; font-weight: 700; color: var(--primary);">${stats.consistency ? stats.consistency.toFixed(2) : 'N/A'}</div>
+      </div>
+    </div>
+    <div style="margin-top: 12px;">
+      <h4 style="color: var(--primary); margin-bottom: 6px;">Rating: ${rating.label}</h4>
+      <p style="font-size: 13px; color: var(--text-secondary);">${rating.description}</p>
+    </div>
+    <div style="margin-top: 12px;">
+      <h4 style="color: var(--primary); margin-bottom: 6px;">Positions Played</h4>
+      <p style="font-size: 13px; color: var(--text-secondary);">${(stats.positions || []).join(', ') || 'N/A'}</p>
+    </div>
+  `;
+}
+
+async function updateManagerComparison() {
+  const p1 = document.getElementById('comparePlayer1').value;
+  const p2 = document.getElementById('comparePlayer2').value;
+  const container = document.getElementById('managerComparisonResult');
+  if (!p1 || !p2 || !container) { if (container) container.innerHTML = ''; return; }
+
+  const stats1 = await getPlayerStats(p1);
+  const stats2 = await getPlayerStats(p2);
+  if (!stats1 || !stats2) { container.innerHTML = '<p>Insufficient data for comparison.</p>'; return; }
+
+  const r1 = getPerformanceRating(stats1.avgScore);
+  const r2 = getPerformanceRating(stats2.avgScore);
+
+  container.innerHTML = `
+    <table class="comparison-table">
+      <thead><tr><th>Metric</th><th>${p1}</th><th>${p2}</th></tr></thead>
+      <tbody>
+        <tr><td>Avg Score</td><td><strong>${stats1.avgScore.toFixed(2)}</strong></td><td><strong>${stats2.avgScore.toFixed(2)}</strong></td></tr>
+        <tr><td>Rating</td><td>${r1.stars} ${r1.label}</td><td>${r2.stars} ${r2.label}</td></tr>
+        <tr><td>Games Played</td><td>${stats1.gamesPlayed}</td><td>${stats2.gamesPlayed}</td></tr>
+        <tr><td>Total Bowls</td><td>${stats1.totalBowls}</td><td>${stats2.totalBowls}</td></tr>
+        <tr><td>Consistency</td><td>${stats1.consistency ? stats1.consistency.toFixed(2) : 'N/A'}</td><td>${stats2.consistency ? stats2.consistency.toFixed(2) : 'N/A'}</td></tr>
+        <tr><td>Clutch Avg</td><td>${stats1.clutchAvg ? stats1.clutchAvg.toFixed(2) : 'N/A'}</td><td>${stats2.clutchAvg ? stats2.clutchAvg.toFixed(2) : 'N/A'}</td></tr>
+      </tbody>
+    </table>
+  `;
+}
+
+// ===== PERFORMANCE RATING =====
+
+function getPerformanceRating(avgScore) {
+  if (avgScore >= 3.4) return { stars: '\u2605\u2605\u2605\u2605\u2605', label: 'Elite', description: 'Consistently outstanding \u2014 strong selection case', pct: avgScore / 4 * 100 };
+  if (avgScore >= 2.8) return { stars: '\u2605\u2605\u2605\u2605', label: 'Excellent', description: 'Above average \u2014 performing well in position', pct: avgScore / 4 * 100 };
+  if (avgScore >= 2.2) return { stars: '\u2605\u2605\u2605', label: 'Good', description: 'Solid performance \u2014 competitive for selection', pct: avgScore / 4 * 100 };
+  if (avgScore >= 1.6) return { stars: '\u2605\u2605', label: 'Average', description: 'Some inconsistency \u2014 monitor over more games', pct: avgScore / 4 * 100 };
+  return { stars: '\u2605', label: 'Below Average', description: 'Struggling \u2014 needs development or position review', pct: avgScore / 4 * 100 };
+}
+
+// ===== ELITE ANALYTICS (Tier 4) =====
+
+function initEliteView() {
+  populateEliteSelects();
+  renderHeatmap();
+}
+
+function setEliteTab(tab) {
+  document.querySelectorAll('[data-etab]').forEach(t => t.classList.remove('active'));
+  const activeTab = document.querySelector(`[data-etab="${tab}"]`);
+  if (activeTab) activeTab.classList.add('active');
+
+  document.getElementById('eliteHeatmap').style.display = tab === 'heatmap' ? 'block' : 'none';
+  document.getElementById('eliteRankings').style.display = tab === 'rankings' ? 'block' : 'none';
+  document.getElementById('eliteTrends').style.display = tab === 'trends' ? 'block' : 'none';
+  document.getElementById('eliteRecommend').style.display = tab === 'recommend' ? 'block' : 'none';
+
+  if (tab === 'rankings') renderRankings();
+  if (tab === 'trends') renderTrends();
+  if (tab === 'recommend') renderRecommendations();
+}
+
+async function populateEliteSelects() {
+  const allBowls = await getAllBowls();
+  const playerNames = [...new Set(allBowls.filter(b => b.team === 'yours').map(b => b.playerId || b.playerName || b.player))].filter(Boolean);
+
+  ['heatmapPlayer', 'trendPlayer'].forEach(id => {
+    const sel = document.getElementById(id);
+    if (!sel) return;
+    // Keep first option
+    while (sel.options.length > 1) sel.remove(1);
+    playerNames.forEach(name => {
+      const opt = document.createElement('option');
+      opt.value = name;
+      opt.textContent = name;
+      sel.appendChild(opt);
+    });
+  });
+}
+
+async function renderHeatmap() {
+  const heatCanvas = document.getElementById('heatmapCanvas');
+  if (!heatCanvas) return;
+
+  const hCtx = heatCanvas.getContext('2d');
+  heatCanvas.width = 500;
+  heatCanvas.height = 500;
+
+  const playerFilter = document.getElementById('heatmapPlayer').value;
+  const positionFilter = document.getElementById('heatmapPosition').value;
+
+  const allBowls = await getAllBowls();
+  let bowls = allBowls.filter(b => b.team === 'yours');
+
+  if (playerFilter !== 'all') {
+    bowls = bowls.filter(b => (b.playerId || b.playerName || b.player) === playerFilter);
+  }
+  if (positionFilter !== 'all') {
+    bowls = bowls.filter(b => b.position === positionFilter);
+  }
+
+  // Draw green background
+  hCtx.fillStyle = '#2d5016';
+  hCtx.fillRect(0, 0, 500, 500);
+
+  // Draw concentric circles
+  for (let i = 5; i >= 1; i--) {
+    const radius = (240 / 5) * i;
+    hCtx.beginPath();
+    hCtx.arc(250, 250, radius, 0, 2 * Math.PI);
+    hCtx.strokeStyle = '#1a3810';
+    hCtx.lineWidth = 1;
+    hCtx.stroke();
+    hCtx.fillStyle = '#4a7035';
+    hCtx.font = '11px Arial';
+    hCtx.textAlign = 'center';
+    hCtx.fillText(`${i}ft`, 250, 250 - radius + 14);
+  }
+
+  // Draw jack
+  hCtx.beginPath();
+  hCtx.arc(250, 250, 8, 0, 2 * Math.PI);
+  hCtx.fillStyle = '#FFD700';
+  hCtx.fill();
+  hCtx.strokeStyle = '#FFA500';
+  hCtx.lineWidth = 2;
+  hCtx.stroke();
+
+  if (bowls.length === 0) {
+    hCtx.fillStyle = 'rgba(255,255,255,0.7)';
+    hCtx.font = '16px Arial';
+    hCtx.textAlign = 'center';
+    hCtx.fillText('No bowl data available', 250, 450);
+    return;
+  }
+
+  // Create heatmap grid
+  const gridSize = 20;
+  const grid = {};
+  let maxCount = 0;
+
+  bowls.forEach(b => {
+    const x = b.x || Math.random() * 400 + 50;
+    const y = b.y || Math.random() * 400 + 50;
+    const gx = Math.floor(x / gridSize);
+    const gy = Math.floor(y / gridSize);
+    const key = `${gx},${gy}`;
+    grid[key] = (grid[key] || 0) + 1;
+    maxCount = Math.max(maxCount, grid[key]);
+  });
+
+  // Draw heatmap cells
+  Object.entries(grid).forEach(([key, count]) => {
+    const [gx, gy] = key.split(',').map(Number);
+    const intensity = count / maxCount;
+
+    let r, g, b, a;
+    if (intensity < 0.25) { r = 0; g = 0; b = 255; a = 0.15 + intensity; }
+    else if (intensity < 0.5) { r = 0; g = 255; b = 128; a = 0.25 + intensity * 0.5; }
+    else if (intensity < 0.75) { r = 255; g = 255; b = 0; a = 0.4 + intensity * 0.3; }
+    else { r = 255; g = 0; b = 0; a = 0.5 + intensity * 0.4; }
+
+    hCtx.fillStyle = `rgba(${r},${g},${b},${a})`;
+    hCtx.beginPath();
+    hCtx.arc(gx * gridSize + gridSize / 2, gy * gridSize + gridSize / 2, gridSize * 0.8, 0, 2 * Math.PI);
+    hCtx.fill();
+  });
+
+  // Draw bowl count label
+  hCtx.fillStyle = 'rgba(255,255,255,0.8)';
+  hCtx.font = '12px Arial';
+  hCtx.textAlign = 'left';
+  hCtx.fillText(`${bowls.length} bowls`, 10, 490);
+}
+
+async function renderRankings() {
+  const container = document.getElementById('rankingsTable');
+  if (!container) return;
+
+  const positionFilter = document.getElementById('rankingPosition').value;
+  const allBowls = await getAllBowls();
+
+  const yourBowls = allBowls.filter(b => b.team === 'yours');
+  const playerNames = [...new Set(yourBowls.map(b => b.playerId || b.playerName || b.player))].filter(Boolean);
+
+  const rankings = [];
+  for (const name of playerNames) {
+    const stats = await getPlayerStats(name);
+    if (!stats || stats.totalBowls < 4) continue;
+
+    if (positionFilter !== 'all' && stats.positions && !stats.positions.includes(positionFilter)) continue;
+
+    const rating = getPerformanceRating(stats.avgScore);
+    const effectivePct = stats.totalBowls > 0
+      ? ((stats.scoreDistribution[4] || 0) / stats.totalBowls * 100).toFixed(0)
+      : 0;
+    const formTrend = stats.formTrend || 'steady';
+
+    rankings.push({
+      name,
+      avgScore: stats.avgScore,
+      totalBowls: stats.totalBowls,
+      gamesPlayed: stats.gamesPlayed,
+      consistency: stats.consistency || 0,
+      effectivePct,
+      formTrend,
+      rating,
+      positions: stats.positions || []
+    });
+  }
+
+  rankings.sort((a, b) => b.avgScore - a.avgScore);
+
+  if (rankings.length === 0) {
+    container.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">No player data available. Record some games first.</p>';
+    return;
+  }
+
+  container.innerHTML = `
+    <table class="rankings-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Player</th>
+          <th>Avg</th>
+          <th>Eff%</th>
+          <th>Form</th>
+          <th>Rating</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rankings.map((r, i) => `
+          <tr>
+            <td><strong>${i + 1}</strong></td>
+            <td>${r.name}<br><span style="font-size: 10px; color: var(--text-muted);">${r.positions.join(', ')}</span></td>
+            <td><strong>${r.avgScore.toFixed(2)}</strong></td>
+            <td>${r.effectivePct}%</td>
+            <td><span class="form-indicator form-${r.formTrend}"></span>${r.formTrend}</td>
+            <td><span class="star-rating">${r.rating.stars}</span></td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+async function renderTrends() {
+  const playerName = document.getElementById('trendPlayer').value;
+  if (!playerName) return;
+
+  const allBowls = await getAllBowls();
+  const playerBowls = allBowls.filter(b => (b.playerId || b.playerName || b.player) === playerName && b.team === 'yours');
+
+  if (playerBowls.length === 0) return;
+
+  // Group by game
+  const gameIds = [...new Set(playerBowls.map(b => b.gameId))];
+  const gameAvgs = gameIds.map(gid => {
+    const gameBowls = playerBowls.filter(b => b.gameId === gid);
+    const avg = gameBowls.reduce((s, b) => s + (b.scoreValue || b.score || 0), 0) / gameBowls.length;
+    return { gameId: gid, avg, bowls: gameBowls.length };
+  });
+
+  // Trend chart
+  const trendCanvas = document.getElementById('trendChart');
+  if (trendCanvas) {
+    if (trendChartInstance) trendChartInstance.destroy();
+    trendChartInstance = new Chart(trendCanvas, {
+      type: 'line',
+      data: {
+        labels: gameAvgs.map((_, i) => `Game ${i + 1}`),
+        datasets: [{
+          label: 'Average Score',
+          data: gameAvgs.map(g => g.avg),
+          borderColor: '#2a5298',
+          backgroundColor: 'rgba(42,82,152,0.1)',
+          fill: true,
+          tension: 0.3,
+          pointRadius: 4,
+          pointBackgroundColor: '#2a5298'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false }, title: { display: true, text: `${playerName} - Scoring Trend` } },
+        scales: { y: { min: 0, max: 4, title: { display: true, text: 'Avg Score (0-4)' } } }
+      }
+    });
+  }
+
+  // Effectiveness chart
+  const effCanvas = document.getElementById('effectivenessChart');
+  if (effCanvas) {
+    const effective = playerBowls.filter(b => (b.scoreValue || b.score || 0) === 4).length;
+    const ineffective = playerBowls.filter(b => (b.scoreValue || b.score || 0) === 0).length;
+    const other = playerBowls.length - effective - ineffective;
+
+    if (effectivenessChartInstance) effectivenessChartInstance.destroy();
+    effectivenessChartInstance = new Chart(effCanvas, {
+      type: 'doughnut',
+      data: {
+        labels: ['Effective (4)', 'Partial (1-3)', 'Ineffective (0)'],
+        datasets: [{
+          data: [effective, other, ineffective],
+          backgroundColor: ['#4CAF50', '#FF9800', '#f44336']
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { title: { display: true, text: 'Bowl Effectiveness' } }
+      }
+    });
+  }
+}
+
+async function renderRecommendations() {
+  const container = document.getElementById('recommendationResult');
+  if (!container) return;
+
+  const format = document.getElementById('recommendFormat').value;
+  const positions = getPositionsForFormat(format);
+  const allBowls = await getAllBowls();
+
+  const yourBowls = allBowls.filter(b => b.team === 'yours');
+  const playerNames = [...new Set(yourBowls.map(b => b.playerId || b.playerName || b.player))].filter(Boolean);
+
+  // Calculate form index for each player
+  const playerScores = [];
+  for (const name of playerNames) {
+    const stats = await getPlayerStats(name);
+    if (!stats || stats.totalBowls < 4) continue;
+
+    const effectivePct = stats.totalBowls > 0 ? (stats.scoreDistribution[4] || 0) / stats.totalBowls : 0;
+    const consistencyBonus = stats.consistency < 1 ? 0.2 : 0;
+    const formIndex = stats.avgScore * 0.5 + effectivePct * 4 * 0.3 + consistencyBonus + (stats.avgScore > 2.5 ? 0.2 : 0);
+
+    playerScores.push({
+      name,
+      formIndex,
+      avgScore: stats.avgScore,
+      effectivePct: (effectivePct * 100).toFixed(0),
+      positions: stats.positions || [],
+      rating: getPerformanceRating(stats.avgScore)
+    });
+  }
+
+  playerScores.sort((a, b) => b.formIndex - a.formIndex);
+
+  let html = '';
+  const assigned = new Set();
+
+  positions.forEach(pos => {
+    // Find best available player for this position, preferring those who've played it
+    const candidates = playerScores.filter(p => !assigned.has(p.name));
+    const posPlayers = candidates.sort((a, b) => {
+      const aPref = a.positions.includes(pos) ? 1 : 0;
+      const bPref = b.positions.includes(pos) ? 1 : 0;
+      return (bPref - aPref) || (b.formIndex - a.formIndex);
+    });
+
+    html += `<div class="recommend-position">
+      <h4>${pos}</h4>`;
+
+    posPlayers.slice(0, 3).forEach((p, i) => {
+      if (i === 0) assigned.add(p.name);
+      html += `<div class="recommend-player">
+        <span class="recommend-rank">${i + 1}</span>
+        <span class="recommend-name">${p.name}</span>
+        <span class="star-rating" style="font-size: 11px;">${p.rating.stars}</span>
+        <span class="recommend-score">${p.avgScore.toFixed(2)} (${p.effectivePct}% eff)</span>
+      </div>`;
+    });
+
+    if (posPlayers.length === 0) {
+      html += `<div class="recommend-player"><span style="color: var(--text-muted);">No candidates available</span></div>`;
+    }
+
+    html += `</div>`;
+  });
+
+  container.innerHTML = html || '<p style="color: var(--text-secondary); text-align: center;">Not enough player data for recommendations. Record more games first.</p>';
+}
+
+// ===== GAMES MANAGER (updated to show set format info) =====
+
+function showGamesManagerUpdated() {
+  // This extends the original showGamesManager with set format badges
+}
+
+// Override showGamesManager to add set format info
+const _originalShowGamesManager = showGamesManager;
+showGamesManager = function() {
+  _originalShowGamesManager();
+
+  // Add set format badges and additional info
+  const gamesList = document.getElementById('gamesList');
+  if (!gamesList) return;
+
+  allGames.forEach((game, idx) => {
+    const cards = gamesList.querySelectorAll('.game-card');
+    if (cards[idx] && game.matchStructure === 'sets') {
+      const info = cards[idx].querySelector('.game-card-info');
+      if (info) {
+        info.innerHTML += ` <span class="badge-sets">Sets ${game.numberOfSets}\u00D7${game.endsPerSet}</span>`;
+      }
+    }
+  });
+};
 
 // Initialize app when DOM is ready
 document.addEventListener('DOMContentLoaded', initApp);
