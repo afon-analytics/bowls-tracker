@@ -94,35 +94,40 @@ const QUALITY_OPTIONS = [
 
 async function initApp() {
   try {
-    // Open database
+    // Open IndexedDB
     await openDB();
     console.log('[App] Database ready');
+
+    // Initialize Supabase sync layer (overrides db.js functions)
+    if (typeof initSupabaseSync === 'function') {
+      initSupabaseSync();
+    }
 
     // Migrate localStorage if needed
     await migrateFromLocalStorage();
 
-    // Load open games from IndexedDB
-    const openGames = await getOpenGames();
-    allGames = openGames.map(g => ({
-      ...g,
-      gameId: g.id,
-      yourPlayers: g.players || g.yourPlayers || [],
-      bowls: [] // Bowls are stored separately in IndexedDB
-    }));
-
-    // Load bowls for each game
-    for (let i = 0; i < allGames.length; i++) {
-      const bowls = await getBowlsByGame(allGames[i].id);
-      allGames[i].bowls = bowls;
+    // Check for existing Supabase session
+    let sessionResult = null;
+    if (typeof checkSession === 'function') {
+      try {
+        sessionResult = await checkSession();
+      } catch (err) {
+        console.warn('[App] Session check failed:', err.message);
+      }
     }
 
-    currentGameId = allGames.length;
+    if (sessionResult) {
+      // Authenticated — pull cloud data, then load
+      console.log('[App] Resuming session as', sessionResult.role);
+      try { await pullDataFromSupabase(); } catch {}
+      try { await processQueue(); } catch {}
+    }
+
+    // Load open games from IndexedDB
+    await reloadGamesFromDB();
 
     // Check first time user
     const hasVisited = await getSetting('hasVisited');
-    if (!hasVisited) {
-      showOnboarding();
-    }
 
     // Register service worker
     registerServiceWorker();
@@ -130,10 +135,46 @@ async function initApp() {
     // Setup PWA install prompt
     setupInstallPrompt();
 
+    // Show appropriate screen
+    if (sessionResult) {
+      // Already authenticated — show the right view
+      showAuthenticatedUI(sessionResult.role);
+      if (!hasVisited) {
+        showOnboarding();
+        await saveSetting('hasVisited', true);
+      }
+    } else {
+      // Show login screen (hide other UI)
+      document.getElementById('tierBanner').style.display = 'none';
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById('loginScreen').classList.add('active');
+      if (!hasVisited) {
+        // First visit — they might want to try offline first
+        await saveSetting('hasVisited', true);
+      }
+    }
+
     console.log('[App] Initialization complete');
   } catch (err) {
     console.error('[App] Init error:', err);
   }
+}
+
+async function reloadGamesFromDB() {
+  const openGames = await getOpenGames();
+  allGames = openGames.map(g => ({
+    ...g,
+    gameId: g.id,
+    yourPlayers: g.players || g.yourPlayers || [],
+    bowls: []
+  }));
+
+  for (let i = 0; i < allGames.length; i++) {
+    const bowls = await getBowlsByGame(allGames[i].id);
+    allGames[i].bowls = bowls;
+  }
+
+  currentGameId = allGames.length;
 }
 
 function registerServiceWorker() {
@@ -1856,6 +1897,42 @@ function updateTierButtons() {
 function initManagerView() {
   refreshManagerView();
   populateManagerPlayerSelects();
+
+  // Subscribe to real-time delivery updates for all active games
+  if (typeof subscribeToAllGames === 'function' && isAuthenticated()) {
+    // Unsubscribe first to avoid duplicates
+    if (typeof unsubscribeAll === 'function') unsubscribeAll();
+
+    // Subscribe to game-level changes
+    subscribeToAllGames((payload) => {
+      console.log('[Manager] Game update received');
+      // Reload games and refresh the view
+      reloadGamesFromDB().then(() => refreshManagerView());
+    });
+
+    // Subscribe to deliveries for each open game
+    const openGames = allGames.filter(g => !g.completed);
+    openGames.forEach(game => {
+      const gid = game.gameId || game.id;
+      subscribeToGameDeliveries(gid, (payload) => {
+        console.log('[Manager] Delivery update for game', gid);
+        if (payload.new) {
+          const bowl = mapDeliveryToBowl(payload.new);
+          // Update local game data
+          const gameIdx = allGames.findIndex(g => (g.gameId || g.id) === gid);
+          if (gameIdx !== -1) {
+            const existing = allGames[gameIdx].bowls.findIndex(b => b.id === bowl.id);
+            if (existing !== -1) {
+              allGames[gameIdx].bowls[existing] = bowl;
+            } else {
+              allGames[gameIdx].bowls.push(bowl);
+            }
+          }
+        }
+        refreshManagerView();
+      });
+    });
+  }
 }
 
 function setManagerTab(tab) {

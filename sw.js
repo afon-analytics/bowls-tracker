@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'bowls-tracker-v4';
+const CACHE_VERSION = 'bowls-tracker-v5';
 const STATIC_CACHE = CACHE_VERSION + '-static';
 const DYNAMIC_CACHE = CACHE_VERSION + '-dynamic';
 
@@ -12,6 +12,7 @@ const PRECACHE_URLS = [
   SW_BASE + 'manifest.json',
   SW_BASE + 'css/main.css',
   SW_BASE + 'css/analytics.css',
+  SW_BASE + 'js/supabase.js',
   SW_BASE + 'js/db.js',
   SW_BASE + 'js/app.js',
   SW_BASE + 'js/analytics.js',
@@ -66,11 +67,13 @@ self.addEventListener('fetch', event => {
 
   // Skip cross-origin requests
   if (url.origin !== location.origin) {
-    // Allow CDN requests (Chart.js) with cache-first
+    // Allow CDN requests (Chart.js, Supabase SDK) with cache-first
     if (url.hostname === 'cdn.jsdelivr.net') {
       event.respondWith(cacheFirst(request));
       return;
     }
+    // Skip Supabase API/realtime calls entirely
+    if (url.hostname.includes('supabase.co')) return;
     return;
   }
 

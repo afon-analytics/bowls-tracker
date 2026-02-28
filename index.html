@@ -23,11 +23,44 @@
             <button class="btn-dismiss" onclick="dismissInstallBanner()">&times;</button>
         </div>
 
+        <!-- User Bar (shown when authenticated) -->
+        <div id="userBar" class="user-bar" style="display: none;">
+            <span class="user-bar-name">User</span>
+            <span class="user-bar-role role-selector">selector</span>
+            <span class="sync-indicator" id="syncIndicator">
+                <span class="sync-dot"></span>
+                <span class="sync-label">Synced</span>
+            </span>
+            <button class="btn-small btn-secondary" style="padding: 3px 10px; min-height: 26px; font-size: 11px;" onclick="handleLogout()">Sign Out</button>
+        </div>
+
         <!-- Tier Banner -->
         <div id="tierBanner" class="tier-banner">
             <span class="tier-badge" id="tierBadge">ESSENTIAL</span>
             <span class="tier-label" id="tierLabel">Free Tier</span>
             <button class="btn-small btn-tier-upgrade" onclick="navigateTo('tiers')">Upgrade</button>
+        </div>
+
+        <!-- Login Screen -->
+        <div id="loginScreen" class="screen">
+            <div class="login-container">
+                <div style="font-size: 48px; text-align: center; margin-bottom: 10px;">&#127923;</div>
+                <h2 style="margin-bottom: 5px;">BowlsTrack</h2>
+                <p style="text-align: center; color: var(--text-secondary); font-size: 13px; margin-bottom: 20px;">Sign in to sync your data</p>
+                <div id="loginError" class="login-error" style="display: none;"></div>
+                <div class="form-group">
+                    <label for="loginEmail">Email</label>
+                    <input type="email" id="loginEmail" placeholder="your@email.com" autocomplete="email">
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">Password</label>
+                    <input type="password" id="loginPassword" placeholder="Password" autocomplete="current-password">
+                </div>
+                <button class="btn-block" id="loginBtn" onclick="handleLogin()">Sign In</button>
+                <div id="loginSpinner" class="login-spinner" style="display: none;">Signing in...</div>
+                <button class="btn-secondary btn-block" style="margin-top: 10px;" onclick="continueOffline()">Continue Offline</button>
+                <p style="text-align: center; color: var(--text-muted); font-size: 11px; margin-top: 15px;">Offline mode uses local storage only</p>
+            </div>
         </div>
 
         <!-- Home Screen -->
@@ -682,7 +715,9 @@
     <button class="fab" id="fabNewGame" onclick="navigateTo('track')" title="New Game">+</button>
 
     <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    <script src="js/supabase.js"></script>
     <script src="js/db.js"></script>
     <script src="js/demo-data.js"></script>
     <script src="js/analytics.js"></script>
