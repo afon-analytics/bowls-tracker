@@ -188,6 +188,7 @@ function navigateTo(view) {
       break;
     case 'track':
       document.getElementById('setupScreen').classList.add('active');
+      initSetupScreen();
       break;
     case 'games':
       showGamesManager();
@@ -216,6 +217,11 @@ function navigateTo(view) {
   if (fab) {
     fab.style.display = (view === 'home' || view === 'games') ? 'flex' : 'none';
   }
+
+  // Scroll to top so the new screen is visible
+  window.scrollTo(0, 0);
+  const container = document.getElementById('mainContainer');
+  if (container) container.scrollTop = 0;
 }
 
 function setAnalyticsTab(tab) {
@@ -393,6 +399,29 @@ function getPositionsForFormat(format) {
     'fours': ['Lead', 'Second', 'Third', 'Skip']
   };
   return positions[format] || ['Player'];
+}
+
+// ===== SETUP SCREEN INIT =====
+
+function initSetupScreen() {
+  // Sync match structure UI with current state
+  const endsGroup = document.getElementById('endsGroup');
+  const setFormatGroup = document.getElementById('setFormatGroup');
+
+  if (selectedMatchStructure === 'sets') {
+    if (endsGroup) endsGroup.style.display = 'none';
+    if (setFormatGroup) setFormatGroup.style.display = 'block';
+    updateSetFormatPreview();
+  } else {
+    if (setFormatGroup) setFormatGroup.style.display = 'none';
+    updateEndsDropdown();
+  }
+
+  // Ensure match structure buttons reflect current state
+  const buttons = document.querySelectorAll('#matchStructureGroup .radio-btn');
+  buttons.forEach((btn, idx) => {
+    btn.classList.toggle('active', (idx === 0 && selectedMatchStructure === 'traditional') || (idx === 1 && selectedMatchStructure === 'sets'));
+  });
 }
 
 // ===== MATCH STRUCTURE =====
@@ -726,6 +755,20 @@ function drawGreen() {
     ctx.textAlign = 'center';
     ctx.fillText('TAP TO PLACE JACK', canvas.width / 2, 25);
   }
+
+  // Draw dead bowl mode indicator
+  if (deadBowlMode) {
+    ctx.strokeStyle = '#f44336';
+    ctx.lineWidth = 3;
+    ctx.setLineDash([10, 5]);
+    ctx.strokeRect(5, 5, canvas.width - 10, canvas.height - 10);
+    ctx.setLineDash([]);
+
+    ctx.fillStyle = 'rgba(244, 67, 54, 0.85)';
+    ctx.font = 'bold 14px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('TAP A BOWL TO MARK DEAD', canvas.width / 2, 25);
+  }
 }
 
 function drawJack(x, y) {
@@ -848,6 +891,32 @@ function handleMouseDown(e) {
   if (moveJackMode) return; // In move jack mode, use click instead
 
   const coords = getCanvasCoordinates(e);
+
+  // Dead bowl mode: handle directly on mousedown/touchstart so it works on touch devices
+  // (touch preventDefault in drag logic would otherwise suppress the click event)
+  if (deadBowlMode) {
+    const currentEndBowls = gameState.bowls.filter(b => b.end === gameState.currentEnd);
+    for (let bowl of currentEndBowls) {
+      if (isNearBowl(coords.x, coords.y, bowl)) {
+        bowl.isDead = !bowl.isDead;
+        if (bowl.isDead) {
+          bowl.scoreValue = 0;
+        }
+        deadBowlMode = false;
+        const btn = document.getElementById('deadBowlBtn');
+        if (btn) { btn.classList.remove('btn-active'); btn.textContent = 'Dead Bowl'; }
+        document.getElementById('deadBowlLegend').style.display = 'flex';
+        persistCurrentGame();
+        drawGreen();
+        updateDisplay();
+        e.preventDefault();
+        return;
+      }
+    }
+    // Tapped canvas but not near a bowl - keep dead bowl mode active
+    e.preventDefault();
+    return;
+  }
 
   if (isNearJack(coords.x, coords.y)) {
     isDraggingJack = true;
@@ -1624,12 +1693,22 @@ function updateScoreboard() {
 // ===== DEAD BOWL =====
 
 function toggleDeadBowlMode() {
+  // Check there are bowls to mark as dead
+  const currentEndBowls = gameState.bowls.filter(b => b.end === gameState.currentEnd);
+  if (currentEndBowls.length === 0 && !deadBowlMode) {
+    alert('No bowls on this end to mark as dead. Place some bowls first.');
+    return;
+  }
+
   deadBowlMode = !deadBowlMode;
   const btn = document.getElementById('deadBowlBtn');
   if (btn) {
     btn.classList.toggle('btn-active', deadBowlMode);
-    btn.textContent = deadBowlMode ? 'Tap Bowl...' : 'Dead Bowl';
+    btn.textContent = deadBowlMode ? 'Tap a Bowl...' : 'Dead Bowl';
   }
+
+  // Redraw canvas with dead bowl mode indicator
+  drawGreen();
 }
 
 function undoLastBowl() {
@@ -1737,7 +1816,8 @@ function captureScreenshot() {
 
 // ===== TIER SYSTEM =====
 
-function selectTier(tier) {
+function selectTier(tier, e) {
+  if (e) e.stopPropagation(); // Prevent double-firing from button + parent div
   currentTier = tier;
   const tierNames = { essential: 'Essential', personal: 'Personal', club: 'Club', elite: 'Elite' };
   const tierLabels = { essential: 'Free Tier', personal: '\u00A310/month', club: '\u00A340/month', elite: '\u00A350/month' };

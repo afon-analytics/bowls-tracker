@@ -81,7 +81,7 @@
             </div>
             <h2 style="margin-bottom: 20px;">Choose Your Plan</h2>
             <div class="tier-grid">
-                <div class="tier-option" onclick="selectTier('essential')">
+                <div class="tier-option" onclick="selectTier('essential', event)">
                     <div class="tier-option-header tier-1-bg">
                         <h3>Essential</h3>
                         <div class="tier-price">Free</div>
@@ -94,9 +94,9 @@
                         <li>Offline PWA</li>
                         <li>Session-only data</li>
                     </ul>
-                    <button class="btn-block btn-small" id="tierBtn1">Current Plan</button>
+                    <button class="btn-block btn-small" id="tierBtn1" type="button" onclick="selectTier('essential', event)">Current Plan</button>
                 </div>
-                <div class="tier-option" onclick="selectTier('personal')">
+                <div class="tier-option" onclick="selectTier('personal', event)">
                     <div class="tier-option-header tier-2-bg">
                         <h3>Personal</h3>
                         <div class="tier-price">&pound;10/mo</div>
@@ -108,9 +108,9 @@
                         <li>Cloud storage</li>
                         <li>Personal login</li>
                     </ul>
-                    <button class="btn-block btn-small btn-secondary" id="tierBtn2">Select</button>
+                    <button class="btn-block btn-small btn-secondary" id="tierBtn2" type="button" onclick="selectTier('personal', event)">Select</button>
                 </div>
-                <div class="tier-option" onclick="selectTier('club')">
+                <div class="tier-option" onclick="selectTier('club', event)">
                     <div class="tier-option-header tier-3-bg">
                         <h3>Club</h3>
                         <div class="tier-price">&pound;40/mo</div>
@@ -122,9 +122,9 @@
                         <li>Player comparison</li>
                         <li>Club branding &amp; Excel export</li>
                     </ul>
-                    <button class="btn-block btn-small btn-secondary" id="tierBtn3">Select</button>
+                    <button class="btn-block btn-small btn-secondary" id="tierBtn3" type="button" onclick="selectTier('club', event)">Select</button>
                 </div>
-                <div class="tier-option" onclick="selectTier('elite')">
+                <div class="tier-option" onclick="selectTier('elite', event)">
                     <div class="tier-option-header tier-4-bg">
                         <h3>Elite</h3>
                         <div class="tier-price">&pound;50/mo</div>
@@ -137,7 +137,7 @@
                         <li>Player ranking &amp; form index</li>
                         <li>API access &amp; unlimited seats</li>
                     </ul>
-                    <button class="btn-block btn-small btn-secondary" id="tierBtn4">Select</button>
+                    <button class="btn-block btn-small btn-secondary" id="tierBtn4" type="button" onclick="selectTier('elite', event)">Select</button>
                 </div>
             </div>
         </div>
