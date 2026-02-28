@@ -80,18 +80,18 @@
                     <div class="game-card-title">Open Games</div>
                     <div class="game-card-info">Continue in-progress games</div>
                 </div>
-                <div class="game-card" onclick="navigateTo('analytics')" style="text-align: center;">
+                <div class="game-card role-manager-only" id="homeCardAnalytics" onclick="navigateTo('analytics')" style="text-align: center;">
                     <div style="font-size: 28px; margin-bottom: 6px;">&#128202;</div>
                     <div class="game-card-title">Analytics</div>
                     <div class="game-card-info">Player stats &amp; comparison</div>
                 </div>
-                <div class="game-card tier-card tier-3" onclick="navigateTo('manager')" style="text-align: center;">
+                <div class="game-card tier-card tier-3 role-manager-only" id="homeCardManager" onclick="navigateTo('manager')" style="text-align: center;">
                     <div style="font-size: 28px; margin-bottom: 6px;">&#128101;</div>
                     <div class="game-card-title">Team Manager</div>
                     <div class="game-card-info">Live dashboard &amp; team view</div>
                     <span class="tier-lock-badge">CLUB+</span>
                 </div>
-                <div class="game-card tier-card tier-4" onclick="navigateTo('elite')" style="text-align: center;">
+                <div class="game-card tier-card tier-4 role-manager-only" id="homeCardElite" onclick="navigateTo('elite')" style="text-align: center;">
                     <div style="font-size: 28px; margin-bottom: 6px;">&#9733;</div>
                     <div class="game-card-title">Elite Analytics</div>
                     <div class="game-card-info">Heatmaps, rankings &amp; recommendations</div>
@@ -701,11 +701,11 @@
             <span class="nav-icon">&#128203;</span>
             <span>Games</span>
         </div>
-        <div class="nav-item" data-view="analytics" onclick="navigateTo('analytics')">
+        <div class="nav-item role-manager-only" data-view="analytics" onclick="navigateTo('analytics')">
             <span class="nav-icon">&#128202;</span>
             <span>Analytics</span>
         </div>
-        <div class="nav-item" data-view="manager" onclick="navigateTo('manager')">
+        <div class="nav-item role-manager-only" data-view="manager" onclick="navigateTo('manager')">
             <span class="nav-icon">&#128101;</span>
             <span>Manager</span>
         </div>
