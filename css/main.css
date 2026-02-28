@@ -1249,6 +1249,83 @@ canvas {
   color: var(--primary);
 }
 
+/* ===== LOGIN ===== */
+
+.login-container {
+  max-width: 360px;
+  margin: 30px auto;
+  padding: 10px;
+}
+
+.login-error {
+  background: #FFEBEE;
+  color: #C62828;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.login-spinner {
+  text-align: center;
+  color: var(--primary-light);
+  padding: 10px;
+  font-size: 14px;
+}
+
+.user-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: var(--surface-alt);
+  border-radius: var(--radius-md);
+  margin-bottom: 8px;
+  font-size: 12px;
+}
+
+.user-bar-name {
+  flex: 1;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.user-bar-role {
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.role-manager { background: var(--tier-3); color: white; }
+.role-selector { background: var(--tier-2); color: white; }
+
+.sync-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.sync-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--success);
+}
+
+.sync-dot.offline { background: var(--warning); }
+.sync-dot.syncing { background: var(--tier-2); animation: pulse 1s infinite; }
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
 /* ===== LOADING / SKELETON ===== */
 
 .skeleton {
