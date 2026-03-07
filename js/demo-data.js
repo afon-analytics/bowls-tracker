@@ -19,7 +19,7 @@ async function generateDemoData() {
   // Fetch all deliveries from Supabase
   const { data: supabaseDeliveries, error: dErr } = await db.from('deliveries')
     .select('*')
-    .order('timestamp', { ascending: true });
+    .order('created_at', { ascending: true });
 
   if (dErr) throw new Error('Failed to fetch deliveries: ' + dErr.message);
 
