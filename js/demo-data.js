@@ -5,7 +5,7 @@ const DEMO_DATA_MARKER = '__demo_data';
 
 // ===== REAL DATA CONSTANTS =====
 
-const SHOT_TYPES = [
+const _DEMO_SHOT_TYPES = [
   { name: 'Draw shot',       weight: 30 },
   { name: 'Past',            weight: 27 },
   { name: 'Short',           weight: 20 },
@@ -20,7 +20,7 @@ const SHOT_TYPES = [
   { name: 'No Bowl thrown',  weight: 0.1 }
 ];
 
-const RESULT_CATEGORIES = [
+const _DEMO_RESULT_CATEGORIES = [
   { name: '< 0.5 ft',              weight: 15, scoreLo: 4, scoreHi: 4, distLo: 0.05, distHi: 0.49 },
   { name: '0.5 ft - 1 ft',         weight: 18, scoreLo: 3, scoreHi: 4, distLo: 0.50, distHi: 0.99 },
   { name: '1 ft - 2 ft',           weight: 16, scoreLo: 2, scoreHi: 3, distLo: 1.00, distHi: 1.99 },
@@ -36,7 +36,7 @@ const RESULT_CATEGORIES = [
   { name: 'Bowl off Rink',         weight: 0.5, scoreLo: 0, scoreHi: 0, distLo: 10.0, distHi: 15.0 }
 ];
 
-const JACK_LENGTHS = ['Short', 'Medium', 'Long', 'T'];
+const _DEMO_JACK_LENGTHS = ['Short', 'Medium', 'Long', 'T'];
 
 // ===== SEEDED RANDOM =====
 
@@ -138,14 +138,14 @@ function _buildDemoGames() {
 
     // Generate bowls for each end
     for (let end = 1; end <= cfg.ends; end++) {
-      const jackLen = _pick(JACK_LENGTHS);
+      const jackLen = _pick(_DEMO_JACK_LENGTHS);
 
       // Your team bowls
       for (let pi = 0; pi < cfg.players.length; pi++) {
         for (let bn = 1; bn <= cfg.bowlsPer; bn++) {
           const hand = _rand() > 0.4 ? 'Forehand' : 'Backhand';
-          const shotType = _pickWeighted(SHOT_TYPES).name;
-          const result = _pickWeighted(RESULT_CATEGORIES);
+          const shotType = _pickWeighted(_DEMO_SHOT_TYPES).name;
+          const result = _pickWeighted(_DEMO_RESULT_CATEGORIES);
           const score = result.scoreLo === result.scoreHi
             ? result.scoreLo
             : (_rand() > 0.5 ? result.scoreHi : result.scoreLo);
@@ -192,7 +192,7 @@ function _buildDemoGames() {
         const oppName = oppPlayers[pi];
         for (let bn = 1; bn <= cfg.bowlsPer; bn++) {
           const hand = _rand() > 0.5 ? 'Forehand' : 'Backhand';
-          const result = _pickWeighted(RESULT_CATEGORIES);
+          const result = _pickWeighted(_DEMO_RESULT_CATEGORIES);
           const score = result.scoreLo === result.scoreHi
             ? result.scoreLo
             : (_rand() > 0.5 ? result.scoreHi : result.scoreLo);
@@ -220,7 +220,7 @@ function _buildDemoGames() {
             distance: dist,
             matLength: jackLen,
             jackLength: jackLen,
-            shotType: _pickWeighted(SHOT_TYPES).name,
+            shotType: _pickWeighted(_DEMO_SHOT_TYPES).name,
             isDead: false,
             angle: Math.floor(_rand() * 360),
             notes: '',
