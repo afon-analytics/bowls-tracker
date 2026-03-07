@@ -1,22 +1,45 @@
 // Demo Data Loader for Bowls Performance Tracker
-// Embedded demo data — no Supabase dependency
+// Embedded demo data based on real tournament data from Central Hub
 
 const DEMO_DATA_MARKER = '__demo_data';
 
-// ===== EMBEDDED DEMO DATA =====
+// ===== REAL DATA CONSTANTS =====
 
-const DEMO_PLAYERS = ['Sarah Mitchell', 'James Cooper', 'Caroline Taylor', 'Ryan Edwards'];
-const DEMO_OPPONENTS = ['Hong Kong', 'Malaysia', 'Scotland', 'Wales', 'Canada', 'Australia'];
-const SHOT_TYPES = ['Draw shot', 'Weight shot', 'Short', 'Past', 'Blocker', 'Trail', 'Drive', 'Wick', 'Promote', 'Rest'];
-const RESULTS = ['< 0.5 ft', '0.5-1 ft', '1-2 ft', '2-3 ft', '> 3 ft', 'Very well played', 'Well played', 'Unlucky'];
+const SHOT_TYPES = [
+  { name: 'Draw shot',       weight: 30 },
+  { name: 'Past',            weight: 27 },
+  { name: 'Short',           weight: 20 },
+  { name: 'JackHigh',        weight: 11 },
+  { name: 'Weight shot',     weight: 7 },
+  { name: 'Draw Positional', weight: 2 },
+  { name: 'Draw to Respot',  weight: 1 },
+  { name: 'Blocker',         weight: 1 },
+  { name: 'Bowl off Rink',   weight: 0.5 },
+  { name: 'Draw to Ditch',   weight: 0.3 },
+  { name: 'Other',           weight: 0.1 },
+  { name: 'No Bowl thrown',  weight: 0.1 }
+];
+
+const RESULT_CATEGORIES = [
+  { name: '< 0.5 ft',              weight: 15, scoreLo: 4, scoreHi: 4, distLo: 0.05, distHi: 0.49 },
+  { name: '0.5 ft - 1 ft',         weight: 18, scoreLo: 3, scoreHi: 4, distLo: 0.50, distHi: 0.99 },
+  { name: '1 ft - 2 ft',           weight: 16, scoreLo: 2, scoreHi: 3, distLo: 1.00, distHi: 1.99 },
+  { name: '2 ft - 3 ft',           weight: 12, scoreLo: 1, scoreHi: 2, distLo: 2.00, distHi: 2.99 },
+  { name: '> 3 ft',                weight: 10, scoreLo: 0, scoreHi: 1, distLo: 3.00, distHi: 5.00 },
+  { name: 'Very well played',      weight: 8,  scoreLo: 4, scoreHi: 4, distLo: 0.05, distHi: 0.40 },
+  { name: 'Good Effort',           weight: 6,  scoreLo: 3, scoreHi: 3, distLo: 0.30, distHi: 1.20 },
+  { name: 'Average attempt',       weight: 5,  scoreLo: 2, scoreHi: 2, distLo: 1.00, distHi: 2.50 },
+  { name: 'Below average',         weight: 4,  scoreLo: 1, scoreHi: 1, distLo: 2.00, distHi: 3.50 },
+  { name: 'Score 3',               weight: 3,  scoreLo: 3, scoreHi: 3, distLo: 0.30, distHi: 1.00 },
+  { name: 'Score 0',               weight: 2,  scoreLo: 0, scoreHi: 0, distLo: 3.00, distHi: 6.00 },
+  { name: 'Completely Ineffective', weight: 1,  scoreLo: 0, scoreHi: 0, distLo: 4.00, distHi: 8.00 },
+  { name: 'Bowl off Rink',         weight: 0.5, scoreLo: 0, scoreHi: 0, distLo: 10.0, distHi: 15.0 }
+];
+
 const JACK_LENGTHS = ['Short', 'Medium', 'Long', 'T'];
-const MAT_LENGTHS = ['Short', 'Medium', 'Long'];
 
-function _demoId() {
-  return 'demo_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
-}
+// ===== SEEDED RANDOM =====
 
-// Seeded-ish random for reproducibility within a session
 let _seed = 42;
 function _rand() {
   _seed = (_seed * 16807 + 0) % 2147483647;
@@ -25,45 +48,61 @@ function _rand() {
 
 function _pick(arr) { return arr[Math.floor(_rand() * arr.length)]; }
 
-function _scoreFromResult(result) {
-  if (result === '< 0.5 ft' || result === 'Very well played') return 4;
-  if (result === '0.5-1 ft' || result === 'Well played') return 3;
-  if (result === '1-2 ft') return 2;
-  if (result === '2-3 ft' || result === 'Unlucky') return 1;
-  return 0;
+function _pickWeighted(items) {
+  const total = items.reduce((s, i) => s + i.weight, 0);
+  let r = _rand() * total;
+  for (const item of items) {
+    r -= item.weight;
+    if (r <= 0) return item;
+  }
+  return items[items.length - 1];
 }
 
-function _distanceFromResult(result) {
-  if (result === '< 0.5 ft' || result === 'Very well played') return +(0.1 + _rand() * 0.4).toFixed(2);
-  if (result === '0.5-1 ft' || result === 'Well played') return +(0.5 + _rand() * 0.5).toFixed(2);
-  if (result === '1-2 ft') return +(1.0 + _rand() * 1.0).toFixed(2);
-  if (result === '2-3 ft' || result === 'Unlucky') return +(2.0 + _rand() * 1.0).toFixed(2);
-  return +(3.0 + _rand() * 2.0).toFixed(2);
+function _demoId() {
+  return 'demo_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
 }
+
+// ===== GAME CONFIGS (based on real tournament data) =====
 
 function _buildDemoGames() {
   const games = [];
   const allBowls = [];
-  _seed = 42; // reset for consistent data
+  _seed = 42;
 
   const configs = [
-    { format: 'singles', opponent: 'Hong Kong',  date: '2025-04-11', ends: 7, bowlsPer: 4, players: ['Sarah Mitchell'],   playersPerTeam: 1, tournament: 'Asia Pacific Championships' },
-    { format: 'singles', opponent: 'Malaysia',   date: '2025-05-03', ends: 6, bowlsPer: 4, players: ['James Cooper'],      playersPerTeam: 1, tournament: 'Asia Pacific Championships' },
-    { format: 'singles', opponent: 'Scotland',   date: '2025-06-14', ends: 8, bowlsPer: 4, players: ['Caroline Taylor'],   playersPerTeam: 1, tournament: 'World Singles Qualifier' },
-    { format: 'pairs4',  opponent: 'Wales',      date: '2025-07-20', ends: 6, bowlsPer: 4, players: ['Sarah Mitchell', 'James Cooper'],    playersPerTeam: 2, tournament: 'Commonwealth Pairs' },
-    { format: 'pairs4',  opponent: 'Canada',     date: '2025-08-09', ends: 7, bowlsPer: 4, players: ['Caroline Taylor', 'Ryan Edwards'],   playersPerTeam: 2, tournament: 'Commonwealth Pairs' },
-    { format: 'singles', opponent: 'Australia',  date: '2025-10-10', ends: 9, bowlsPer: 4, players: ['Sarah Mitchell'],   playersPerTeam: 1, tournament: 'Trans-Tasman Test' },
+    // World Cup events
+    { format: 'Womens Singles', opponent: 'Canda',       date: '2025-04-11', ends: 7, bowlsPer: 4, players: ['Caroline Taylor'],                   playersPerTeam: 1, tournament: 'World Cup Day 1' },
+    { format: 'Womens Singles', opponent: 'India',        date: '2025-04-11', ends: 7, bowlsPer: 4, players: ['Amy Williams'],                      playersPerTeam: 1, tournament: 'World Cup Day 2' },
+    { format: 'Mens Singles',   opponent: 'Canda',        date: '2025-06-11', ends: 7, bowlsPer: 4, players: ['Ross Owen'],                         playersPerTeam: 1, tournament: 'World Cup Day 3' },
+    { format: 'Womens Pairs',   opponent: 'India',        date: '2025-06-12', ends: 7, bowlsPer: 4, players: ['Amy Williams', 'Caroline Taylor'],   playersPerTeam: 2, tournament: 'World Cup Day 4' },
+    { format: 'Mens Pairs',     opponent: 'England',      date: '2025-04-12', ends: 7, bowlsPer: 4, players: ['Ross Owen', 'Daniel Davies Jnr'],    playersPerTeam: 2, tournament: 'World Cup Day 2' },
+    // Hong Kong events
+    { format: 'Mens Pairs',     opponent: 'Malaysia',     date: '2025-07-15', ends: 9, bowlsPer: 4, players: ['Carl Wood', 'Dan Salmon'],           playersPerTeam: 2, tournament: 'HK Day 1' },
+    { format: 'Womens Pairs',   opponent: 'USA',          date: '2025-07-16', ends: 9, bowlsPer: 4, players: ['Sara Nicholls', 'Ysie White'],       playersPerTeam: 2, tournament: 'HK Day 2' },
+    { format: 'Womens Pairs',   opponent: 'England',      date: '2025-07-18', ends: 9, bowlsPer: 4, players: ['Sara Nicholls', 'Ysie White'],       playersPerTeam: 2, tournament: 'HK Day 3' },
+    { format: 'Mens Singles',   opponent: 'South Africa',  date: '2025-07-19', ends: 7, bowlsPer: 4, players: ['Carl Wood'],                        playersPerTeam: 1, tournament: 'HK Men Singles' },
+    { format: 'Mens Singles',   opponent: 'Hong Kong',    date: '2025-07-19', ends: 7, bowlsPer: 4, players: ['Dan Salmon'],                       playersPerTeam: 1, tournament: 'HK Men Singles' },
+    { format: 'Womens Singles', opponent: 'Hong Kong',    date: '2025-07-20', ends: 7, bowlsPer: 4, players: ['Sara Nicholls'],                    playersPerTeam: 1, tournament: 'HK Women Singles' },
+    { format: 'Womens Singles', opponent: 'Hong Kong',    date: '2025-07-20', ends: 7, bowlsPer: 4, players: ['Ysie White'],                       playersPerTeam: 1, tournament: 'HK Women Singles' },
+    { format: 'Mens Pairs',     opponent: 'England',      date: '2025-07-22', ends: 9, bowlsPer: 4, players: ['Carl Wood', 'Dan Salmon'],           playersPerTeam: 2, tournament: 'HK Day 5' },
+    // Test match
+    { format: 'Womens Singles', opponent: 'Australia',    date: '2025-10-10', ends: 7, bowlsPer: 4, players: ['Amy Williams'],                      playersPerTeam: 1, tournament: 'TestDay1' },
   ];
 
   for (let gi = 0; gi < configs.length; gi++) {
     const cfg = configs[gi];
     const gameId = _demoId();
+    const isPairs = cfg.format.includes('Pairs');
+
+    const oppPlayers = cfg.playersPerTeam === 1
+      ? [cfg.opponent]
+      : [cfg.opponent + ' Lead', cfg.opponent + ' Skip'];
 
     const game = {
       id: gameId,
       gameId: gameId,
       tournamentName: cfg.tournament,
-      format: cfg.format,
+      format: isPairs ? 'pairs4' : 'singles',
       gameType: 'game',
       matchStructure: 'traditional',
       totalEnds: cfg.ends,
@@ -73,7 +112,7 @@ function _buildDemoGames() {
       date: cfg.date + 'T10:00:00.000Z',
       yourPlayers: cfg.players,
       players: cfg.players,
-      opponentPlayers: [cfg.opponent + ' Lead', cfg.opponent + ' Skip'].slice(0, cfg.playersPerTeam),
+      opponentPlayers: oppPlayers,
       awayPlayers: [],
       bowlsPerPlayer: cfg.bowlsPer,
       playersPerTeam: cfg.playersPerTeam,
@@ -100,16 +139,17 @@ function _buildDemoGames() {
     // Generate bowls for each end
     for (let end = 1; end <= cfg.ends; end++) {
       const jackLen = _pick(JACK_LENGTHS);
-      const matLen = _pick(MAT_LENGTHS);
 
       // Your team bowls
       for (let pi = 0; pi < cfg.players.length; pi++) {
         for (let bn = 1; bn <= cfg.bowlsPer; bn++) {
           const hand = _rand() > 0.4 ? 'Forehand' : 'Backhand';
-          const shotType = _pick(SHOT_TYPES);
-          const result = _pick(RESULTS);
-          const score = _scoreFromResult(result);
-          const dist = _distanceFromResult(result);
+          const shotType = _pickWeighted(SHOT_TYPES).name;
+          const result = _pickWeighted(RESULT_CATEGORIES);
+          const score = result.scoreLo === result.scoreHi
+            ? result.scoreLo
+            : (_rand() > 0.5 ? result.scoreHi : result.scoreLo);
+          const dist = +(result.distLo + _rand() * (result.distHi - result.distLo)).toFixed(2);
 
           allBowls.push({
             id: _demoId(),
@@ -122,19 +162,19 @@ function _buildDemoGames() {
             playerId: cfg.players[pi],
             team: 'yours',
             hand: hand,
-            position: cfg.format === 'singles' ? 'Player' : (pi === 0 ? 'Lead' : 'Skip'),
+            position: isPairs ? (pi === 0 ? 'Lead' : 'Skip') : 'Player',
             x: 200 + Math.floor(_rand() * 100),
             y: 200 + Math.floor(_rand() * 100),
             scoreValue: score,
             score: score,
-            resultCategory: result,
-            direction: result,
+            resultCategory: result.name,
+            direction: result.name,
             distanceCategory: dist < 1 ? 'close' : (dist < 2 ? 'medium' : 'far'),
             distanceInFeet: dist,
             distance: dist,
             scoreCategory: shotType,
-            scoreDetail: result,
-            matLength: matLen,
+            scoreDetail: result.name,
+            matLength: jackLen,
             jackLength: jackLen,
             shotType: shotType,
             quality: score >= 3 ? 'good' : (score >= 2 ? 'average' : 'poor'),
@@ -149,12 +189,14 @@ function _buildDemoGames() {
 
       // Opponent bowls
       for (let pi = 0; pi < cfg.playersPerTeam; pi++) {
-        const oppName = cfg.opponent + (pi === 0 ? ' Lead' : ' Skip');
+        const oppName = oppPlayers[pi];
         for (let bn = 1; bn <= cfg.bowlsPer; bn++) {
           const hand = _rand() > 0.5 ? 'Forehand' : 'Backhand';
-          const result = _pick(RESULTS);
-          const score = _scoreFromResult(result);
-          const dist = _distanceFromResult(result);
+          const result = _pickWeighted(RESULT_CATEGORIES);
+          const score = result.scoreLo === result.scoreHi
+            ? result.scoreLo
+            : (_rand() > 0.5 ? result.scoreHi : result.scoreLo);
+          const dist = +(result.distLo + _rand() * (result.distHi - result.distLo)).toFixed(2);
 
           allBowls.push({
             id: _demoId(),
@@ -167,18 +209,18 @@ function _buildDemoGames() {
             playerId: oppName,
             team: 'opponent',
             hand: hand,
-            position: cfg.playersPerTeam === 1 ? 'Player' : (pi === 0 ? 'Lead' : 'Skip'),
+            position: isPairs ? (pi === 0 ? 'Lead' : 'Skip') : 'Player',
             x: 200 + Math.floor(_rand() * 100),
             y: 200 + Math.floor(_rand() * 100),
             scoreValue: score,
             score: score,
-            resultCategory: result,
-            direction: result,
+            resultCategory: result.name,
+            direction: result.name,
             distanceInFeet: dist,
             distance: dist,
-            matLength: matLen,
+            matLength: jackLen,
             jackLength: jackLen,
-            shotType: _pick(SHOT_TYPES),
+            shotType: _pickWeighted(SHOT_TYPES).name,
             isDead: false,
             angle: Math.floor(_rand() * 360),
             notes: '',
@@ -236,7 +278,6 @@ async function isDemoDataLoaded() {
 async function removeDemoData() {
   const gameIds = await getSetting('demoGameIds');
   if (!gameIds || gameIds.length === 0) {
-    // Fallback: try to remove all games marked as demo data
     const allGames = await getAllGames();
     for (const game of allGames) {
       if (game[DEMO_DATA_MARKER]) {
