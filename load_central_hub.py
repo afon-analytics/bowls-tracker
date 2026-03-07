@@ -65,19 +65,7 @@ for _, row in games_df.iterrows():
     record = {
         "date": row["Date"],
         "format": row["Format"],
-        "tournament_name": row["Game"],
-        "game_type": "game",
-        "match_structure": "traditional",
-        "total_ends": 21,
-        "current_end": 1,
-        "completed": True,
-        "bowls_per_player": 4,
-        "players_per_team": 1,
-        "your_players": [],
-        "opponent_players": [],
-        "away_players": [],
-        "set_scores": [],
-        "end_notes": {},
+        "status": "active",
     }
     result = sb.table("games").insert(record).execute()
     if result.data:
@@ -102,9 +90,8 @@ for _, row in end_rows.iterrows():
     record = {
         "game_id": game_id,
         "end_number": int(row["End"]),
-        "your_score": int(row["Shots For"]) if pd.notna(row["Shots For"]) else 0,
-        "opponent_score": int(row["Shots Against"]) if pd.notna(row["Shots Against"]) else 0,
-        "notes": "",
+        "team_score": int(row["Shots For"]) if pd.notna(row["Shots For"]) else 0,
+        "opposition_score": int(row["Shots Against"]) if pd.notna(row["Shots Against"]) else 0,
     }
     result = sb.table("ends").insert(record).execute()
     if result.data:
@@ -137,22 +124,17 @@ for _, row in bowl_rows.iterrows():
 
     delivery_records.append({
         "game_id": game_id,
-        "end_number": int(row["End"]),
+        "end_id": end_id,
         "player_name": str(row["Player"]),
         "player_id": player_id,
-        "team": "yours",
-        "hand": row["Hand played"] if pd.notna(row.get("Hand played")) else None,
-        "shot_type": row["Selection 1"] if pd.notna(row.get("Selection 1")) else None,
-        "quality": row["Selection 2"] if pd.notna(row.get("Selection 2")) else None,
-        "score_value": score if score is not None else 0,
-        "mat_length": row["Mat Length"] if pd.notna(row.get("Mat Length")) else None,
-        "jack_length": row["Jack Length"] if pd.notna(row.get("Jack Length")) else None,
+        "bowl_number": int(row["Bowl"]),
+        "scoring_method": row["Selection 1"] if pd.notna(row.get("Selection 1")) else None,
+        "bowl_result": row["Selection 2"] if pd.notna(row.get("Selection 2")) else None,
+        "shot_type": row["Hand played"] if pd.notna(row.get("Hand played")) else None,
+        "mark": score,
+        "is_effective": (score >= 3) if score is not None else None,
+        "mat_position": row["Jack Length"] if pd.notna(row.get("Jack Length")) else None,
         "is_dead": False,
-        "notes": str(row["Comments"]) if pd.notna(row.get("Comments")) else "",
-        "x": 0,
-        "y": 0,
-        "distance_in_feet": 0,
-        "timestamp": f"{row['Date']}T00:00:00Z",
     })
 
 # Insert in batches of 500
