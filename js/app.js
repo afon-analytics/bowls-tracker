@@ -366,7 +366,7 @@ async function loadDemoDataAndClose() {
     }, 1000);
   } catch (err) {
     console.error('[App] Demo data error:', err);
-    if (statusEl) statusEl.textContent = 'Error loading demo data.';
+    if (statusEl) statusEl.textContent = 'Error: ' + (err.message || 'Failed to load demo data.');
   }
 }
 
@@ -388,7 +388,7 @@ async function handleLoadDemoData() {
     setTimeout(() => { if (statusEl) statusEl.textContent = ''; }, 3000);
   } catch (err) {
     console.error('[App] Demo data error:', err);
-    if (statusEl) statusEl.textContent = 'Error loading demo data.';
+    if (statusEl) statusEl.textContent = 'Error: ' + (err.message || 'Failed to load demo data.');
   }
 }
 

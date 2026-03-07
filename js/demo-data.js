@@ -8,8 +8,7 @@ async function generateDemoData() {
 
   // Fetch games from Supabase
   const { data: supabaseGames, error: gErr } = await db.from('games')
-    .select('*')
-    .order('date', { ascending: false });
+    .select('*');
 
   if (gErr) throw new Error('Failed to fetch games: ' + gErr.message);
   if (!supabaseGames || supabaseGames.length === 0) {
@@ -18,8 +17,7 @@ async function generateDemoData() {
 
   // Fetch all deliveries from Supabase
   const { data: supabaseDeliveries, error: dErr } = await db.from('deliveries')
-    .select('*')
-    .order('created_at', { ascending: true });
+    .select('*');
 
   if (dErr) throw new Error('Failed to fetch deliveries: ' + dErr.message);
 
