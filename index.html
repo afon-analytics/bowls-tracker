@@ -325,121 +325,115 @@
                 </div>
             </div>
 
-            <div class="controls">
-                <div class="control-group">
-                    <h3>Mat Length
-                        <span class="tooltip-trigger" tabindex="0">?
-                            <span class="tooltip-content">Long = on the T mark. Medium = mat moved up the green. Short = mat well up the green.</span>
-                        </span>
-                    </h3>
-                    <div class="radio-group" id="matLengthGroup">
-                        <div class="radio-btn active" onclick="selectMatLength('short')">Short</div>
-                        <div class="radio-btn" onclick="selectMatLength('medium')">Medium</div>
-                        <div class="radio-btn" onclick="selectMatLength('long')">Long</div>
+            <div class="game-layout">
+                <!-- LEFT SIDE: Marking Arena -->
+                <div class="game-layout-arena">
+                    <div class="legend">
+                        <div class="legend-item">
+                            <div class="legend-circle" style="background: #4CAF50; border-color: #1B5E20;"></div>
+                            <span>Your Team</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-circle" style="background: #f44336; border-color: #B71C1C;"></div>
+                            <span>Opposition</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-circle" style="background: #FFD700; border-color: #FFA500;"></div>
+                            <span>Jack</span>
+                        </div>
+                        <div class="legend-item" id="deadBowlLegend" style="display: none;">
+                            <div class="legend-circle" style="background: #999; border-color: #666; opacity: 0.5;"></div>
+                            <span>Dead</span>
+                        </div>
+                    </div>
+
+                    <div style="text-align: center; margin-bottom: 3px;">
+                        <span style="font-weight: 600; color: var(--primary); font-size: 12px;">MAT END</span>
+                    </div>
+
+                    <div class="green-canvas-wrapper">
+                        <div class="green-canvas">
+                            <canvas id="greenCanvas"></canvas>
+                        </div>
+                        <div class="zoom-controls">
+                            <button class="btn-small btn-secondary zoom-btn" id="zoomInBtn" onclick="zoomIn()" title="Zoom In">+</button>
+                            <button class="btn-small btn-secondary zoom-btn" id="zoomOutBtn" onclick="zoomOut()" title="Zoom Out">&minus;</button>
+                            <button class="btn-small btn-secondary zoom-btn" id="zoomResetBtn" onclick="zoomReset()" title="Reset Zoom">R</button>
+                        </div>
+                    </div>
+
+                    <div style="text-align: center; margin-top: 3px;">
+                        <span style="font-weight: 600; color: var(--primary); font-size: 12px;">DITCH END</span>
+                    </div>
+
+                    <!-- End-by-end scoreboard -->
+                    <div class="scoreboard" id="scoreboard">
+                        <div class="scoreboard-header">
+                            <span class="scoreboard-team" id="scoreTeam1">Your Team</span>
+                            <span class="scoreboard-team" id="scoreTeam2">Opposition</span>
+                        </div>
+                        <div class="scoreboard-ends" id="scoreboardEnds"></div>
                     </div>
                 </div>
 
-                <div class="control-group">
-                    <h3>Jack Length
-                        <span class="tooltip-trigger" tabindex="0">?
-                            <span class="tooltip-content">Short = jack near the 2m mark. Medium = middle of the rink. Long = near the ditch end.</span>
-                        </span>
-                    </h3>
-                    <div class="radio-group" id="jackLengthGroup">
-                        <div class="radio-btn active" onclick="selectJackLength('short')">Short</div>
-                        <div class="radio-btn" onclick="selectJackLength('medium')">Medium</div>
-                        <div class="radio-btn" onclick="selectJackLength('long')">Long</div>
+                <!-- RIGHT SIDE: Controls & Options -->
+                <div class="game-layout-controls">
+                    <div class="controls">
+                        <div class="control-group">
+                            <h3>Jack Length</h3>
+                            <div class="radio-group" id="jackLengthGroup">
+                                <div class="radio-btn active" onclick="selectJackLength('short')">Short</div>
+                                <div class="radio-btn" onclick="selectJackLength('medium')">Medium</div>
+                                <div class="radio-btn" onclick="selectJackLength('long')">Long</div>
+                            </div>
+                        </div>
+
+                        <div class="control-group">
+                            <h3>Team</h3>
+                            <div class="radio-group" id="teamGroup">
+                                <div class="radio-btn active" onclick="selectTeam('yours')">Yours</div>
+                                <div class="radio-btn" onclick="selectTeam('opponent')">Opponent</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="controls">
+                        <div class="control-group">
+                            <h3>Delivery</h3>
+                            <div class="radio-group" id="handGroup">
+                                <div class="radio-btn active" onclick="selectHand('forehand')">Forehand</div>
+                                <div class="radio-btn" onclick="selectHand('backhand')">Backhand</div>
+                            </div>
+                        </div>
+
+                        <div class="control-group" id="playerSelectorInline" style="display: none;">
+                            <h3>Select Player</h3>
+                            <div id="playerButtonsInline" class="radio-group"></div>
+                        </div>
+                    </div>
+
+                    <div class="jack-controls">
+                        <button class="btn-secondary btn-small" id="moveJackBtn" onclick="toggleMoveJackMode()">Move Jack</button>
+                        <button class="btn-secondary btn-small" id="jackInDitchBtn" onclick="toggleJackInDitch()">Jack in Ditch</button>
+                        <button class="btn-secondary btn-small" id="deadBowlBtn" onclick="toggleDeadBowlMode()">Dead Bowl</button>
+                        <button class="btn-secondary btn-small" onclick="captureScreenshot()">Screenshot</button>
+                    </div>
+
+                    <div class="control-group" style="margin-top: 6px;">
+                        <h3>Bowl Notes</h3>
+                        <textarea id="quickBowlNotes" rows="1" placeholder="Add notes for next bowl..." style="font-size: 14px;"></textarea>
+                    </div>
+
+                    <div class="action-buttons">
+                        <button class="btn-secondary" onclick="undoLastBowl()">Undo Last</button>
+                        <button onclick="showEndNotes()">End Notes &amp; Next End</button>
+                    </div>
+
+                    <div class="action-buttons">
+                        <button class="btn-secondary" onclick="navigateTo('games')">Switch Game</button>
+                        <button class="btn-secondary" onclick="showEndGameDialog()">End Game</button>
                     </div>
                 </div>
-            </div>
-
-            <div class="controls">
-                <div class="control-group">
-                    <h3>Team</h3>
-                    <div class="radio-group" id="teamGroup">
-                        <div class="radio-btn active" onclick="selectTeam('yours')">Yours</div>
-                        <div class="radio-btn" onclick="selectTeam('opponent')">Opponent</div>
-                    </div>
-                </div>
-
-                <div class="control-group">
-                    <h3>Delivery</h3>
-                    <div class="radio-group" id="handGroup">
-                        <div class="radio-btn active" onclick="selectHand('forehand')">Forehand</div>
-                        <div class="radio-btn" onclick="selectHand('backhand')">Backhand</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="control-group" id="playerSelector" style="margin-bottom: 10px;">
-                <h3>Select Player</h3>
-                <div id="playerButtons" class="radio-group"></div>
-            </div>
-
-            <div class="legend">
-                <div class="legend-item">
-                    <div class="legend-circle" style="background: #4CAF50; border-color: #1B5E20;"></div>
-                    <span>Your Team
-                        <span class="tooltip-trigger" tabindex="0" style="margin-left: 2px;">?
-                            <span class="tooltip-content">Green = your team bowls. Dark green border = forehand delivery. Dark red border = backhand delivery. Initials shown on each bowl.</span>
-                        </span>
-                    </span>
-                </div>
-                <div class="legend-item">
-                    <div class="legend-circle" style="background: #f44336; border-color: #B71C1C;"></div>
-                    <span>Opposition</span>
-                </div>
-                <div class="legend-item">
-                    <div class="legend-circle" style="background: #FFD700; border-color: #FFA500;"></div>
-                    <span>Jack</span>
-                </div>
-                <div class="legend-item" id="deadBowlLegend" style="display: none;">
-                    <div class="legend-circle" style="background: #999; border-color: #666; opacity: 0.5;"></div>
-                    <span>Dead Bowl</span>
-                </div>
-            </div>
-
-            <div style="text-align: center; margin-bottom: 5px;">
-                <span style="font-weight: 600; color: var(--primary); font-size: 13px;">MAT END</span>
-            </div>
-
-            <div class="green-canvas">
-                <canvas id="greenCanvas"></canvas>
-            </div>
-
-            <div style="text-align: center; margin-top: 5px;">
-                <span style="font-weight: 600; color: var(--primary); font-size: 13px;">DITCH END</span>
-            </div>
-
-            <!-- End-by-end scoreboard -->
-            <div class="scoreboard" id="scoreboard">
-                <div class="scoreboard-header">
-                    <span class="scoreboard-team" id="scoreTeam1">Your Team</span>
-                    <span class="scoreboard-team" id="scoreTeam2">Opposition</span>
-                </div>
-                <div class="scoreboard-ends" id="scoreboardEnds"></div>
-            </div>
-
-            <div class="jack-controls">
-                <button class="btn-secondary btn-small" id="moveJackBtn" onclick="toggleMoveJackMode()">Move Jack</button>
-                <button class="btn-secondary btn-small" id="jackInDitchBtn" onclick="toggleJackInDitch()">Jack in Ditch</button>
-                <button class="btn-secondary btn-small" id="deadBowlBtn" onclick="toggleDeadBowlMode()">Dead Bowl</button>
-                <button class="btn-secondary btn-small" onclick="captureScreenshot()">Screenshot</button>
-            </div>
-
-            <div class="control-group" style="margin-top: 10px;">
-                <h3>Bowl Notes</h3>
-                <textarea id="quickBowlNotes" rows="1" placeholder="Add notes for next bowl..." style="font-size: 14px;"></textarea>
-            </div>
-
-            <div class="action-buttons">
-                <button class="btn-secondary" onclick="undoLastBowl()">Undo Last</button>
-                <button onclick="showEndNotes()">End Notes &amp; Next End</button>
-            </div>
-
-            <div class="action-buttons">
-                <button class="btn-secondary" onclick="navigateTo('games')">Switch Game</button>
-                <button class="btn-secondary" onclick="showEndGameDialog()">End Game</button>
             </div>
         </div>
 
@@ -631,6 +625,18 @@
             <div class="modal-content">
                 <h2>End <span id="endNotesNumber"></span> Complete</h2>
                 <div id="endScoreSummary" style="text-align: center; margin-bottom: 15px;"></div>
+
+                <div class="end-shots-summary" id="endShotsSummary" style="margin-bottom: 15px;"></div>
+
+                <div class="form-group">
+                    <label for="endShotsFor">Shots For</label>
+                    <input type="number" id="endShotsFor" min="0" max="99" placeholder="0" style="text-align: center; font-size: 20px; font-weight: 700;">
+                </div>
+                <div class="form-group">
+                    <label for="endShotsAgainst">Shots Against</label>
+                    <input type="number" id="endShotsAgainst" min="0" max="99" placeholder="0" style="text-align: center; font-size: 20px; font-weight: 700;">
+                </div>
+
                 <div class="form-group">
                     <label for="endNotes">End Notes (Optional)</label>
                     <textarea id="endNotes" rows="3" placeholder="Add notes about this end..."></textarea>
