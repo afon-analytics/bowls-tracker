@@ -21,7 +21,8 @@ async function getPlayerStats(playerName, filterGameId) {
     allBowls = allBowls.filter(b => b.gameId === filterGameId);
   }
 
-  const playerBowls = allBowls.filter(b => b.playerId === playerName && b.team === 'yours');
+  // Include bowls from both 'yours' team and trial away team (which have real player names as playerId)
+  const playerBowls = allBowls.filter(b => b.playerId === playerName);
 
   if (playerBowls.length === 0) return null;
 
@@ -175,7 +176,8 @@ async function getPlayerStats(playerName, filterGameId) {
 
 async function getAllPlayerNames() {
   const allBowls = await getAllBowls();
-  const names = [...new Set(allBowls.filter(b => b.team === 'yours').map(b => b.playerId))];
+  // Include all bowls with real player names (yours + trial away players)
+  const names = [...new Set(allBowls.map(b => b.playerId))];
   return names.filter(n => n && n !== 'opponent');
 }
 
@@ -185,15 +187,16 @@ async function getGameSummaries() {
 
   return allGames.map(game => {
     const gameBowls = allBowls.filter(b => b.gameId === game.id);
-    const yourBowls = gameBowls.filter(b => b.team === 'yours');
-    const scoredBowls = yourBowls.filter(b => b.score !== undefined);
+    // Include all tracked bowls (yours + trial away players with real names)
+    const trackedBowls = gameBowls.filter(b => b.playerId && b.playerId !== 'opponent');
+    const scoredBowls = trackedBowls.filter(b => b.score !== undefined);
     const avgScore = scoredBowls.length > 0
       ? scoredBowls.reduce((s, b) => s + (b.scoreValue || b.score || 0), 0) / scoredBowls.length
       : 0;
 
     // Top performer
     const playerScores = {};
-    yourBowls.forEach(b => {
+    trackedBowls.forEach(b => {
       if (!playerScores[b.playerId]) playerScores[b.playerId] = { total: 0, count: 0 };
       playerScores[b.playerId].total += (b.scoreValue || b.score || 0);
       playerScores[b.playerId].count++;
@@ -873,7 +876,8 @@ async function showGameDrillDown(gameId) {
   if (!game) return;
 
   const container = document.getElementById('analyticsContent');
-  const yourBowls = bowls.filter(b => b.team === 'yours');
+  // Include all tracked bowls (yours + trial away players)
+  const yourBowls = bowls.filter(b => (b.playerId || b.playerName || b.player) !== 'opponent');
   const totalEnds = game.endCount || game.totalEnds || 21;
 
   // Player performance in this game
@@ -999,7 +1003,7 @@ async function filterDrillDownByPlayer(gameId) {
   const game = await getGame(gameId);
   if (!game) return;
 
-  let yourBowls = bowls.filter(b => b.team === 'yours');
+  let yourBowls = bowls.filter(b => (b.playerId || b.playerName || b.player) !== 'opponent');
   if (selectedPlayer !== 'all') {
     yourBowls = yourBowls.filter(b => (b.playerId || b.playerName || b.player) === selectedPlayer);
   }

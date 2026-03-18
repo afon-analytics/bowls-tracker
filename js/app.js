@@ -670,12 +670,9 @@ async function startGame() {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById('gameScreen').classList.add('active');
 
-  if (config.players === 1 && selectedGameType !== 'trial') {
-    document.getElementById('playerSelector').style.display = 'none';
-  } else {
-    document.getElementById('playerSelector').style.display = 'block';
-    createPlayerButtons();
-  }
+  // Reset per-team player tracking for new game
+  lastPlayerIndexByTeam = { yours: 0, opponent: 0 };
+  createPlayerButtons();
 
   // Update team labels for trial mode
   updateTeamLabels();
@@ -697,25 +694,38 @@ function updateTeamLabels() {
 
 function createPlayerButtons() {
   const positions = getPositionsForFormat(gameState.format);
-  const playerButtonsDiv = document.getElementById('playerButtons');
+  const playerButtonsDiv = document.getElementById('playerButtonsInline');
+  const playerSelectorDiv = document.getElementById('playerSelectorInline');
+  if (!playerButtonsDiv || !playerSelectorDiv) return;
+
   playerButtonsDiv.innerHTML = '';
 
   // Determine which players to show based on team
   const isTrialAway = gameState.gameType === 'trial' && gameState.currentTeam === 'opponent';
   const players = isTrialAway ? gameState.awayPlayers : gameState.yourPlayers;
+  const count = isTrialAway ? gameState.awayPlayers.length : gameState.playersPerTeam;
 
-  for (let i = 0; i < (isTrialAway ? gameState.awayPlayers.length : gameState.playersPerTeam); i++) {
+  for (let i = 0; i < count; i++) {
     const btn = document.createElement('div');
     btn.className = 'radio-btn' + (i === gameState.currentPlayerIndex ? ' active' : '');
     btn.textContent = positions[i] || `Player ${i + 1}`;
     btn.onclick = () => selectPlayer(i);
     playerButtonsDiv.appendChild(btn);
   }
+
+  // Show/hide player selector based on number of players
+  if (count > 1 || gameState.gameType === 'trial') {
+    playerSelectorDiv.style.display = 'block';
+  } else {
+    playerSelectorDiv.style.display = 'none';
+  }
 }
 
 function selectPlayer(index) {
   gameState.currentPlayerIndex = index;
-  const buttons = document.querySelectorAll('#playerButtons .radio-btn');
+  // Update per-team tracking
+  lastPlayerIndexByTeam[gameState.currentTeam] = index;
+  const buttons = document.querySelectorAll('#playerButtonsInline .radio-btn');
   buttons.forEach((btn, idx) => {
     btn.classList.toggle('active', idx === index);
   });
@@ -746,6 +756,13 @@ function initCanvas() {
   moveJackMode = false;
   jackInDitchMode = false;
   updateJackButtonStates();
+
+  // Reset zoom and setup gestures
+  canvasZoom = 1;
+  canvasPanX = 0;
+  canvasPanY = 0;
+  if (canvas) canvas.style.transform = '';
+  setupZoomGestures();
 
   drawGreen();
 }
@@ -1312,7 +1329,8 @@ function advanceToNextPlayer() {
 
       if (nextPlayerBowls < gameState.bowlsPerPlayer) {
         gameState.currentPlayerIndex = nextPlayerIndex;
-        const buttons = document.querySelectorAll('#playerButtons .radio-btn');
+        lastPlayerIndexByTeam[gameState.currentTeam] = nextPlayerIndex;
+        const buttons = document.querySelectorAll('#playerButtonsInline .radio-btn');
         buttons.forEach((btn, idx) => {
           btn.classList.toggle('active', idx === nextPlayerIndex);
         });
@@ -1409,12 +1427,8 @@ function loadGame(gameIndex) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById('gameScreen').classList.add('active');
 
-  if (gameState.playersPerTeam === 1 && gameState.gameType !== 'trial') {
-    document.getElementById('playerSelector').style.display = 'none';
-  } else {
-    document.getElementById('playerSelector').style.display = 'block';
-    createPlayerButtons();
-  }
+  lastPlayerIndexByTeam = { yours: gameState.currentPlayerIndex || 0, opponent: 0 };
+  createPlayerButtons();
 
   updateTeamLabels();
   initCanvas();
@@ -1555,11 +1569,23 @@ function showEndNotes() {
     `;
   }
 
+  // Pre-populate shots for/against from existing end data or default to 0
+  const existingEndData = gameState.endScoresManual ? gameState.endScoresManual[gameState.currentEnd] : null;
+  document.getElementById('endShotsFor').value = existingEndData ? existingEndData.shotsFor : '';
+  document.getElementById('endShotsAgainst').value = existingEndData ? existingEndData.shotsAgainst : '';
+
   document.getElementById('endNotesModal').classList.add('active');
 }
 
 function saveEndNotes() {
   gameState.endNotes[gameState.currentEnd] = document.getElementById('endNotes').value;
+
+  // Save shots for/against
+  const shotsFor = parseInt(document.getElementById('endShotsFor').value) || 0;
+  const shotsAgainst = parseInt(document.getElementById('endShotsAgainst').value) || 0;
+  if (!gameState.endScoresManual) gameState.endScoresManual = {};
+  gameState.endScoresManual[gameState.currentEnd] = { shotsFor, shotsAgainst };
+
   document.getElementById('endNotesModal').classList.remove('active');
   nextEnd();
 }
@@ -1588,16 +1614,24 @@ function closeEndGameModal() {
 
 // ===== CONTROLS =====
 
+// Track last selected player index per team so switching doesn't reset to Lead
+let lastPlayerIndexByTeam = { yours: 0, opponent: 0 };
+
 function selectTeam(team) {
+  // Save current player index for the team we're leaving
+  lastPlayerIndexByTeam[gameState.currentTeam] = gameState.currentPlayerIndex;
+
   gameState.currentTeam = team;
-  gameState.currentPlayerIndex = 0;
+  // Restore last selected player index for the team we're switching to
+  gameState.currentPlayerIndex = lastPlayerIndexByTeam[team] || 0;
+
   const buttons = document.querySelectorAll('#teamGroup .radio-btn');
   buttons.forEach((btn, idx) => {
     btn.classList.toggle('active', (idx === 0 && team === 'yours') || (idx === 1 && team === 'opponent'));
   });
 
-  // Rebuild player buttons for trial mode (different players per team)
-  if (gameState.gameType === 'trial') {
+  // Rebuild player buttons (different players per team in trial, and to restore active state)
+  if (gameState.playersPerTeam > 1 || gameState.gameType === 'trial') {
     createPlayerButtons();
   }
 
@@ -1822,6 +1856,8 @@ function nextEnd() {
 
   gameState.currentEnd++;
   gameState.currentPlayerIndex = 0;
+  gameState.currentTeam = 'yours';
+  lastPlayerIndexByTeam = { yours: 0, opponent: 0 };
   gameState.jackPosition = { x: 250, y: 250 };
   gameState.jackOriginalPosition = null;
   gameState.jackMoved = false;
@@ -1831,6 +1867,15 @@ function nextEnd() {
 
   const deadBtn = document.getElementById('deadBowlBtn');
   if (deadBtn) { deadBtn.classList.remove('btn-active'); deadBtn.textContent = 'Dead Bowl'; }
+
+  // Reset team toggle UI to yours
+  const teamBtns = document.querySelectorAll('#teamGroup .radio-btn');
+  if (teamBtns[0]) teamBtns[0].classList.add('active');
+  if (teamBtns[1]) teamBtns[1].classList.remove('active');
+
+  // Reset zoom
+  canvasZoom = 1; canvasPanX = 0; canvasPanY = 0;
+  if (canvas) canvas.style.transform = '';
 
   persistCurrentGame();
   createPlayerButtons();
@@ -1862,6 +1907,109 @@ function captureScreenshot() {
     alert('Screenshot capture failed. Please try again.');
     console.error('Screenshot error:', error);
   }
+}
+
+// ===== CANVAS ZOOM =====
+
+let canvasZoom = 1;
+let canvasPanX = 0;
+let canvasPanY = 0;
+let isPanning = false;
+let lastPinchDist = 0;
+let panStartX = 0;
+let panStartY = 0;
+
+function zoomIn() {
+  canvasZoom = Math.min(canvasZoom + 0.5, 4);
+  applyCanvasZoom();
+}
+
+function zoomOut() {
+  canvasZoom = Math.max(canvasZoom - 0.5, 1);
+  if (canvasZoom === 1) { canvasPanX = 0; canvasPanY = 0; }
+  applyCanvasZoom();
+}
+
+function zoomReset() {
+  canvasZoom = 1;
+  canvasPanX = 0;
+  canvasPanY = 0;
+  applyCanvasZoom();
+}
+
+function applyCanvasZoom() {
+  if (!canvas) return;
+  // Constrain pan so we don't go out of bounds
+  const maxPan = (canvasZoom - 1) * 250; // half of 500px canvas
+  canvasPanX = Math.max(-maxPan, Math.min(maxPan, canvasPanX));
+  canvasPanY = Math.max(-maxPan, Math.min(maxPan, canvasPanY));
+
+  canvas.style.transform = `scale(${canvasZoom}) translate(${canvasPanX / canvasZoom}px, ${canvasPanY / canvasZoom}px)`;
+  canvas.style.transformOrigin = 'center center';
+}
+
+function setupZoomGestures() {
+  const wrapper = document.querySelector('.green-canvas-wrapper');
+  if (!wrapper) return;
+
+  // Pinch to zoom on the wrapper
+  wrapper.addEventListener('touchstart', function(e) {
+    if (e.touches.length === 2) {
+      e.preventDefault();
+      lastPinchDist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+    } else if (e.touches.length === 1 && canvasZoom > 1) {
+      // Start pan when zoomed in
+      isPanning = true;
+      panStartX = e.touches[0].clientX - canvasPanX;
+      panStartY = e.touches[0].clientY - canvasPanY;
+    }
+  }, { passive: false });
+
+  wrapper.addEventListener('touchmove', function(e) {
+    if (e.touches.length === 2) {
+      e.preventDefault();
+      const dist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      if (lastPinchDist > 0) {
+        const scale = dist / lastPinchDist;
+        canvasZoom = Math.max(1, Math.min(4, canvasZoom * scale));
+        if (canvasZoom === 1) { canvasPanX = 0; canvasPanY = 0; }
+        applyCanvasZoom();
+      }
+      lastPinchDist = dist;
+    } else if (e.touches.length === 1 && isPanning && canvasZoom > 1) {
+      e.preventDefault();
+      canvasPanX = e.touches[0].clientX - panStartX;
+      canvasPanY = e.touches[0].clientY - panStartY;
+      applyCanvasZoom();
+    }
+  }, { passive: false });
+
+  wrapper.addEventListener('touchend', function(e) {
+    if (e.touches.length < 2) {
+      lastPinchDist = 0;
+    }
+    if (e.touches.length === 0) {
+      isPanning = false;
+    }
+  });
+
+  // Mouse wheel zoom
+  wrapper.addEventListener('wheel', function(e) {
+    e.preventDefault();
+    if (e.deltaY < 0) {
+      canvasZoom = Math.min(canvasZoom + 0.25, 4);
+    } else {
+      canvasZoom = Math.max(canvasZoom - 0.25, 1);
+    }
+    if (canvasZoom === 1) { canvasPanX = 0; canvasPanY = 0; }
+    applyCanvasZoom();
+  }, { passive: false });
 }
 
 // ===== TIER SYSTEM =====
@@ -2003,9 +2151,14 @@ function refreshManagerView() {
   }).join('');
 }
 
+// Helper: get all tracked player names (yours + trial away, excluding generic 'opponent')
+function getTrackedPlayerNames(allBowls) {
+  return [...new Set(allBowls.map(b => b.playerId || b.playerName || b.player))].filter(n => n && n !== 'opponent');
+}
+
 async function populateManagerPlayerSelects() {
   const allBowls = await getAllBowls();
-  const playerNames = [...new Set(allBowls.filter(b => b.team === 'yours').map(b => b.playerId || b.playerName || b.player))].filter(Boolean);
+  const playerNames = getTrackedPlayerNames(allBowls);
 
   const selects = ['managerPlayerSelect', 'comparePlayer1', 'comparePlayer2'];
   selects.forEach(id => {
@@ -2126,7 +2279,7 @@ function setEliteTab(tab) {
 
 async function populateEliteSelects() {
   const allBowls = await getAllBowls();
-  const playerNames = [...new Set(allBowls.filter(b => b.team === 'yours').map(b => b.playerId || b.playerName || b.player))].filter(Boolean);
+  const playerNames = getTrackedPlayerNames(allBowls);
 
   ['heatmapPlayer', 'trendPlayer'].forEach(id => {
     const sel = document.getElementById(id);
@@ -2154,7 +2307,8 @@ async function renderHeatmap() {
   const positionFilter = document.getElementById('heatmapPosition').value;
 
   const allBowls = await getAllBowls();
-  let bowls = allBowls.filter(b => b.team === 'yours');
+  // Include all tracked bowls (yours + trial away players)
+  let bowls = allBowls.filter(b => (b.playerId || b.playerName || b.player) !== 'opponent');
 
   if (playerFilter !== 'all') {
     bowls = bowls.filter(b => (b.playerId || b.playerName || b.player) === playerFilter);
@@ -2244,8 +2398,7 @@ async function renderRankings() {
   const positionFilter = document.getElementById('rankingPosition').value;
   const allBowls = await getAllBowls();
 
-  const yourBowls = allBowls.filter(b => b.team === 'yours');
-  const playerNames = [...new Set(yourBowls.map(b => b.playerId || b.playerName || b.player))].filter(Boolean);
+  const playerNames = getTrackedPlayerNames(allBowls);
 
   const rankings = [];
   for (const name of playerNames) {
@@ -2313,7 +2466,7 @@ async function renderTrends() {
   if (!playerName) return;
 
   const allBowls = await getAllBowls();
-  const playerBowls = allBowls.filter(b => (b.playerId || b.playerName || b.player) === playerName && b.team === 'yours');
+  const playerBowls = allBowls.filter(b => (b.playerId || b.playerName || b.player) === playerName);
 
   if (playerBowls.length === 0) return;
 
@@ -2387,8 +2540,7 @@ async function renderRecommendations() {
   const positions = getPositionsForFormat(format);
   const allBowls = await getAllBowls();
 
-  const yourBowls = allBowls.filter(b => b.team === 'yours');
-  const playerNames = [...new Set(yourBowls.map(b => b.playerId || b.playerName || b.player))].filter(Boolean);
+  const playerNames = getTrackedPlayerNames(allBowls);
 
   // Calculate form index for each player
   const playerScores = [];
