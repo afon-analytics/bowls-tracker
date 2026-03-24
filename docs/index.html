@@ -3,149 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BowlsTrack | Performance Analytics for Lawn Bowls</title>
-    <meta name="description" content="Track every delivery. Elevate every performance. The only lawn bowls analytics platform that captures actual bowl positions with dartboard precision.">
-
-    <!-- Favicon -->
+    <title>BowlsTrack - Sign Up</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='%23155e3d'/><circle cx='50' cy='50' r='8' fill='%23fbbf24'/></svg>">
-
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root {
-            --green-900: #0f3d2b;
-            --green-800: #155e3d;
-            --green-700: #1a7a4c;
-            --green-600: #22995f;
-            --green-500: #2db572;
-            --gold-500: #fbbf24;
-            --gold-400: #fcd34d;
-            --gold-600: #d97706;
-            --cream: #fefdf8;
-            --cream-dark: #f5f3eb;
-            --slate-900: #1e293b;
-            --slate-700: #334155;
-            --slate-500: #64748b;
-            --slate-300: #cbd5e1;
-            --font-display: 'DM Serif Display', Georgia, serif;
-            --font-body: 'DM Sans', system-ui, sans-serif;
-            --section-padding: clamp(4rem, 10vw, 8rem);
-        }
-
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        html { scroll-behavior: smooth; }
-        body { font-family: var(--font-body); background: var(--cream); color: var(--slate-900); line-height: 1.6; overflow-x: hidden; }
-
-        .nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; padding: 1rem 2rem; transition: background 0.3s ease, box-shadow 0.3s ease; }
-        .nav.scrolled { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); box-shadow: 0 2px 20px rgba(0, 0, 0, 0.08); }
-        .nav-inner { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
-        .logo { display: flex; align-items: center; gap: 0.75rem; text-decoration: none; color: var(--green-800); }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'DM Sans', system-ui, sans-serif; background: #fefdf8; color: #1e293b; min-height: 100vh; display: flex; flex-direction: column; }
+        .header { padding: 1.5rem 2rem; border-bottom: 1px solid #e2e8f0; }
+        .header-inner { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+        .logo { display: flex; align-items: center; gap: 0.75rem; text-decoration: none; color: #155e3d; }
         .logo-icon { width: 40px; height: 40px; }
-        .logo-text { font-family: var(--font-display); font-size: 1.5rem; }
-        .nav-links { display: flex; gap: 2rem; align-items: center; }
-        .nav-links a { text-decoration: none; color: var(--slate-700); font-weight: 500; font-size: 0.95rem; transition: color 0.2s; }
-        .nav-links a:hover { color: var(--green-700); }
-
-        .btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 600; font-size: 0.95rem; text-decoration: none; transition: all 0.2s ease; cursor: pointer; border: none; }
-        .btn-primary { background: var(--green-800); color: white; }
-        .btn-primary:hover { background: var(--green-700); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(21, 94, 61, 0.3); }
-        .btn-secondary { background: transparent; color: var(--green-800); border: 2px solid var(--green-800); }
-        .btn-secondary:hover { background: var(--green-800); color: white; }
-        .btn-gold { background: var(--gold-500); color: var(--green-900); }
-        .btn-gold:hover { background: var(--gold-400); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(251, 191, 36, 0.4); }
-
-        .hero { min-height: 100vh; display: flex; align-items: center; padding: 6rem 2rem var(--section-padding); background: radial-gradient(ellipse at 70% 20%, rgba(21, 94, 61, 0.08) 0%, transparent 50%), radial-gradient(ellipse at 30% 80%, rgba(251, 191, 36, 0.06) 0%, transparent 40%), var(--cream); position: relative; overflow: hidden; }
-        .hero::before { content: ''; position: absolute; top: 10%; right: -10%; width: 600px; height: 600px; background: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='200' cy='200' r='180' fill='none' stroke='%23155e3d' stroke-width='0.5' opacity='0.15'/%3E%3Ccircle cx='200' cy='200' r='140' fill='none' stroke='%23155e3d' stroke-width='0.5' opacity='0.12'/%3E%3Ccircle cx='200' cy='200' r='100' fill='none' stroke='%23155e3d' stroke-width='0.5' opacity='0.1'/%3E%3Ccircle cx='200' cy='200' r='60' fill='none' stroke='%23155e3d' stroke-width='0.5' opacity='0.08'/%3E%3Ccircle cx='200' cy='200' r='20' fill='%23fbbf24' opacity='0.2'/%3E%3C/svg%3E") no-repeat center; background-size: contain; animation: float 20s ease-in-out infinite; }
-        @keyframes float { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-20px) rotate(5deg); } }
-        .hero-inner { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center; position: relative; z-index: 1; }
-        .hero-badge { display: inline-flex; align-items: center; gap: 0.5rem; background: var(--green-800); color: white; padding: 0.5rem 1rem; border-radius: 100px; font-size: 0.85rem; font-weight: 600; margin-bottom: 1.5rem; }
-        .hero-badge::before { content: ''; width: 8px; height: 8px; background: var(--gold-500); border-radius: 50%; animation: pulse 2s infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(1.2); } }
-        .hero h1 { font-family: var(--font-display); font-size: clamp(2.5rem, 5vw, 4rem); line-height: 1.1; color: var(--green-900); margin-bottom: 1.5rem; }
-        .hero h1 span { color: var(--green-600); }
-        .hero-description { font-size: 1.25rem; color: var(--slate-700); margin-bottom: 2rem; max-width: 500px; }
-        .hero-ctas { display: flex; gap: 1rem; flex-wrap: wrap; }
-        .hero-visual { position: relative; }
-        .dartboard-container { position: relative; width: 100%; max-width: 450px; margin: 0 auto; }
-        .dartboard { width: 100%; filter: drop-shadow(0 20px 40px rgba(21, 94, 61, 0.2)); }
-
-        .differentiator { padding: var(--section-padding) 2rem; background: var(--green-900); color: white; position: relative; overflow: hidden; }
-        .differentiator::before { content: ''; position: absolute; inset: 0; background: url("data:image/svg+xml,%3Csvg viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpattern id='grain' width='100' height='100' patternUnits='userSpaceOnUse'%3E%3Ccircle cx='50' cy='50' r='1' fill='white' opacity='0.03'/%3E%3C/pattern%3E%3Crect width='100' height='100' fill='url(%23grain)'/%3E%3C/svg%3E"); opacity: 0.5; }
-        .differentiator-inner { max-width: 900px; margin: 0 auto; text-align: center; position: relative; z-index: 1; }
-        .differentiator h2 { font-family: var(--font-display); font-size: clamp(1.75rem, 4vw, 2.5rem); margin-bottom: 1.5rem; }
-        .differentiator p { font-size: 1.15rem; opacity: 0.9; max-width: 700px; margin: 0 auto; line-height: 1.8; }
-        .differentiator strong { color: var(--gold-400); }
-
-        .features { padding: var(--section-padding) 2rem; background: var(--cream); }
-        .features-inner { max-width: 1200px; margin: 0 auto; }
-        .section-header { text-align: center; margin-bottom: 4rem; }
-        .section-header h2 { font-family: var(--font-display); font-size: clamp(2rem, 4vw, 3rem); color: var(--green-900); margin-bottom: 1rem; }
-        .section-header p { font-size: 1.15rem; color: var(--slate-600); max-width: 600px; margin: 0 auto; }
-        .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; }
-        .feature-card { background: white; padding: 2rem; border-radius: 16px; border: 1px solid var(--slate-300); transition: all 0.3s ease; }
-        .feature-card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08); border-color: var(--green-500); }
-        .feature-icon { width: 56px; height: 56px; background: linear-gradient(135deg, var(--green-700), var(--green-800)); border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 1.5rem; }
-        .feature-icon svg { width: 28px; height: 28px; color: white; }
-        .feature-card h3 { font-size: 1.25rem; color: var(--green-900); margin-bottom: 0.75rem; }
-        .feature-card p { color: var(--slate-600); line-height: 1.7; }
-
-        .pricing { padding: var(--section-padding) 2rem; background: var(--cream-dark); }
-        .pricing-inner { max-width: 1200px; margin: 0 auto; }
-        .pricing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.5rem; margin-top: 3rem; }
-        .pricing-card { background: white; border-radius: 16px; padding: 2rem; border: 2px solid transparent; transition: all 0.3s ease; display: flex; flex-direction: column; }
-        .pricing-card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1); }
-        .pricing-card.featured { border-color: var(--green-600); position: relative; }
-        .pricing-card.featured::before { content: 'Most Popular'; position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: var(--green-600); color: white; padding: 0.25rem 1rem; border-radius: 100px; font-size: 0.8rem; font-weight: 600; }
-        .pricing-tier { font-size: 0.9rem; font-weight: 600; color: var(--green-700); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; }
-        .pricing-name { font-family: var(--font-display); font-size: 1.5rem; color: var(--green-900); margin-bottom: 1rem; }
-        .pricing-price { font-size: 2.5rem; font-weight: 700; color: var(--green-900); margin-bottom: 0.25rem; }
-        .pricing-price span { font-size: 1rem; font-weight: 400; color: var(--slate-500); }
-        .pricing-description { color: var(--slate-600); font-size: 0.95rem; margin-bottom: 1.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--slate-300); }
-        .pricing-features { list-style: none; margin-bottom: 2rem; flex-grow: 1; }
-        .pricing-features li { display: flex; align-items: flex-start; gap: 0.75rem; margin-bottom: 0.75rem; font-size: 0.95rem; color: var(--slate-700); }
-        .pricing-features li::before { content: '\2713'; color: var(--green-600); font-weight: 700; flex-shrink: 0; }
-        .pricing-card .btn { width: 100%; justify-content: center; }
-
-        .cta { padding: var(--section-padding) 2rem; background: linear-gradient(135deg, var(--green-800), var(--green-900)); text-align: center; color: white; }
-        .cta-inner { max-width: 700px; margin: 0 auto; }
-        .cta h2 { font-family: var(--font-display); font-size: clamp(2rem, 4vw, 2.75rem); margin-bottom: 1rem; }
-        .cta p { font-size: 1.15rem; opacity: 0.9; margin-bottom: 2rem; }
-
-        .footer { padding: 3rem 2rem; background: var(--slate-900); color: white; }
-        .footer-inner { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1.5rem; }
-        .footer-brand { display: flex; align-items: center; gap: 0.75rem; }
-        .footer-brand svg { width: 32px; height: 32px; }
-        .footer-brand span { font-family: var(--font-display); font-size: 1.25rem; }
-        .footer-links { display: flex; gap: 2rem; }
-        .footer-links a { color: var(--slate-300); text-decoration: none; font-size: 0.9rem; transition: color 0.2s; }
-        .footer-links a:hover { color: white; }
-        .footer-afon { font-size: 0.85rem; color: var(--slate-500); }
-        .footer-afon a { color: var(--slate-400); text-decoration: none; }
-        .footer-afon a:hover { color: white; }
-
-        @media (max-width: 900px) {
-            .hero-inner { grid-template-columns: 1fr; text-align: center; }
-            .hero-description { margin: 0 auto 2rem; }
-            .hero-ctas { justify-content: center; }
-            .hero-visual { order: -1; }
-            .dartboard-container { max-width: 300px; }
-            .nav-links { display: none; }
-        }
-        @media (max-width: 600px) {
-            .hero-ctas { flex-direction: column; }
-            .btn { width: 100%; justify-content: center; }
-            .footer-inner { flex-direction: column; text-align: center; }
-            .footer-links { flex-wrap: wrap; justify-content: center; }
-        }
+        .logo-text { font-family: 'DM Serif Display', Georgia, serif; font-size: 1.5rem; }
+        .back-link { color: #64748b; text-decoration: none; font-size: 0.95rem; }
+        .back-link:hover { color: #1a7a4c; }
+        .main { flex: 1; display: flex; align-items: center; justify-content: center; padding: 2rem; }
+        .auth-container { width: 100%; max-width: 420px; }
+        .auth-card { background: white; border-radius: 16px; padding: 2.5rem; box-shadow: 0 4px 20px rgba(0,0,0,0.08); border: 1px solid #e2e8f0; }
+        .auth-header { text-align: center; margin-bottom: 2rem; }
+        .auth-header h1 { font-family: 'DM Serif Display', Georgia, serif; font-size: 1.75rem; color: #0f3d2b; margin-bottom: 0.5rem; }
+        .auth-header p { color: #64748b; font-size: 0.95rem; }
+        .free-badge { display: inline-flex; align-items: center; gap: 0.5rem; background: #f5f3eb; border: 1px solid #e2e8f0; padding: 0.5rem 1rem; border-radius: 100px; font-size: 0.85rem; color: #334155; margin-bottom: 1.5rem; }
+        .auth-tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; background: #f5f3eb; padding: 0.25rem; border-radius: 8px; }
+        .auth-tab { flex: 1; padding: 0.75rem; border: none; background: transparent; font-family: 'DM Sans', system-ui, sans-serif; font-size: 0.95rem; font-weight: 600; color: #64748b; cursor: pointer; border-radius: 6px; transition: all 0.2s; }
+        .auth-tab.active { background: white; color: #155e3d; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .auth-tab:hover:not(.active) { color: #334155; }
+        .auth-form { display: none; }
+        .auth-form.active { display: block; }
+        .form-group { margin-bottom: 1.25rem; }
+        .form-group label { display: block; font-size: 0.9rem; font-weight: 600; color: #334155; margin-bottom: 0.5rem; }
+        .form-group input { width: 100%; padding: 0.875rem 1rem; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 1rem; font-family: 'DM Sans', system-ui, sans-serif; transition: border-color 0.2s, box-shadow 0.2s; }
+        .form-group input:focus { outline: none; border-color: #2db572; box-shadow: 0 0 0 3px rgba(45,181,114,0.15); }
+        .btn { width: 100%; padding: 1rem; border: none; border-radius: 8px; font-family: 'DM Sans', system-ui, sans-serif; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+        .btn-primary { background: #155e3d; color: white; }
+        .btn-primary:hover { background: #1a7a4c; }
+        .btn-primary:disabled { background: #cbd5e1; cursor: not-allowed; }
+        .message { padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; font-size: 0.9rem; display: none; }
+        .message.error { background: #fee2e2; color: #ef4444; border: 1px solid #ef4444; display: block; }
+        .message.success { background: #dcfce7; color: #155e3d; border: 1px solid #2db572; display: block; }
+        .features-list { margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #e2e8f0; }
+        .features-list h3 { font-size: 0.85rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem; }
+        .features-list ul { list-style: none; }
+        .features-list li { display: flex; align-items: center; gap: 0.75rem; font-size: 0.9rem; color: #334155; margin-bottom: 0.5rem; }
+        .features-list li::before { content: '✓'; color: #22995f; font-weight: 700; }
+        .spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: white; animation: spin 0.8s linear infinite; margin-right: 0.5rem; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .footer { padding: 1.5rem 2rem; text-align: center; border-top: 1px solid #e2e8f0; }
+        .footer p { font-size: 0.85rem; color: #64748b; }
+        .footer a { color: #1a7a4c; text-decoration: none; }
+        .footer a:hover { text-decoration: underline; }
+        @media (max-width: 480px) { .auth-card { padding: 1.5rem; } .header-inner { flex-direction: column; gap: 1rem; } }
     </style>
 </head>
 <body>
-    <nav class="nav" id="nav">
-        <div class="nav-inner">
-            <a href="#" class="logo">
+    <header class="header">
+        <div class="header-inner">
+            <a href="https://bowlstrack.com" class="logo">
                 <svg class="logo-icon" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <circle cx="50" cy="50" r="45" fill="#155e3d"/>
                     <circle cx="50" cy="50" r="35" stroke="#1a7a4c" stroke-width="2" fill="none"/>
@@ -155,232 +68,202 @@
                 </svg>
                 <span class="logo-text">BowlsTrack</span>
             </a>
-            <div class="nav-links">
-                <a href="#features">Features</a>
-                <a href="#pricing">Pricing</a>
-                <a href="/app/signup/" class="btn btn-primary">Sign In</a>
-            </div>
+            <a href="https://bowlstrack.com" class="back-link">← Back to website</a>
         </div>
-    </nav>
-
-    <section class="hero">
-        <div class="hero-inner">
-            <div class="hero-content">
-                <div class="hero-badge">Now Available for Welsh Clubs</div>
-                <h1>Track every delivery.<br><span>Elevate every performance.</span></h1>
-                <p class="hero-description">
-                    The only lawn bowls analytics platform that captures actual bowl positions.
-                    Understand your game like never before.
-                </p>
-                <div class="hero-ctas">
-                    <a href="#pricing" class="btn btn-primary">Get Started</a>
-                    <a href="#features" class="btn btn-secondary">See Features</a>
+    </header>
+    
+    <main class="main">
+        <div class="auth-container">
+            <div class="auth-card">
+                <div class="auth-header">
+                    <h1>Get Started</h1>
+                    <p>Create your free account or sign in</p>
                 </div>
-            </div>
-            <div class="hero-visual">
-                <div class="dartboard-container">
-                    <svg class="dartboard" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <circle cx="200" cy="200" r="180" fill="#155e3d"/>
-                        <circle cx="200" cy="200" r="150" fill="none" stroke="#1a7a4c" stroke-width="2"/>
-                        <circle cx="200" cy="200" r="120" fill="none" stroke="#1a7a4c" stroke-width="2"/>
-                        <circle cx="200" cy="200" r="90" fill="none" stroke="#1a7a4c" stroke-width="2"/>
-                        <circle cx="200" cy="200" r="60" fill="none" stroke="#1a7a4c" stroke-width="2"/>
-                        <circle cx="200" cy="200" r="30" fill="none" stroke="#1a7a4c" stroke-width="2"/>
-                        <circle cx="200" cy="200" r="12" fill="#fbbf24"/>
-                        <circle cx="185" cy="175" r="18" fill="#1e3a5f" stroke="#2d4a6f" stroke-width="2"/>
-                        <circle cx="220" cy="210" r="18" fill="#1e3a5f" stroke="#2d4a6f" stroke-width="2"/>
-                        <circle cx="175" cy="220" r="18" fill="#8b1538" stroke="#a01d42" stroke-width="2"/>
-                        <circle cx="230" cy="185" r="18" fill="#8b1538" stroke="#a01d42" stroke-width="2"/>
-                        <line x1="200" y1="200" x2="185" y2="175" stroke="#fbbf24" stroke-width="1" stroke-dasharray="4 4" opacity="0.6"/>
-                        <line x1="200" y1="200" x2="220" y2="210" stroke="#fbbf24" stroke-width="1" stroke-dasharray="4 4" opacity="0.6"/>
-                    </svg>
+                
+                <div class="free-badge">
+                    <span style="color: #22995f; font-weight: 700;">✓</span>
+                    Essential Plan — Free forever
                 </div>
-            </div>
-        </div>
-    </section>
-
-    <section class="differentiator">
-        <div class="differentiator-inner">
-            <h2>Not just scores. Actual positions.</h2>
-            <p>
-                Other apps track wins and losses. BowlsTrack captures <strong>exactly where every bowl lands</strong>
-                using our dartboard interface. Build a complete picture of player performance,
-                shot selection patterns, and tactical tendencies over time.
-            </p>
-        </div>
-    </section>
-
-    <section class="features" id="features">
-        <div class="features-inner">
-            <div class="section-header">
-                <h2>Everything you need to improve</h2>
-                <p>From individual delivery tracking to team-wide analytics, BowlsTrack gives you the insights that matter.</p>
-            </div>
-            <div class="features-grid">
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>
-                        </svg>
+                
+                <div id="message" class="message"></div>
+                
+                <div class="auth-tabs">
+                    <button type="button" class="auth-tab active" id="tab-signup">Sign Up</button>
+                    <button type="button" class="auth-tab" id="tab-login">Sign In</button>
+                </div>
+                
+                <form id="signup-form" class="auth-form active">
+                    <div class="form-group">
+                        <label for="signup-name">Your Name</label>
+                        <input type="text" id="signup-name" placeholder="John Smith" required>
                     </div>
-                    <h3>Dartboard Position Capture</h3>
-                    <p>Tap to record exactly where each bowl finishes. Build a spatial database of every delivery across every game.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-                        </svg>
+                    <div class="form-group">
+                        <label for="signup-email">Email Address</label>
+                        <input type="email" id="signup-email" placeholder="john@example.com" required>
                     </div>
-                    <h3>Performance Analytics</h3>
-                    <p>Visualise trends, compare players, and identify strengths and weaknesses with comprehensive dashboards.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
-                        </svg>
+                    <div class="form-group">
+                        <label for="signup-password">Password</label>
+                        <input type="password" id="signup-password" placeholder="At least 6 characters" minlength="6" required>
                     </div>
-                    <h3>Team Management</h3>
-                    <p>Manage squads, track individual and team performance, and make data-driven selection decisions.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>
-                        </svg>
+                    <button type="submit" class="btn btn-primary" id="signup-btn">Create Free Account</button>
+                </form>
+                
+                <form id="login-form" class="auth-form">
+                    <div class="form-group">
+                        <label for="login-email">Email Address</label>
+                        <input type="email" id="login-email" placeholder="john@example.com" required>
                     </div>
-                    <h3>Works on Any Device</h3>
-                    <p>Use on your iPad rink-side, review on your laptop at home. Your data syncs everywhere automatically.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
-                        </svg>
+                    <div class="form-group">
+                        <label for="login-password">Password</label>
+                        <input type="password" id="login-password" placeholder="Your password" required>
                     </div>
-                    <h3>All Six Formats</h3>
-                    <p>Singles, Pairs (3 & 4 bowl), Triples (2 & 3 bowl), and Rinks. Every format, every configuration.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                        </svg>
-                    </div>
-                    <h3>Real-Time Recording</h3>
-                    <p>Capture deliveries as they happen. No post-match data entry. No forgotten details.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section class="pricing" id="pricing">
-        <div class="pricing-inner">
-            <div class="section-header">
-                <h2>Simple, transparent pricing</h2>
-                <p>Choose the plan that fits your needs. Upgrade or downgrade anytime.</p>
-            </div>
-            <div class="pricing-grid">
-                <div class="pricing-card">
-                    <div class="pricing-tier">Free</div>
-                    <div class="pricing-name">Essential</div>
-                    <div class="pricing-price">&pound;0 <span>/year</span></div>
-                    <p class="pricing-description">For individual bowlers getting started</p>
-                    <ul class="pricing-features">
+                    <button type="submit" class="btn btn-primary" id="login-btn">Sign In</button>
+                </form>
+                
+                <div class="features-list">
+                    <h3>Included in Essential</h3>
+                    <ul>
                         <li>Track up to 10 games</li>
                         <li>Basic performance stats</li>
-                        <li>Single user</li>
+                        <li>Dartboard position capture</li>
+                        <li>Works on any device</li>
                     </ul>
-                    <a href="/app/signup/" class="btn btn-secondary">Get Started Free</a>
-                </div>
-                <div class="pricing-card">
-                    <div class="pricing-tier">Individual</div>
-                    <div class="pricing-name">Personal</div>
-                    <div class="pricing-price">&pound;100 <span>/year</span></div>
-                    <p class="pricing-description">For serious players tracking their game</p>
-                    <ul class="pricing-features">
-                        <li>Unlimited games</li>
-                        <li>Full analytics dashboard</li>
-                        <li>Historical data export</li>
-                        <li>Priority support</li>
-                    </ul>
-                    <a href="https://afonanalytics.co.uk/bowlstrack-personal" class="btn btn-primary">Subscribe</a>
-                </div>
-                <div class="pricing-card featured">
-                    <div class="pricing-tier">Teams</div>
-                    <div class="pricing-name">Club</div>
-                    <div class="pricing-price">&pound;400 <span>/year</span></div>
-                    <p class="pricing-description">For clubs and team managers</p>
-                    <ul class="pricing-features">
-                        <li>Everything in Personal</li>
-                        <li>Up to 10 team members</li>
-                        <li>Squad management</li>
-                        <li>Team comparison reports</li>
-                        <li>Role-based access</li>
-                    </ul>
-                    <a href="https://afonanalytics.co.uk/bowlstrack-club" class="btn btn-gold">Subscribe</a>
-                </div>
-                <div class="pricing-card">
-                    <div class="pricing-tier">Professional</div>
-                    <div class="pricing-name">Elite</div>
-                    <div class="pricing-price">&pound;500 <span>/year</span></div>
-                    <p class="pricing-description">For national selectors and associations</p>
-                    <ul class="pricing-features">
-                        <li>Everything in Club</li>
-                        <li>Advanced selection tools</li>
-                        <li>Multi-team oversight</li>
-                        <li>Custom reporting</li>
-                        <li>Dedicated support</li>
-                    </ul>
-                    <a href="https://afonanalytics.co.uk/bowlstrack-elite" class="btn btn-primary">Contact Us</a>
                 </div>
             </div>
         </div>
-    </section>
-
-    <section class="cta">
-        <div class="cta-inner">
-            <h2>Ready to transform your game?</h2>
-            <p>Join clubs across Wales already using BowlsTrack to gain a competitive edge.</p>
-            <a href="#pricing" class="btn btn-gold">Get Started Today</a>
-        </div>
-    </section>
-
+    </main>
+    
     <footer class="footer">
-        <div class="footer-inner">
-            <div class="footer-brand">
-                <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="50" cy="50" r="45" fill="#155e3d"/>
-                    <circle cx="50" cy="50" r="6" fill="#fbbf24"/>
-                </svg>
-                <span>BowlsTrack</span>
-            </div>
-            <div class="footer-links">
-                <a href="#features">Features</a>
-                <a href="#pricing">Pricing</a>
-                <a href="mailto:hello@bowlstrack.com">Contact</a>
-                <a href="/privacy">Privacy</a>
-                <a href="/terms">Terms</a>
-            </div>
-            <div class="footer-afon">
-                A product of <a href="https://afonanalytics.co.uk">Afon Analytics</a>
-            </div>
-        </div>
+        <p>By signing up, you agree to our <a href="https://bowlstrack.com/terms">Terms</a> and <a href="https://bowlstrack.com/privacy">Privacy Policy</a>.</p>
     </footer>
-
+    
     <script>
-        const nav = document.getElementById('nav');
-        window.addEventListener('scroll', () => {
-            if (window.scrollY > 50) { nav.classList.add('scrolled'); }
-            else { nav.classList.remove('scrolled'); }
+        // Supabase setup
+        var SUPABASE_URL = 'https://ckgppsxswmpzrngzpacv.supabase.co';
+        var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNrZ3Bwc3hzd21wenJuZ3pwYWN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIyOTU3NjUsImV4cCI6MjA4Nzg3MTc2NX0.ODkevSgXobwQKwfluwJdcJnflD5dH0NThxcbeOXW8Xo';
+        
+        var supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        // Elements
+        var tabSignup = document.getElementById('tab-signup');
+        var tabLogin = document.getElementById('tab-login');
+        var signupForm = document.getElementById('signup-form');
+        var loginForm = document.getElementById('login-form');
+        var messageEl = document.getElementById('message');
+        var signupBtn = document.getElementById('signup-btn');
+        var loginBtn = document.getElementById('login-btn');
+        
+        // Tab switching
+        tabSignup.addEventListener('click', function() {
+            tabSignup.classList.add('active');
+            tabLogin.classList.remove('active');
+            signupForm.classList.add('active');
+            loginForm.classList.remove('active');
+            messageEl.className = 'message';
         });
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) { target.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+        
+        tabLogin.addEventListener('click', function() {
+            tabLogin.classList.add('active');
+            tabSignup.classList.remove('active');
+            loginForm.classList.add('active');
+            signupForm.classList.remove('active');
+            messageEl.className = 'message';
+        });
+        
+        // Show message
+        function showMessage(text, type) {
+            messageEl.textContent = text;
+            messageEl.className = 'message ' + type;
+        }
+        
+        // Set loading
+        function setLoading(btn, loading, defaultText) {
+            if (loading) {
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner"></span> Please wait...';
+            } else {
+                btn.disabled = false;
+                btn.textContent = defaultText;
+            }
+        }
+        
+        // Sign Up
+        signupForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            messageEl.className = 'message';
+            
+            var name = document.getElementById('signup-name').value.trim();
+            var email = document.getElementById('signup-email').value.trim();
+            var password = document.getElementById('signup-password').value;
+            
+            setLoading(signupBtn, true, 'Create Free Account');
+            
+            supabaseClient.auth.signUp({
+                email: email,
+                password: password,
+                options: {
+                    data: {
+                        full_name: name
+                    }
+                }
+            }).then(function(response) {
+                setLoading(signupBtn, false, 'Create Free Account');
+                
+                if (response.error) {
+                    showMessage(response.error.message, 'error');
+                    return;
+                }
+                
+                if (response.data.user && response.data.user.identities && response.data.user.identities.length === 0) {
+                    showMessage('An account with this email already exists. Please sign in instead.', 'error');
+                } else {
+                    showMessage('Success! Please check your email to confirm your account.', 'success');
+                    signupForm.reset();
+                }
+            }).catch(function(err) {
+                setLoading(signupBtn, false, 'Create Free Account');
+                showMessage('An error occurred. Please try again.', 'error');
+                console.error(err);
             });
+        });
+        
+        // Sign In
+        loginForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            messageEl.className = 'message';
+            
+            var email = document.getElementById('login-email').value.trim();
+            var password = document.getElementById('login-password').value;
+            
+            setLoading(loginBtn, true, 'Sign In');
+            
+            supabaseClient.auth.signInWithPassword({
+                email: email,
+                password: password
+            }).then(function(response) {
+                setLoading(loginBtn, false, 'Sign In');
+                
+                if (response.error) {
+                    showMessage(response.error.message, 'error');
+                    return;
+                }
+                
+                showMessage('Signed in successfully! Redirecting...', 'success');
+                setTimeout(function() {
+                    window.location.href = '/app/dashboard/';
+                }, 1000);
+            }).catch(function(err) {
+                setLoading(loginBtn, false, 'Sign In');
+                showMessage('Invalid email or password.', 'error');
+                console.error(err);
+            });
+        });
+        
+        // Check if already logged in
+        supabaseClient.auth.getSession().then(function(response) {
+            if (response.data.session) {
+                window.location.href = '/app/dashboard/';
+            }
         });
     </script>
 </body>
