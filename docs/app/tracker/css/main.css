@@ -1613,3 +1613,10 @@ body.tier-essential #homeCardManager,
 body.tier-essential #homeCardElite {
     display: none !important;
 }
+
+/* When embedded in dashboard iframe, hide redundant chrome */
+body.embedded-in-dashboard .user-bar,
+body.embedded-in-dashboard .tier-banner,
+body.embedded-in-dashboard #loginScreen {
+    display: none !important;
+}

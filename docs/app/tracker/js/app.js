@@ -22,7 +22,7 @@ let currentTier = 'essential'; // essential, personal, club, elite
 let trendChartInstance = null;
 let effectivenessChartInstance = null;
 
-// Navigation target check moved to end of file
+// Detect if embedded in dashboard iframe (applied in initApp)
 
 let gameState = {
   gameId: 0,
@@ -95,6 +95,11 @@ const QUALITY_OPTIONS = [
 // ===== APP INITIALIZATION =====
 
 async function initApp() {
+  // If embedded in dashboard iframe, hide redundant UI
+  if (window.self !== window.top) {
+    document.body.classList.add('embedded-in-dashboard');
+  }
+
   try {
     // Open IndexedDB
     await openDB();
@@ -2648,3 +2653,13 @@ document.addEventListener('DOMContentLoaded', initApp);
         }, 200);
     }
 })();
+
+// Listen for navigation messages from parent dashboard (iframe embed)
+window.addEventListener('message', function(event) {
+    if (event.data && event.data.type === 'bowlstrack_navigate') {
+        var view = event.data.view;
+        if (typeof navigateTo === 'function') {
+            navigateTo(view);
+        }
+    }
+});
