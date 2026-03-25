@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#1e3c72">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="BowlsTrack">
+    <meta name="description" content="Performance tracking application for lawn bowls selectors">
+    <title>BowlsTrack</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/analytics.css">
+</head>
+<body>
+    <div class="container" id="mainContainer">
+        <!-- Install Banner -->
+        <div id="installBanner" class="install-banner">
+            <span class="install-banner-text">Install BowlsTrack for offline use</span>
+            <button onclick="installPWA()">Install</button>
+            <button class="btn-dismiss" onclick="dismissInstallBanner()">&times;</button>
+        </div>
+
+        <!-- User Bar (shown when authenticated) -->
+        <div id="userBar" class="user-bar" style="display: none;">
+            <span class="user-bar-name">User</span>
+            <span class="user-bar-role role-selector">selector</span>
+            <span class="sync-indicator" id="syncIndicator">
+                <span class="sync-dot"></span>
+                <span class="sync-label">Synced</span>
+            </span>
+            <button class="btn-small btn-secondary" style="padding: 3px 10px; min-height: 26px; font-size: 11px;" onclick="handleLogout()">Sign Out</button>
+        </div>
+
+        <!-- Tier Banner -->
+        <div id="tierBanner" class="tier-banner">
+            <span class="tier-badge" id="tierBadge">ESSENTIAL</span>
+            <span class="tier-label" id="tierLabel">Free Tier</span>
+            <button class="btn-small btn-tier-upgrade" onclick="navigateTo('tiers')">Upgrade</button>
+        </div>
+
+        <!-- Login Screen -->
+        <div id="loginScreen" class="screen">
+            <div class="login-container">
+                <div style="font-size: 48px; text-align: center; margin-bottom: 10px;">&#127923;</div>
+                <h2 style="margin-bottom: 5px;">BowlsTrack</h2>
+                <p style="text-align: center; color: var(--text-secondary); font-size: 13px; margin-bottom: 20px;">Sign in to sync your data</p>
+                <div id="loginError" class="login-error" style="display: none;"></div>
+                <div class="form-group">
+                    <label for="loginEmail">Email</label>
+                    <input type="email" id="loginEmail" placeholder="your@email.com" autocomplete="email">
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">Password</label>
+                    <input type="password" id="loginPassword" placeholder="Password" autocomplete="current-password">
+                </div>
+                <button class="btn-block" id="loginBtn" onclick="handleLogin()">Sign In</button>
+                <div id="loginSpinner" class="login-spinner" style="display: none;">Signing in...</div>
+                <button class="btn-secondary btn-block" style="margin-top: 10px;" onclick="continueOffline()">Continue Offline</button>
+                <p style="text-align: center; color: var(--text-muted); font-size: 11px; margin-top: 15px;">Offline mode uses local storage only</p>
+            </div>
+        </div>
+
+        <!-- Home Screen -->
+        <div id="homeScreen" class="screen active">
+            <h1>BowlsTrack</h1>
+            <p style="text-align: center; color: var(--text-secondary); font-size: 13px; margin: -10px 0 15px;">Performance tracking for lawn bowls selectors</p>
+            <div id="homeStatus" style="text-align: center; color: var(--primary-light); font-size: 14px; margin-bottom: 15px;"></div>
+
+            <div class="home-grid">
+                <div class="game-card" onclick="navigateTo('track')" style="text-align: center;">
+                    <div style="font-size: 28px; margin-bottom: 6px;">&#127919;</div>
+                    <div class="game-card-title">Selector App</div>
+                    <div class="game-card-info">Record bowls with interactive green</div>
+                </div>
+                <div class="game-card" onclick="navigateTo('games')" style="text-align: center;">
+                    <div style="font-size: 28px; margin-bottom: 6px;">&#128203;</div>
+                    <div class="game-card-title">Open Games</div>
+                    <div class="game-card-info">Continue in-progress games</div>
+                </div>
+                <div class="game-card role-manager-only" id="homeCardAnalytics" onclick="navigateTo('analytics')" style="text-align: center;">
+                    <div style="font-size: 28px; margin-bottom: 6px;">&#128202;</div>
+                    <div class="game-card-title">Analytics</div>
+                    <div class="game-card-info">Player stats &amp; comparison</div>
+                </div>
+                <div class="game-card tier-card tier-3 role-manager-only" id="homeCardManager" onclick="navigateTo('manager')" style="text-align: center;">
+                    <div style="font-size: 28px; margin-bottom: 6px;">&#128101;</div>
+                    <div class="game-card-title">Team Manager</div>
+                    <div class="game-card-info">Live dashboard &amp; team view</div>
+                    <span class="tier-lock-badge">CLUB+</span>
+                </div>
+                <div class="game-card tier-card tier-4 role-manager-only" id="homeCardElite" onclick="navigateTo('elite')" style="text-align: center;">
+                    <div style="font-size: 28px; margin-bottom: 6px;">&#9733;</div>
+                    <div class="game-card-title">Elite Analytics</div>
+                    <div class="game-card-info">Heatmaps, rankings &amp; recommendations</div>
+                    <span class="tier-lock-badge">ELITE</span>
+                </div>
+            </div>
+
+            <div style="text-align: center; margin-top: 10px;">
+                <button class="btn-secondary btn-small" onclick="handleLoadDemoData()">Load Demo Data</button>
+                <span class="tooltip-trigger" tabindex="0">?
+                    <span class="tooltip-content">Load sample tournament data to explore analytics features</span>
+                </span>
+            </div>
+        </div>
+
+        <!-- Tier Selection Screen -->
+        <div id="tiersScreen" class="screen">
+            <div class="breadcrumbs">
+                <a href="#" onclick="navigateTo('home'); return false;">Home</a> &rsaquo; Subscription Tiers
+            </div>
+            <h2 style="margin-bottom: 20px;">Choose Your Plan</h2>
+            <div class="tier-grid">
+                <div class="tier-option" onclick="selectTier('essential', event)">
+                    <div class="tier-option-header tier-1-bg">
+                        <h3>Essential</h3>
+                        <div class="tier-price">Free</div>
+                    </div>
+                    <ul class="tier-features">
+                        <li>Core game tracking &amp; dartboard entry</li>
+                        <li>Automatic scoring (0-4 scale)</li>
+                        <li>Set format options</li>
+                        <li>CSV export</li>
+                        <li>Offline PWA</li>
+                        <li>Session-only data</li>
+                    </ul>
+                    <button class="btn-block btn-small" id="tierBtn1" type="button" onclick="selectTier('essential', event)">Current Plan</button>
+                </div>
+                <div class="tier-option" onclick="selectTier('personal', event)">
+                    <div class="tier-option-header tier-2-bg">
+                        <h3>Personal</h3>
+                        <div class="tier-price">&pound;10/mo</div>
+                    </div>
+                    <ul class="tier-features">
+                        <li>Everything in Essential</li>
+                        <li>Video recording per end</li>
+                        <li>Personal heatmaps</li>
+                        <li>Cloud storage</li>
+                        <li>Personal login</li>
+                    </ul>
+                    <button class="btn-block btn-small btn-secondary" id="tierBtn2" type="button" onclick="selectTier('personal', event)">Select</button>
+                </div>
+                <div class="tier-option" onclick="selectTier('club', event)">
+                    <div class="tier-option-header tier-3-bg">
+                        <h3>Club</h3>
+                        <div class="tier-price">&pound;40/mo</div>
+                    </div>
+                    <ul class="tier-features">
+                        <li>Everything in Personal</li>
+                        <li>Up to 8 user accounts</li>
+                        <li>Team Manager live view</li>
+                        <li>Player comparison</li>
+                        <li>Club branding &amp; Excel export</li>
+                    </ul>
+                    <button class="btn-block btn-small btn-secondary" id="tierBtn3" type="button" onclick="selectTier('club', event)">Select</button>
+                </div>
+                <div class="tier-option" onclick="selectTier('elite', event)">
+                    <div class="tier-option-header tier-4-bg">
+                        <h3>Elite</h3>
+                        <div class="tier-price">&pound;50/mo</div>
+                    </div>
+                    <ul class="tier-features">
+                        <li>Everything in Club</li>
+                        <li>LIVE data streaming</li>
+                        <li>Advanced heatmaps</li>
+                        <li>Selection recommendations</li>
+                        <li>Player ranking &amp; form index</li>
+                        <li>API access &amp; unlimited seats</li>
+                    </ul>
+                    <button class="btn-block btn-small btn-secondary" id="tierBtn4" type="button" onclick="selectTier('elite', event)">Select</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Setup Screen (Track New Game) -->
+        <div id="setupScreen" class="screen">
+            <div class="breadcrumbs">
+                <a href="#" onclick="navigateTo('home'); return false;">Home</a> &rsaquo; New Game
+            </div>
+            <h2 style="margin-bottom: 20px;">New Game Setup</h2>
+
+            <div class="form-group">
+                <label>Game Type</label>
+                <div class="radio-group" id="gameTypeGroup">
+                    <div class="radio-btn active" onclick="selectGameType('game')">Game</div>
+                    <div class="radio-btn" onclick="selectGameType('trial')">Trial</div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="tournamentName">Tournament Name (Optional)</label>
+                <input type="text" id="tournamentName" placeholder="Enter tournament name">
+            </div>
+
+            <div class="form-group">
+                <label for="gameFormat">Game Format</label>
+                <select id="gameFormat" onchange="updateEndsDropdown()">
+                    <option value="singles">Singles (4 bowls each)</option>
+                    <option value="pairs4">Pairs (4 bowls each)</option>
+                    <option value="pairs3">Pairs (3 bowls each)</option>
+                    <option value="triples3">Triples (3 bowls each)</option>
+                    <option value="triples2">Triples (2 bowls each)</option>
+                    <option value="fours">Fours (2 bowls each)</option>
+                </select>
+            </div>
+
+            <!-- Match Structure: Traditional or Set Format -->
+            <div class="form-group">
+                <label>Match Structure
+                    <span class="tooltip-trigger" tabindex="0">?
+                        <span class="tooltip-content">Traditional: fixed number of ends. Set Format: play in sets (e.g. 2 sets of 7 ends) with tie-break if sets are level.</span>
+                    </span>
+                </label>
+                <div class="radio-group" id="matchStructureGroup">
+                    <div class="radio-btn active" onclick="selectMatchStructure('traditional')">Traditional</div>
+                    <div class="radio-btn" onclick="selectMatchStructure('sets')">Set Format</div>
+                </div>
+            </div>
+
+            <!-- Traditional ends selection -->
+            <div class="form-group" id="endsGroup">
+                <label for="numberOfEnds">Number of Ends</label>
+                <select id="numberOfEnds">
+                    <option value="15">15 Ends</option>
+                    <option value="18" selected>18 Ends</option>
+                    <option value="21">21 Ends</option>
+                </select>
+            </div>
+
+            <!-- Set format options -->
+            <div id="setFormatGroup" style="display: none;">
+                <div class="form-group">
+                    <label for="numberOfSets">Number of Sets</label>
+                    <select id="numberOfSets">
+                        <option value="2" selected>2 Sets</option>
+                        <option value="3">3 Sets</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="endsPerSet">Ends per Set</label>
+                    <select id="endsPerSet">
+                        <option value="5">5 Ends</option>
+                        <option value="7" selected>7 Ends</option>
+                        <option value="9">9 Ends</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="tieBreakEnds">Tie-Break Ends
+                        <span class="tooltip-trigger" tabindex="0">?
+                            <span class="tooltip-content">If sets are level after all sets are played, a tie-break determines the winner.</span>
+                        </span>
+                    </label>
+                    <select id="tieBreakEnds">
+                        <option value="1" selected>1 End</option>
+                        <option value="3">3 Ends</option>
+                    </select>
+                </div>
+                <div class="set-format-preview" id="setFormatPreview">
+                    Format: 2 sets &times; 7 ends + 1 end tie-break (15 ends max)
+                </div>
+            </div>
+
+            <div id="yourTeamPlayers">
+                <h3 id="yourTeamLabel">Your Team</h3>
+                <div class="form-group">
+                    <label for="yourPlayer0">Player Name</label>
+                    <input type="text" id="yourPlayer0" placeholder="Enter name">
+                </div>
+            </div>
+
+            <div id="opponentTeamSection">
+                <h3 id="opponentTeamLabel">Opponent Team</h3>
+                <div class="form-group">
+                    <label for="opponentTeamName">Team Name</label>
+                    <input type="text" id="opponentTeamName" placeholder="Enter opponent team name">
+                </div>
+                <div id="awayTeamPlayers" style="display: none;"></div>
+            </div>
+
+            <button class="btn-block" onclick="startGame()">Start Game</button>
+            <button class="btn-secondary btn-block" onclick="navigateTo('games')" style="margin-top: 10px;">View Open Games</button>
+        </div>
+
+        <!-- Games Manager Screen -->
+        <div id="gamesManagerScreen" class="screen">
+            <div class="breadcrumbs">
+                <a href="#" onclick="navigateTo('home'); return false;">Home</a> &rsaquo; Games
+            </div>
+            <h2 style="margin-bottom: 20px;">Open Games</h2>
+            <div id="gamesList" style="margin-bottom: 20px;"></div>
+            <button class="btn-block" onclick="showSetupScreen()">Start New Game</button>
+            <button class="btn-secondary btn-block" onclick="returnToCurrentGame()" style="margin-top: 10px;">Back to Current Game</button>
+        </div>
+
+        <!-- Game Screen (Selector App) -->
+        <div id="gameScreen" class="screen">
+            <div class="breadcrumbs">
+                <a href="#" onclick="navigateTo('home'); return false;">Home</a> &rsaquo;
+                <a href="#" onclick="navigateTo('games'); return false;">Games</a> &rsaquo; Current Game
+            </div>
+
+            <div class="info-bar">
+                <div class="info-item">
+                    <div class="info-label" id="endLabel">End</div>
+                    <div class="info-value" id="currentEnd">1</div>
+                </div>
+                <div class="info-item" id="setInfoItem" style="display: none;">
+                    <div class="info-label">Set</div>
+                    <div class="info-value" id="currentSet">1</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Score</div>
+                    <div class="info-value" id="currentScore">0-0</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Player</div>
+                    <div class="info-value" id="currentPlayer">-</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Bowl</div>
+                    <div class="info-value" id="currentBowl">1</div>
+                </div>
+            </div>
+
+            <div class="game-layout">
+                <!-- LEFT SIDE: Marking Arena -->
+                <div class="game-layout-arena">
+                    <div class="legend">
+                        <div class="legend-item">
+                            <div class="legend-circle" style="background: #4CAF50; border-color: #1B5E20;"></div>
+                            <span>Your Team</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-circle" style="background: #f44336; border-color: #B71C1C;"></div>
+                            <span>Opposition</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-circle" style="background: #FFD700; border-color: #FFA500;"></div>
+                            <span>Jack</span>
+                        </div>
+                        <div class="legend-item" id="deadBowlLegend" style="display: none;">
+                            <div class="legend-circle" style="background: #999; border-color: #666; opacity: 0.5;"></div>
+                            <span>Dead</span>
+                        </div>
+                    </div>
+
+                    <div style="text-align: center; margin-bottom: 3px;">
+                        <span style="font-weight: 600; color: var(--primary); font-size: 12px;">MAT END</span>
+                    </div>
+
+                    <div class="green-canvas-wrapper">
+                        <div class="green-canvas">
+                            <canvas id="greenCanvas"></canvas>
+                        </div>
+                        <div class="zoom-controls">
+                            <button class="btn-small btn-secondary zoom-btn" id="zoomInBtn" onclick="zoomIn()" title="Zoom In">+</button>
+                            <button class="btn-small btn-secondary zoom-btn" id="zoomOutBtn" onclick="zoomOut()" title="Zoom Out">&minus;</button>
+                            <button class="btn-small btn-secondary zoom-btn" id="zoomResetBtn" onclick="zoomReset()" title="Reset Zoom">R</button>
+                        </div>
+                    </div>
+
+                    <div style="text-align: center; margin-top: 3px;">
+                        <span style="font-weight: 600; color: var(--primary); font-size: 12px;">DITCH END</span>
+                    </div>
+
+                    <!-- End-by-end scoreboard -->
+                    <div class="scoreboard" id="scoreboard">
+                        <div class="scoreboard-header">
+                            <span class="scoreboard-team" id="scoreTeam1">Your Team</span>
+                            <span class="scoreboard-team" id="scoreTeam2">Opposition</span>
+                        </div>
+                        <div class="scoreboard-ends" id="scoreboardEnds"></div>
+                    </div>
+                </div>
+
+                <!-- RIGHT SIDE: Controls & Options -->
+                <div class="game-layout-controls">
+                    <div class="controls">
+                        <div class="control-group">
+                            <h3>Jack Length</h3>
+                            <div class="radio-group" id="jackLengthGroup">
+                                <div class="radio-btn active" onclick="selectJackLength('short')">Short</div>
+                                <div class="radio-btn" onclick="selectJackLength('medium')">Medium</div>
+                                <div class="radio-btn" onclick="selectJackLength('long')">Long</div>
+                            </div>
+                        </div>
+
+                        <div class="control-group">
+                            <h3>Team</h3>
+                            <div class="radio-group" id="teamGroup">
+                                <div class="radio-btn active" onclick="selectTeam('yours')">Yours</div>
+                                <div class="radio-btn" onclick="selectTeam('opponent')">Opponent</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="controls">
+                        <div class="control-group">
+                            <h3>Delivery</h3>
+                            <div class="radio-group" id="handGroup">
+                                <div class="radio-btn active" onclick="selectHand('forehand')">Forehand</div>
+                                <div class="radio-btn" onclick="selectHand('backhand')">Backhand</div>
+                            </div>
+                        </div>
+
+                        <div class="control-group" id="playerSelectorInline" style="display: none;">
+                            <h3>Select Player</h3>
+                            <div id="playerButtonsInline" class="radio-group"></div>
+                        </div>
+                    </div>
+
+                    <div class="jack-controls">
+                        <button class="btn-secondary btn-small" id="moveJackBtn" onclick="toggleMoveJackMode()">Move Jack</button>
+                        <button class="btn-secondary btn-small" id="jackInDitchBtn" onclick="toggleJackInDitch()">Jack in Ditch</button>
+                        <button class="btn-secondary btn-small" id="deadBowlBtn" onclick="toggleDeadBowlMode()">Dead Bowl</button>
+                        <button class="btn-secondary btn-small" onclick="captureScreenshot()">Screenshot</button>
+                    </div>
+
+                    <div class="control-group" style="margin-top: 6px;">
+                        <h3>Bowl Notes</h3>
+                        <textarea id="quickBowlNotes" rows="1" placeholder="Add notes for next bowl..." style="font-size: 14px;"></textarea>
+                    </div>
+
+                    <div class="action-buttons">
+                        <button class="btn-secondary" onclick="undoLastBowl()">Undo Last</button>
+                        <button onclick="showEndNotes()">End Notes &amp; Next End</button>
+                    </div>
+
+                    <div class="action-buttons">
+                        <button class="btn-secondary" onclick="navigateTo('games')">Switch Game</button>
+                        <button class="btn-secondary" onclick="showEndGameDialog()">End Game</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analytics Screen -->
+        <div id="analyticsScreen" class="screen">
+            <div class="breadcrumbs">
+                <a href="#" onclick="navigateTo('home'); return false;">Home</a> &rsaquo; Analytics
+            </div>
+
+            <div class="analytics-tabs">
+                <div class="analytics-tab active" data-tab="player" onclick="setAnalyticsTab('player')">Players</div>
+                <div class="analytics-tab" data-tab="compare" onclick="setAnalyticsTab('compare')">Compare</div>
+                <div class="analytics-tab" data-tab="history" onclick="setAnalyticsTab('history')">History</div>
+            </div>
+
+            <div id="analyticsContent">
+                <div class="analytics-loading">Loading analytics...</div>
+            </div>
+
+            <!-- Export Section -->
+            <div class="export-section">
+                <h4>Export Data
+                    <span class="tooltip-trigger" tabindex="0">?
+                        <span class="tooltip-content">Download your data as CSV files compatible with Excel and Google Sheets</span>
+                    </span>
+                </h4>
+                <div class="export-buttons">
+                    <button class="btn-secondary btn-small" onclick="exportAllPlayerStats()">All Players</button>
+                    <button class="btn-secondary btn-small" onclick="exportTournamentSummary()">Tournament Summary</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Team Manager Live View (Tier 3+) -->
+        <div id="managerScreen" class="screen">
+            <div class="breadcrumbs">
+                <a href="#" onclick="navigateTo('home'); return false;">Home</a> &rsaquo; Team Manager
+            </div>
+            <div class="manager-header">
+                <h2>Team Manager Dashboard</h2>
+                <span class="tier-lock-badge" style="font-size: 11px;">CLUB+</span>
+            </div>
+
+            <div class="manager-tabs">
+                <div class="analytics-tab active" data-mtab="live" onclick="setManagerTab('live')">Live Games</div>
+                <div class="analytics-tab" data-mtab="players" onclick="setManagerTab('players')">Player History</div>
+                <div class="analytics-tab" data-mtab="comparison" onclick="setManagerTab('comparison')">Compare</div>
+            </div>
+
+            <div id="managerContent">
+                <div id="managerLive" class="manager-panel">
+                    <div class="manager-live-header">
+                        <h3>Active Rinks</h3>
+                        <button class="btn-small" onclick="refreshManagerView()">Refresh</button>
+                    </div>
+                    <div id="managerRinks" class="manager-rinks-grid"></div>
+                </div>
+
+                <div id="managerPlayers" class="manager-panel" style="display: none;">
+                    <h3>Player History &amp; Position Performance</h3>
+                    <div class="form-group">
+                        <select id="managerPlayerSelect" onchange="loadManagerPlayerStats()">
+                            <option value="">Select a player...</option>
+                        </select>
+                    </div>
+                    <div id="managerPlayerStats"></div>
+                </div>
+
+                <div id="managerComparison" class="manager-panel" style="display: none;">
+                    <h3>Player Comparison</h3>
+                    <div class="comparison-selectors">
+                        <select id="comparePlayer1" onchange="updateManagerComparison()"><option value="">Player 1...</option></select>
+                        <span>vs</span>
+                        <select id="comparePlayer2" onchange="updateManagerComparison()"><option value="">Player 2...</option></select>
+                    </div>
+                    <div id="managerComparisonResult"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Elite Analytics Dashboard (Tier 4) -->
+        <div id="eliteScreen" class="screen">
+            <div class="breadcrumbs">
+                <a href="#" onclick="navigateTo('home'); return false;">Home</a> &rsaquo;
+                <a href="#" onclick="navigateTo('manager'); return false;">Team Manager</a> &rsaquo; Elite Analytics
+            </div>
+            <div class="manager-header">
+                <h2>Elite Analytics</h2>
+                <span class="tier-lock-badge tier-4-badge" style="font-size: 11px;">ELITE</span>
+            </div>
+
+            <div class="manager-tabs">
+                <div class="analytics-tab active" data-etab="heatmap" onclick="setEliteTab('heatmap')">Heatmaps</div>
+                <div class="analytics-tab" data-etab="rankings" onclick="setEliteTab('rankings')">Rankings</div>
+                <div class="analytics-tab" data-etab="trends" onclick="setEliteTab('trends')">Trends</div>
+                <div class="analytics-tab" data-etab="recommend" onclick="setEliteTab('recommend')">Selections</div>
+            </div>
+
+            <div id="eliteContent">
+                <div id="eliteHeatmap" class="elite-panel">
+                    <div class="elite-filters">
+                        <select id="heatmapPlayer" onchange="renderHeatmap()">
+                            <option value="all">All Players</option>
+                        </select>
+                        <select id="heatmapPosition" onchange="renderHeatmap()">
+                            <option value="all">All Positions</option>
+                            <option value="Lead">Lead</option>
+                            <option value="Second">Second</option>
+                            <option value="Third">Third</option>
+                            <option value="Skip">Skip</option>
+                        </select>
+                    </div>
+                    <div class="heatmap-container">
+                        <canvas id="heatmapCanvas" width="500" height="500"></canvas>
+                    </div>
+                    <div class="heatmap-legend">
+                        <span class="heatmap-label">Low density</span>
+                        <div class="heatmap-gradient"></div>
+                        <span class="heatmap-label">High density</span>
+                    </div>
+                </div>
+
+                <div id="eliteRankings" class="elite-panel" style="display: none;">
+                    <h3>Player Rankings &amp; Form Index</h3>
+                    <div class="form-group">
+                        <select id="rankingPosition" onchange="renderRankings()">
+                            <option value="all">All Positions</option>
+                            <option value="Lead">Lead</option>
+                            <option value="Second">Second</option>
+                            <option value="Third">Third</option>
+                            <option value="Skip">Skip</option>
+                        </select>
+                    </div>
+                    <div id="rankingsTable"></div>
+                </div>
+
+                <div id="eliteTrends" class="elite-panel" style="display: none;">
+                    <h3>Performance Trends</h3>
+                    <div class="elite-filters">
+                        <select id="trendPlayer" onchange="renderTrends()">
+                            <option value="">Select player...</option>
+                        </select>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="trendChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="effectivenessChart"></canvas>
+                    </div>
+                </div>
+
+                <div id="eliteRecommend" class="elite-panel" style="display: none;">
+                    <h3>Selection Recommendations</h3>
+                    <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 15px;">
+                        Algorithm ranks players by form index: recent effective bowl %, shot type success, and consistency score.
+                    </p>
+                    <div class="form-group">
+                        <label>Recommended team for</label>
+                        <select id="recommendFormat" onchange="renderRecommendations()">
+                            <option value="fours">Fours</option>
+                            <option value="triples3">Triples</option>
+                            <option value="pairs4">Pairs</option>
+                            <option value="singles">Singles</option>
+                        </select>
+                    </div>
+                    <div id="recommendationResult"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bowl Scoring Modal -->
+        <div id="bowlScoringModal" class="modal">
+            <div class="modal-content">
+                <h2>Score Last Bowl</h2>
+                <div id="scoringOptions" style="margin: 20px 0;"></div>
+                <div class="form-group">
+                    <label for="bowlNotes">Bowl Notes (Optional)</label>
+                    <textarea id="bowlNotes" rows="3" placeholder="Add notes about this bowl..."></textarea>
+                </div>
+                <div class="action-buttons">
+                    <button onclick="saveBowlScore()">Save</button>
+                    <button class="btn-secondary" onclick="closeBowlScoringModal()">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- End Notes Modal -->
+        <div id="endNotesModal" class="modal">
+            <div class="modal-content">
+                <h2>End <span id="endNotesNumber"></span> Complete</h2>
+                <div id="endScoreSummary" style="text-align: center; margin-bottom: 15px;"></div>
+
+                <div class="end-shots-summary" id="endShotsSummary" style="margin-bottom: 15px;"></div>
+
+                <div class="form-group">
+                    <label for="endShotsFor">Shots For</label>
+                    <input type="number" id="endShotsFor" min="0" max="99" placeholder="0" style="text-align: center; font-size: 20px; font-weight: 700;">
+                </div>
+                <div class="form-group">
+                    <label for="endShotsAgainst">Shots Against</label>
+                    <input type="number" id="endShotsAgainst" min="0" max="99" placeholder="0" style="text-align: center; font-size: 20px; font-weight: 700;">
+                </div>
+
+                <div class="form-group">
+                    <label for="endNotes">End Notes (Optional)</label>
+                    <textarea id="endNotes" rows="3" placeholder="Add notes about this end..."></textarea>
+                </div>
+                <div class="action-buttons">
+                    <button onclick="saveEndNotes()">Continue to Next End</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- End Game Modal -->
+        <div id="endGameModal" class="modal">
+            <div class="modal-content">
+                <h2>End Game</h2>
+                <p id="endGameSummary" style="margin-bottom: 20px; color: var(--text-secondary);"></p>
+                <div class="form-group">
+                    <label for="gameNotes">Game Notes (Optional)</label>
+                    <textarea id="gameNotes" rows="4" placeholder="Add final notes about this game..."></textarea>
+                </div>
+                <div class="action-buttons">
+                    <button onclick="confirmEndGame()">End Game</button>
+                    <button class="btn-secondary" onclick="closeEndGameModal()">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Back-End Scoring Modal (Third & Skip) -->
+        <div id="backEndScoringModal" class="modal">
+            <div class="modal-content">
+                <h2 id="backEndScoringTitle">Score Bowl</h2>
+                <p id="backEndScoringPlayer" style="text-align: center; color: var(--text-secondary); margin-bottom: 15px;"></p>
+                <div id="backEndShotType" style="margin-bottom: 15px;">
+                    <h4 style="color: var(--primary); margin-bottom: 8px;">Shot Type</h4>
+                    <div class="scoring-options" id="shotTypeOptions"></div>
+                </div>
+                <div id="backEndQuality" style="margin-bottom: 15px;">
+                    <h4 style="color: var(--primary); margin-bottom: 8px;">Quality
+                        <span class="tooltip-trigger" tabindex="0">?
+                            <span class="tooltip-content"><strong>Effective Bowl (4):</strong> Jack-high draw, resting bowl, second shot/backstop, positional blocker, trailing shot, controlled up-shot.<br><strong>Ineffective (0):</strong> Short of head, over-running, narrow/wide of target.</span>
+                        </span>
+                    </h4>
+                    <div class="scoring-options" id="qualityOptions"></div>
+                </div>
+                <div class="action-buttons">
+                    <button onclick="confirmBackEndScore()">Save Score</button>
+                    <button class="btn-secondary" onclick="skipBackEndScore()">Skip</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Onboarding Overlay -->
+        <div id="onboardingOverlay" class="onboarding-overlay">
+            <div class="onboarding-card" id="onboardingCard"></div>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <div class="nav-item active" data-view="home" onclick="navigateTo('home')">
+            <span class="nav-icon">&#127968;</span>
+            <span>Home</span>
+        </div>
+        <div class="nav-item" data-view="track" onclick="navigateTo('track')">
+            <span class="nav-icon">&#127919;</span>
+            <span>Track</span>
+        </div>
+        <div class="nav-item" data-view="games" onclick="navigateTo('games')">
+            <span class="nav-icon">&#128203;</span>
+            <span>Games</span>
+        </div>
+        <div class="nav-item role-manager-only" data-view="analytics" onclick="navigateTo('analytics')">
+            <span class="nav-icon">&#128202;</span>
+            <span>Analytics</span>
+        </div>
+        <div class="nav-item role-manager-only" data-view="manager" onclick="navigateTo('manager')">
+            <span class="nav-icon">&#128101;</span>
+            <span>Manager</span>
+        </div>
+    </nav>
+
+    <!-- FAB for new game -->
+    <button class="fab" id="fabNewGame" onclick="navigateTo('track')" title="New Game">+</button>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    <script src="js/supabase.js"></script>
+    <script src="js/db.js"></script>
+    <script src="js/demo-data.js"></script>
+    <script src="js/analytics.js"></script>
+    <script src="js/export.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
