@@ -3,354 +3,268 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign Up | BowlsTrack</title>
-    <meta name="description" content="Create your free BowlsTrack account and start tracking your lawn bowls performance.">
-
+    <title>BowlsTrack - Sign Up</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='%23155e3d'/><circle cx='50' cy='50' r='8' fill='%23fbbf24'/></svg>">
-
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
     <style>
-        :root {
-            --green-900: #0f3d2b;
-            --green-800: #155e3d;
-            --green-700: #1a7a4c;
-            --green-600: #22995f;
-            --green-500: #2db572;
-            --gold-500: #fbbf24;
-            --gold-400: #fcd34d;
-            --cream: #fefdf8;
-            --cream-dark: #f5f3eb;
-            --slate-900: #1e293b;
-            --slate-700: #334155;
-            --slate-500: #64748b;
-            --slate-300: #cbd5e1;
-            --red-500: #ef4444;
-            --red-100: #fee2e2;
-            --font-display: 'DM Serif Display', Georgia, serif;
-            --font-body: 'DM Sans', system-ui, sans-serif;
-        }
-
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            font-family: var(--font-body);
-            background: var(--cream);
-            color: var(--slate-900);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 2rem;
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            text-decoration: none;
-            color: var(--green-800);
-            margin-bottom: 2rem;
-        }
-        .logo svg { width: 40px; height: 40px; }
-        .logo span { font-family: var(--font-display); font-size: 1.5rem; }
-
-        .auth-card {
-            background: white;
-            border-radius: 16px;
-            padding: 2.5rem;
-            width: 100%;
-            max-width: 420px;
-            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
-            border: 1px solid var(--slate-300);
-        }
-
-        .auth-card h1 {
-            font-family: var(--font-display);
-            font-size: 1.75rem;
-            color: var(--green-900);
-            margin-bottom: 0.5rem;
-            text-align: center;
-        }
-
-        .auth-card .subtitle {
-            text-align: center;
-            color: var(--slate-500);
-            font-size: 0.95rem;
-            margin-bottom: 2rem;
-        }
-
-        .tabs {
-            display: flex;
-            border-bottom: 2px solid var(--cream-dark);
-            margin-bottom: 1.5rem;
-        }
-        .tab {
-            flex: 1;
-            padding: 0.75rem;
-            text-align: center;
-            font-weight: 600;
-            font-size: 0.95rem;
-            color: var(--slate-500);
-            background: none;
-            border: none;
-            cursor: pointer;
-            border-bottom: 2px solid transparent;
-            margin-bottom: -2px;
-            transition: all 0.2s;
-        }
-        .tab.active {
-            color: var(--green-800);
-            border-bottom-color: var(--green-800);
-        }
-
-        .form-group {
-            margin-bottom: 1.25rem;
-        }
-        .form-group label {
-            display: block;
-            font-weight: 600;
-            font-size: 0.9rem;
-            color: var(--slate-700);
-            margin-bottom: 0.5rem;
-        }
-        .form-group input {
-            width: 100%;
-            padding: 0.75rem 1rem;
-            border: 2px solid var(--slate-300);
-            border-radius: 8px;
-            font-size: 1rem;
-            font-family: var(--font-body);
-            transition: border-color 0.2s;
-            outline: none;
-        }
-        .form-group input:focus {
-            border-color: var(--green-600);
-        }
-
-        .btn {
-            display: block;
-            width: 100%;
-            padding: 0.875rem;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 1rem;
-            text-align: center;
-            cursor: pointer;
-            border: none;
-            font-family: var(--font-body);
-            transition: all 0.2s ease;
-        }
-        .btn-primary {
-            background: var(--green-800);
-            color: white;
-        }
-        .btn-primary:hover {
-            background: var(--green-700);
-        }
-        .btn-primary:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-
-        .error-message {
-            background: var(--red-100);
-            color: var(--red-500);
-            padding: 0.75rem 1rem;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            margin-bottom: 1rem;
-            display: none;
-        }
-        .error-message.visible { display: block; }
-
-        .success-message {
-            background: #dcfce7;
-            color: var(--green-800);
-            padding: 0.75rem 1rem;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            margin-bottom: 1rem;
-            display: none;
-        }
-        .success-message.visible { display: block; }
-
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'DM Sans', system-ui, sans-serif; background: #fefdf8; color: #1e293b; min-height: 100vh; display: flex; flex-direction: column; }
+        .header { padding: 1.5rem 2rem; border-bottom: 1px solid #e2e8f0; }
+        .header-inner { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+        .logo { display: flex; align-items: center; gap: 0.75rem; text-decoration: none; color: #155e3d; }
+        .logo-icon { width: 40px; height: 40px; }
+        .logo-text { font-family: 'DM Serif Display', Georgia, serif; font-size: 1.5rem; }
+        .back-link { color: #64748b; text-decoration: none; font-size: 0.95rem; }
+        .back-link:hover { color: #1a7a4c; }
+        .main { flex: 1; display: flex; align-items: center; justify-content: center; padding: 2rem; }
+        .auth-container { width: 100%; max-width: 420px; }
+        .auth-card { background: white; border-radius: 16px; padding: 2.5rem; box-shadow: 0 4px 20px rgba(0,0,0,0.08); border: 1px solid #e2e8f0; }
+        .auth-header { text-align: center; margin-bottom: 2rem; }
+        .auth-header h1 { font-family: 'DM Serif Display', Georgia, serif; font-size: 1.75rem; color: #0f3d2b; margin-bottom: 0.5rem; }
+        .auth-header p { color: #64748b; font-size: 0.95rem; }
+        .free-badge { display: inline-flex; align-items: center; gap: 0.5rem; background: #f5f3eb; border: 1px solid #e2e8f0; padding: 0.5rem 1rem; border-radius: 100px; font-size: 0.85rem; color: #334155; margin-bottom: 1.5rem; }
+        .auth-tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; background: #f5f3eb; padding: 0.25rem; border-radius: 8px; }
+        .auth-tab { flex: 1; padding: 0.75rem; border: none; background: transparent; font-family: 'DM Sans', system-ui, sans-serif; font-size: 0.95rem; font-weight: 600; color: #64748b; cursor: pointer; border-radius: 6px; transition: all 0.2s; }
+        .auth-tab.active { background: white; color: #155e3d; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .auth-tab:hover:not(.active) { color: #334155; }
         .auth-form { display: none; }
         .auth-form.active { display: block; }
-
-        .back-link {
-            display: block;
-            text-align: center;
-            margin-top: 1.5rem;
-            color: var(--slate-500);
-            font-size: 0.9rem;
-            text-decoration: none;
-        }
-        .back-link:hover { color: var(--green-700); }
-
-        .free-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.25rem;
-            background: #dcfce7;
-            color: var(--green-800);
-            padding: 0.25rem 0.75rem;
-            border-radius: 100px;
-            font-size: 0.8rem;
-            font-weight: 600;
-        }
+        .form-group { margin-bottom: 1.25rem; }
+        .form-group label { display: block; font-size: 0.9rem; font-weight: 600; color: #334155; margin-bottom: 0.5rem; }
+        .form-group input { width: 100%; padding: 0.875rem 1rem; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 1rem; font-family: 'DM Sans', system-ui, sans-serif; transition: border-color 0.2s, box-shadow 0.2s; }
+        .form-group input:focus { outline: none; border-color: #2db572; box-shadow: 0 0 0 3px rgba(45,181,114,0.15); }
+        .btn { width: 100%; padding: 1rem; border: none; border-radius: 8px; font-family: 'DM Sans', system-ui, sans-serif; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+        .btn-primary { background: #155e3d; color: white; }
+        .btn-primary:hover { background: #1a7a4c; }
+        .btn-primary:disabled { background: #cbd5e1; cursor: not-allowed; }
+        .message { padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; font-size: 0.9rem; display: none; }
+        .message.error { background: #fee2e2; color: #ef4444; border: 1px solid #ef4444; display: block; }
+        .message.success { background: #dcfce7; color: #155e3d; border: 1px solid #2db572; display: block; }
+        .features-list { margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #e2e8f0; }
+        .features-list h3 { font-size: 0.85rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem; }
+        .features-list ul { list-style: none; }
+        .features-list li { display: flex; align-items: center; gap: 0.75rem; font-size: 0.9rem; color: #334155; margin-bottom: 0.5rem; }
+        .features-list li::before { content: '✓'; color: #22995f; font-weight: 700; }
+        .spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: white; animation: spin 0.8s linear infinite; margin-right: 0.5rem; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .footer { padding: 1.5rem 2rem; text-align: center; border-top: 1px solid #e2e8f0; }
+        .footer p { font-size: 0.85rem; color: #64748b; }
+        .footer a { color: #1a7a4c; text-decoration: none; }
+        .footer a:hover { text-decoration: underline; }
+        @media (max-width: 480px) { .auth-card { padding: 1.5rem; } .header-inner { flex-direction: column; gap: 1rem; } }
     </style>
 </head>
 <body>
-    <a href="/" class="logo">
-        <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="50" cy="50" r="45" fill="#155e3d"/>
-            <circle cx="50" cy="50" r="35" stroke="#1a7a4c" stroke-width="2" fill="none"/>
-            <circle cx="50" cy="50" r="25" stroke="#1a7a4c" stroke-width="1.5" fill="none"/>
-            <circle cx="50" cy="50" r="15" stroke="#1a7a4c" stroke-width="1" fill="none"/>
-            <circle cx="50" cy="50" r="6" fill="#fbbf24"/>
-        </svg>
-        <span>BowlsTrack</span>
-    </a>
-
-    <div class="auth-card">
-        <h1>Welcome</h1>
-        <p class="subtitle">Start tracking your game for free <span class="free-badge">Essential Plan</span></p>
-
-        <div class="tabs">
-            <button class="tab active" data-tab="signup" onclick="switchTab('signup')">Sign Up</button>
-            <button class="tab" data-tab="signin" onclick="switchTab('signin')">Sign In</button>
+    <header class="header">
+        <div class="header-inner">
+            <a href="https://bowlstrack.com" class="logo">
+                <svg class="logo-icon" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="50" cy="50" r="45" fill="#155e3d"/>
+                    <circle cx="50" cy="50" r="35" stroke="#1a7a4c" stroke-width="2" fill="none"/>
+                    <circle cx="50" cy="50" r="25" stroke="#1a7a4c" stroke-width="1.5" fill="none"/>
+                    <circle cx="50" cy="50" r="15" stroke="#1a7a4c" stroke-width="1" fill="none"/>
+                    <circle cx="50" cy="50" r="6" fill="#fbbf24"/>
+                </svg>
+                <span class="logo-text">BowlsTrack</span>
+            </a>
+            <a href="https://bowlstrack.com" class="back-link">← Back to website</a>
         </div>
-
-        <div id="error" class="error-message"></div>
-        <div id="success" class="success-message"></div>
-
-        <form id="signup-form" class="auth-form active" onsubmit="handleSignUp(event)">
-            <div class="form-group">
-                <label for="signup-email">Email address</label>
-                <input type="email" id="signup-email" placeholder="you@example.com" required>
+    </header>
+    
+    <main class="main">
+        <div class="auth-container">
+            <div class="auth-card">
+                <div class="auth-header">
+                    <h1>Get Started</h1>
+                    <p>Create your free account or sign in</p>
+                </div>
+                
+                <div class="free-badge">
+                    <span style="color: #22995f; font-weight: 700;">✓</span>
+                    Essential Plan — Free forever
+                </div>
+                
+                <div id="message" class="message"></div>
+                
+                <div class="auth-tabs">
+                    <button type="button" class="auth-tab active" id="tab-signup">Sign Up</button>
+                    <button type="button" class="auth-tab" id="tab-login">Sign In</button>
+                </div>
+                
+                <form id="signup-form" class="auth-form active">
+                    <div class="form-group">
+                        <label for="signup-name">Your Name</label>
+                        <input type="text" id="signup-name" placeholder="John Smith" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="signup-email">Email Address</label>
+                        <input type="email" id="signup-email" placeholder="john@example.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="signup-password">Password</label>
+                        <input type="password" id="signup-password" placeholder="At least 6 characters" minlength="6" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" id="signup-btn">Create Free Account</button>
+                </form>
+                
+                <form id="login-form" class="auth-form">
+                    <div class="form-group">
+                        <label for="login-email">Email Address</label>
+                        <input type="email" id="login-email" placeholder="john@example.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="login-password">Password</label>
+                        <input type="password" id="login-password" placeholder="Your password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" id="login-btn">Sign In</button>
+                </form>
+                
+                <div class="features-list">
+                    <h3>Included in Essential</h3>
+                    <ul>
+                        <li>Track up to 10 games</li>
+                        <li>Basic performance stats</li>
+                        <li>Dartboard position capture</li>
+                        <li>Works on any device</li>
+                    </ul>
+                </div>
             </div>
-            <div class="form-group">
-                <label for="signup-password">Password</label>
-                <input type="password" id="signup-password" placeholder="At least 6 characters" minlength="6" required>
-            </div>
-            <button type="submit" class="btn btn-primary" id="signup-btn">Create Free Account</button>
-        </form>
-
-        <form id="signin-form" class="auth-form" onsubmit="handleSignIn(event)">
-            <div class="form-group">
-                <label for="signin-email">Email address</label>
-                <input type="email" id="signin-email" placeholder="you@example.com" required>
-            </div>
-            <div class="form-group">
-                <label for="signin-password">Password</label>
-                <input type="password" id="signin-password" placeholder="Your password" required>
-            </div>
-            <button type="submit" class="btn btn-primary" id="signin-btn">Sign In</button>
-        </form>
-    </div>
-
-    <a href="/" class="back-link">&larr; Back to bowlstrack.com</a>
-
+        </div>
+    </main>
+    
+    <footer class="footer">
+        <p>By signing up, you agree to our <a href="https://bowlstrack.com/terms">Terms</a> and <a href="https://bowlstrack.com/privacy">Privacy Policy</a>.</p>
+    </footer>
+    
     <script>
-        const SUPABASE_URL = 'https://ckgppsxswmpzrngzpacv.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNrZ3Bwc3hzd21wenJuZ3pwYWN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIyOTU3NjUsImV4cCI6MjA4Nzg3MTc2NX0.ODkevSgXobwQKwfluwJdcJnflD5dH0NThxcbeOXW8Xo';
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
+        // Supabase setup
+        var SUPABASE_URL = 'https://ckgppsxswmpzrngzpacv.supabase.co';
+        var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNrZ3Bwc3hzd21wenJuZ3pwYWN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIyOTU3NjUsImV4cCI6MjA4Nzg3MTc2NX0.ODkevSgXobwQKwfluwJdcJnflD5dH0NThxcbeOXW8Xo';
+        
+        var supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        // Elements
+        var tabSignup = document.getElementById('tab-signup');
+        var tabLogin = document.getElementById('tab-login');
+        var signupForm = document.getElementById('signup-form');
+        var loginForm = document.getElementById('login-form');
+        var messageEl = document.getElementById('message');
+        var signupBtn = document.getElementById('signup-btn');
+        var loginBtn = document.getElementById('login-btn');
+        
+        // Tab switching
+        tabSignup.addEventListener('click', function() {
+            tabSignup.classList.add('active');
+            tabLogin.classList.remove('active');
+            signupForm.classList.add('active');
+            loginForm.classList.remove('active');
+            messageEl.className = 'message';
+        });
+        
+        tabLogin.addEventListener('click', function() {
+            tabLogin.classList.add('active');
+            tabSignup.classList.remove('active');
+            loginForm.classList.add('active');
+            signupForm.classList.remove('active');
+            messageEl.className = 'message';
+        });
+        
+        // Show message
+        function showMessage(text, type) {
+            messageEl.textContent = text;
+            messageEl.className = 'message ' + type;
+        }
+        
+        // Set loading
+        function setLoading(btn, loading, defaultText) {
+            if (loading) {
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner"></span> Please wait...';
+            } else {
+                btn.disabled = false;
+                btn.textContent = defaultText;
+            }
+        }
+        
+        // Sign Up
+        signupForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            messageEl.className = 'message';
+            
+            var name = document.getElementById('signup-name').value.trim();
+            var email = document.getElementById('signup-email').value.trim();
+            var password = document.getElementById('signup-password').value;
+            
+            setLoading(signupBtn, true, 'Create Free Account');
+            
+            supabaseClient.auth.signUp({
+                email: email,
+                password: password,
+                options: {
+                    data: {
+                        full_name: name
+                    }
+                }
+            }).then(function(response) {
+                setLoading(signupBtn, false, 'Create Free Account');
+                
+                if (response.error) {
+                    showMessage(response.error.message, 'error');
+                    return;
+                }
+                
+                if (response.data.user && response.data.user.identities && response.data.user.identities.length === 0) {
+                    showMessage('An account with this email already exists. Please sign in instead.', 'error');
+                } else {
+                    showMessage('Success! Please check your email to confirm your account.', 'success');
+                    signupForm.reset();
+                }
+            }).catch(function(err) {
+                setLoading(signupBtn, false, 'Create Free Account');
+                showMessage('An error occurred. Please try again.', 'error');
+                console.error(err);
+            });
+        });
+        
+        // Sign In
+        loginForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            messageEl.className = 'message';
+            
+            var email = document.getElementById('login-email').value.trim();
+            var password = document.getElementById('login-password').value;
+            
+            setLoading(loginBtn, true, 'Sign In');
+            
+            supabaseClient.auth.signInWithPassword({
+                email: email,
+                password: password
+            }).then(function(response) {
+                setLoading(loginBtn, false, 'Sign In');
+                
+                if (response.error) {
+                    showMessage(response.error.message, 'error');
+                    return;
+                }
+                
+                showMessage('Signed in successfully! Redirecting...', 'success');
+                setTimeout(function() {
+                    window.location.href = '/app/dashboard/';
+                }, 1000);
+            }).catch(function(err) {
+                setLoading(loginBtn, false, 'Sign In');
+                showMessage('Invalid email or password.', 'error');
+                console.error(err);
+            });
+        });
+        
         // Check if already logged in
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            if (session) {
+        supabaseClient.auth.getSession().then(function(response) {
+            if (response.data.session) {
                 window.location.href = '/app/dashboard/';
             }
         });
-
-        function switchTab(tab) {
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
-            document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
-            document.getElementById(`${tab}-form`).classList.add('active');
-            hideMessages();
-        }
-
-        function showError(msg) {
-            const el = document.getElementById('error');
-            el.textContent = msg;
-            el.classList.add('visible');
-            document.getElementById('success').classList.remove('visible');
-        }
-
-        function showSuccess(msg) {
-            const el = document.getElementById('success');
-            el.textContent = msg;
-            el.classList.add('visible');
-            document.getElementById('error').classList.remove('visible');
-        }
-
-        function hideMessages() {
-            document.getElementById('error').classList.remove('visible');
-            document.getElementById('success').classList.remove('visible');
-        }
-
-        async function handleSignUp(e) {
-            e.preventDefault();
-            const btn = document.getElementById('signup-btn');
-            btn.disabled = true;
-            btn.textContent = 'Creating account...';
-            hideMessages();
-
-            const email = document.getElementById('signup-email').value;
-            const password = document.getElementById('signup-password').value;
-
-            const { data, error } = await supabase.auth.signUp({ email, password });
-
-            if (error) {
-                showError(error.message);
-                btn.disabled = false;
-                btn.textContent = 'Create Free Account';
-                return;
-            }
-
-            if (data.user && data.user.identities && data.user.identities.length === 0) {
-                showError('An account with this email already exists. Please sign in.');
-                btn.disabled = false;
-                btn.textContent = 'Create Free Account';
-                return;
-            }
-
-            if (data.session) {
-                window.location.href = '/app/dashboard/';
-            } else {
-                showSuccess('Check your email for a confirmation link, then sign in.');
-                btn.disabled = false;
-                btn.textContent = 'Create Free Account';
-            }
-        }
-
-        async function handleSignIn(e) {
-            e.preventDefault();
-            const btn = document.getElementById('signin-btn');
-            btn.disabled = true;
-            btn.textContent = 'Signing in...';
-            hideMessages();
-
-            const email = document.getElementById('signin-email').value;
-            const password = document.getElementById('signin-password').value;
-
-            const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-
-            if (error) {
-                showError(error.message);
-                btn.disabled = false;
-                btn.textContent = 'Sign In';
-                return;
-            }
-
-            window.location.href = '/app/dashboard/';
-        }
     </script>
 </body>
 </html>
