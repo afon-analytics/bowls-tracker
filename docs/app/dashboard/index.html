@@ -125,28 +125,28 @@
             
             <h2 class="section-title">Quick Actions</h2>
             <div class="actions-grid">
-                <a href="https://afon-analytics.github.io/bowls-tracker/" class="action-card" onclick="navigateToApp('track')">
+                <a href="#" class="action-card" onclick="navigateToApp('track'); return false;">
                     <div class="action-icon">+</div>
                     <div class="action-content">
                         <h3>New Game</h3>
                         <p>Start tracking a new match</p>
                     </div>
                 </a>
-                <a href="https://afon-analytics.github.io/bowls-tracker/" class="action-card" onclick="navigateToApp('games')">
+                <a href="#" class="action-card" onclick="navigateToApp('games'); return false;">
                     <div class="action-icon">📋</div>
                     <div class="action-content">
                         <h3>View Games</h3>
                         <p>See your game history</p>
                     </div>
                 </a>
-                <a href="https://afon-analytics.github.io/bowls-tracker/" class="action-card" onclick="navigateToApp('analytics')">
+                <a href="#" class="action-card" onclick="navigateToApp('analytics'); return false;">
                     <div class="action-icon">📊</div>
                     <div class="action-content">
                         <h3>Analytics</h3>
                         <p>View performance insights</p>
                     </div>
                 </a>
-                <a href="https://afon-analytics.github.io/bowls-tracker/" class="action-card" onclick="navigateToApp('manager')">
+                <a href="#" class="action-card" onclick="navigateToApp('manager'); return false;">
                     <div class="action-icon">👥</div>
                     <div class="action-content">
                         <h3>Team Manager</h3>
@@ -292,6 +292,8 @@
             window.navigateToApp = function(view) {
                 // Store the target view so the app can pick it up
                 localStorage.setItem('bowlstrack_navigate_to', view);
+                // Redirect to main app
+                window.location.href = 'https://afon-analytics.github.io/bowls-tracker/';
             };
             
             // Start
