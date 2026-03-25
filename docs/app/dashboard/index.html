@@ -3,388 +3,302 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard | BowlsTrack</title>
-    <meta name="description" content="Your BowlsTrack dashboard - track games, view stats, and manage your lawn bowls performance.">
-
+    <title>Dashboard - BowlsTrack</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='%23155e3d'/><circle cx='50' cy='50' r='8' fill='%23fbbf24'/></svg>">
-
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
     <style>
-        :root {
-            --green-900: #0f3d2b;
-            --green-800: #155e3d;
-            --green-700: #1a7a4c;
-            --green-600: #22995f;
-            --green-500: #2db572;
-            --gold-500: #fbbf24;
-            --gold-400: #fcd34d;
-            --gold-600: #d97706;
-            --cream: #fefdf8;
-            --cream-dark: #f5f3eb;
-            --slate-900: #1e293b;
-            --slate-700: #334155;
-            --slate-500: #64748b;
-            --slate-300: #cbd5e1;
-            --slate-100: #f1f5f9;
-            --font-display: 'DM Serif Display', Georgia, serif;
-            --font-body: 'DM Sans', system-ui, sans-serif;
-        }
-
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            font-family: var(--font-body);
-            background: var(--cream-dark);
-            color: var(--slate-900);
-            min-height: 100vh;
-        }
-
-        .topbar {
-            background: white;
-            border-bottom: 1px solid var(--slate-300);
-            padding: 1rem 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .topbar-logo {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            text-decoration: none;
-            color: var(--green-800);
-        }
-        .topbar-logo svg { width: 32px; height: 32px; }
-        .topbar-logo span { font-family: var(--font-display); font-size: 1.25rem; }
-        .topbar-right {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-        .user-email {
-            font-size: 0.9rem;
-            color: var(--slate-500);
-        }
-        .btn-signout {
-            background: none;
-            border: 1px solid var(--slate-300);
-            padding: 0.5rem 1rem;
-            border-radius: 8px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: var(--slate-700);
-            cursor: pointer;
-            font-family: var(--font-body);
-            transition: all 0.2s;
-        }
-        .btn-signout:hover {
-            background: var(--slate-100);
-        }
-
-        .dashboard {
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 2rem;
-        }
-
-        .welcome {
-            margin-bottom: 2rem;
-        }
-        .welcome h1 {
-            font-family: var(--font-display);
-            font-size: 1.75rem;
-            color: var(--green-900);
-            margin-bottom: 0.25rem;
-        }
-        .welcome p {
-            color: var(--slate-500);
-            font-size: 0.95rem;
-        }
-        .plan-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.25rem;
-            background: #dcfce7;
-            color: var(--green-800);
-            padding: 0.25rem 0.75rem;
-            border-radius: 100px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            margin-left: 0.5rem;
-        }
-
-        .upgrade-banner {
-            background: linear-gradient(135deg, var(--green-800), var(--green-900));
-            color: white;
-            border-radius: 16px;
-            padding: 1.5rem 2rem;
-            margin-bottom: 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 1rem;
-            flex-wrap: wrap;
-        }
-        .upgrade-banner h3 {
-            font-size: 1.1rem;
-            margin-bottom: 0.25rem;
-        }
-        .upgrade-banner p {
-            font-size: 0.9rem;
-            opacity: 0.85;
-        }
-        .btn-upgrade {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            background: var(--gold-500);
-            color: var(--green-900);
-            padding: 0.75rem 1.5rem;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 0.95rem;
-            text-decoration: none;
-            transition: all 0.2s;
-            white-space: nowrap;
-        }
-        .btn-upgrade:hover {
-            background: var(--gold-400);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(251, 191, 36, 0.4);
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-        .stat-card {
-            background: white;
-            border-radius: 12px;
-            padding: 1.5rem;
-            border: 1px solid var(--slate-300);
-        }
-        .stat-label {
-            font-size: 0.85rem;
-            color: var(--slate-500);
-            font-weight: 500;
-            margin-bottom: 0.5rem;
-        }
-        .stat-value {
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--green-900);
-        }
-        .stat-value span {
-            font-size: 1rem;
-            font-weight: 400;
-            color: var(--slate-500);
-        }
-        .stat-bar {
-            margin-top: 0.75rem;
-            background: var(--slate-100);
-            border-radius: 100px;
-            height: 8px;
-            overflow: hidden;
-        }
-        .stat-bar-fill {
-            height: 100%;
-            background: var(--green-600);
-            border-radius: 100px;
-            transition: width 0.5s ease;
-        }
-
-        .actions {
-            margin-bottom: 2rem;
-        }
-        .actions h2 {
-            font-family: var(--font-display);
-            font-size: 1.25rem;
-            color: var(--green-900);
-            margin-bottom: 1rem;
-        }
-        .actions-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-        }
-        .action-card {
-            background: white;
-            border-radius: 12px;
-            padding: 1.5rem;
-            border: 1px solid var(--slate-300);
-            text-decoration: none;
-            color: var(--slate-900);
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-        .action-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-            border-color: var(--green-500);
-        }
-        .action-icon {
-            width: 48px;
-            height: 48px;
-            background: linear-gradient(135deg, var(--green-700), var(--green-800));
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
-        .action-icon svg {
-            width: 24px;
-            height: 24px;
-            color: white;
-        }
-        .action-card h3 {
-            font-size: 1rem;
-            margin-bottom: 0.25rem;
-        }
-        .action-card p {
-            font-size: 0.85rem;
-            color: var(--slate-500);
-        }
-
-        .loading {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            font-size: 1.1rem;
-            color: var(--slate-500);
-        }
-
-        @media (max-width: 600px) {
-            .topbar { padding: 1rem; }
-            .user-email { display: none; }
-            .dashboard { padding: 1rem; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'DM Sans', system-ui, sans-serif; background: #f1f5f9; color: #1e293b; min-height: 100vh; }
+        .header { background: white; padding: 1rem 2rem; border-bottom: 1px solid #e2e8f0; position: sticky; top: 0; z-index: 100; }
+        .header-inner { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+        .logo { display: flex; align-items: center; gap: 0.75rem; text-decoration: none; color: #155e3d; }
+        .logo-icon { width: 36px; height: 36px; }
+        .logo-text { font-family: 'DM Serif Display', Georgia, serif; font-size: 1.35rem; }
+        .header-right { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+        .plan-badge { background: #f5f3eb; padding: 0.35rem 0.75rem; border-radius: 100px; font-size: 0.8rem; font-weight: 600; color: #155e3d; }
+        .user-info { display: flex; align-items: center; gap: 0.75rem; }
+        .user-avatar { width: 36px; height: 36px; background: #1a7a4c; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 0.9rem; }
+        .user-name { font-weight: 500; color: #334155; }
+        .btn-logout { background: transparent; border: 1px solid #cbd5e1; padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.85rem; cursor: pointer; color: #64748b; transition: all 0.2s; }
+        .btn-logout:hover { background: #f1f5f9; border-color: #94a3b8; }
+        .main { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+        .welcome { background: linear-gradient(135deg, #155e3d, #0f3d2b); border-radius: 16px; padding: 2rem; color: white; margin-bottom: 2rem; }
+        .welcome h1 { font-family: 'DM Serif Display', Georgia, serif; font-size: 1.75rem; margin-bottom: 0.5rem; }
+        .welcome p { opacity: 0.9; font-size: 1rem; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .stat-card { background: white; border-radius: 12px; padding: 1.5rem; border: 1px solid #e2e8f0; }
+        .stat-label { font-size: 0.85rem; color: #64748b; margin-bottom: 0.5rem; }
+        .stat-value { font-size: 2rem; font-weight: 700; color: #155e3d; }
+        .section-title { font-family: 'DM Serif Display', Georgia, serif; font-size: 1.25rem; color: #1e293b; margin-bottom: 1rem; }
+        .actions-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .action-card { background: white; border-radius: 12px; padding: 1.5rem; border: 1px solid #e2e8f0; text-decoration: none; color: inherit; transition: all 0.2s; display: flex; align-items: flex-start; gap: 1rem; }
+        .action-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.08); border-color: #2db572; }
+        .action-icon { width: 48px; height: 48px; background: linear-gradient(135deg, #22995f, #155e3d); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: white; font-size: 1.5rem; }
+        .action-content h3 { font-size: 1.1rem; margin-bottom: 0.25rem; color: #0f3d2b; }
+        .action-content p { font-size: 0.9rem; color: #64748b; }
+        .upgrade-banner { background: #fefdf8; border: 2px solid #fbbf24; border-radius: 12px; padding: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+        .upgrade-content h3 { font-size: 1.1rem; color: #1e293b; margin-bottom: 0.25rem; }
+        .upgrade-content p { font-size: 0.9rem; color: #64748b; }
+        .btn-upgrade { background: #fbbf24; color: #0f3d2b; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 600; font-size: 0.95rem; cursor: pointer; text-decoration: none; transition: all 0.2s; }
+        .btn-upgrade:hover { background: #fcd34d; transform: translateY(-1px); }
+        .games-limit { background: white; border-radius: 12px; padding: 1.5rem; border: 1px solid #e2e8f0; margin-bottom: 2rem; }
+        .limit-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+        .limit-header h3 { font-size: 1rem; color: #334155; }
+        .limit-header span { font-size: 0.9rem; color: #64748b; }
+        .progress-bar { height: 8px; background: #e2e8f0; border-radius: 100px; overflow: hidden; }
+        .progress-fill { height: 100%; background: #22995f; border-radius: 100px; transition: width 0.3s ease; }
+        .loading { display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100vh; gap: 1rem; }
+        .spinner { width: 40px; height: 40px; border: 3px solid #e2e8f0; border-top-color: #22995f; border-radius: 50%; animation: spin 0.8s linear infinite; }
+        .loading-text { color: #64748b; font-size: 0.95rem; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .hidden { display: none !important; }
+        @media (max-width: 640px) {
+            .header-inner { flex-direction: column; align-items: flex-start; }
+            .user-name { display: none; }
             .upgrade-banner { flex-direction: column; text-align: center; }
         }
     </style>
 </head>
 <body>
-    <div id="loading" class="loading">Loading...</div>
+    <div id="loading" class="loading">
+        <div class="spinner"></div>
+        <div class="loading-text">Loading your dashboard...</div>
+    </div>
 
-    <div id="app" style="display: none;">
-        <header class="topbar">
-            <a href="/app/dashboard/" class="topbar-logo">
-                <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="50" cy="50" r="45" fill="#155e3d"/>
-                    <circle cx="50" cy="50" r="6" fill="#fbbf24"/>
-                </svg>
-                <span>BowlsTrack</span>
-            </a>
-            <div class="topbar-right">
-                <span class="user-email" id="user-email"></span>
-                <button class="btn-signout" onclick="handleSignOut()">Sign Out</button>
+    <div id="app" class="hidden">
+        <header class="header">
+            <div class="header-inner">
+                <a href="/app/dashboard/" class="logo">
+                    <svg class="logo-icon" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="50" cy="50" r="45" fill="#155e3d"/>
+                        <circle cx="50" cy="50" r="35" stroke="#1a7a4c" stroke-width="2" fill="none"/>
+                        <circle cx="50" cy="50" r="6" fill="#fbbf24"/>
+                    </svg>
+                    <span class="logo-text">BowlsTrack</span>
+                </a>
+                <div class="header-right">
+                    <span class="plan-badge" id="plan-badge">Essential</span>
+                    <div class="user-info">
+                        <div class="user-avatar" id="user-avatar">?</div>
+                        <span class="user-name" id="user-name">User</span>
+                    </div>
+                    <button class="btn-logout" id="logout-btn">Sign Out</button>
+                </div>
             </div>
         </header>
 
-        <main class="dashboard">
+        <main class="main">
             <div class="welcome">
-                <h1>Dashboard <span class="plan-badge">Essential (Free)</span></h1>
-                <p>Welcome back! Here's your bowling overview.</p>
+                <h1>Welcome back, <span id="welcome-name">there</span>! 👋</h1>
+                <p>Ready to track your next game?</p>
             </div>
 
-            <div class="upgrade-banner">
-                <div>
-                    <h3>Unlock unlimited games and full analytics</h3>
-                    <p>Upgrade to Personal for unlimited game tracking, full analytics dashboards, and data export.</p>
+            <div class="games-limit" id="games-limit">
+                <div class="limit-header">
+                    <h3>Games Used</h3>
+                    <span><span id="games-count">0</span> / 10 games</span>
                 </div>
-                <a href="https://afonanalytics.co.uk/bowlstrack-personal" class="btn-upgrade">Upgrade to Personal</a>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+                </div>
             </div>
 
             <div class="stats-grid">
                 <div class="stat-card">
-                    <div class="stat-label">Games Used</div>
-                    <div class="stat-value">0 <span>/ 10</span></div>
-                    <div class="stat-bar">
-                        <div class="stat-bar-fill" style="width: 0%"></div>
-                    </div>
+                    <div class="stat-label">Total Games</div>
+                    <div class="stat-value" id="stat-games">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Total Ends</div>
+                    <div class="stat-value" id="stat-ends">0</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-label">Deliveries Tracked</div>
-                    <div class="stat-value">0</div>
+                    <div class="stat-value" id="stat-deliveries">0</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-label">Current Plan</div>
-                    <div class="stat-value" style="font-size: 1.5rem;">Essential</div>
+                    <div class="stat-label">Players</div>
+                    <div class="stat-value" id="stat-players">0</div>
                 </div>
             </div>
 
-            <div class="actions">
-                <h2>Quick Actions</h2>
-                <div class="actions-grid">
-                    <a href="/game/new" class="action-card">
-                        <div class="action-icon">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path d="M12 4v16m8-8H4"/>
-                            </svg>
-                        </div>
-                        <div>
-                            <h3>New Game</h3>
-                            <p>Start tracking a match</p>
-                        </div>
-                    </a>
-                    <a href="/games" class="action-card">
-                        <div class="action-icon">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-                            </svg>
-                        </div>
-                        <div>
-                            <h3>My Games</h3>
-                            <p>View past matches</p>
-                        </div>
-                    </a>
-                    <a href="/stats" class="action-card">
-                        <div class="action-icon">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-                            </svg>
-                        </div>
-                        <div>
-                            <h3>Statistics</h3>
-                            <p>View your performance</p>
-                        </div>
-                    </a>
+            <h2 class="section-title">Quick Actions</h2>
+            <div class="actions-grid">
+                <a href="/app/game/new/" class="action-card">
+                    <div class="action-icon">+</div>
+                    <div class="action-content">
+                        <h3>New Game</h3>
+                        <p>Start tracking a new match</p>
+                    </div>
+                </a>
+                <a href="/app/games/" class="action-card">
+                    <div class="action-icon">📋</div>
+                    <div class="action-content">
+                        <h3>View Games</h3>
+                        <p>See your game history</p>
+                    </div>
+                </a>
+                <a href="/app/players/" class="action-card">
+                    <div class="action-icon">👥</div>
+                    <div class="action-content">
+                        <h3>Manage Players</h3>
+                        <p>Add or edit your squad</p>
+                    </div>
+                </a>
+                <a href="/app/analytics/" class="action-card">
+                    <div class="action-icon">📊</div>
+                    <div class="action-content">
+                        <h3>Analytics</h3>
+                        <p>View performance insights</p>
+                    </div>
+                </a>
+            </div>
+
+            <div class="upgrade-banner" id="upgrade-banner">
+                <div class="upgrade-content">
+                    <h3>🚀 Unlock unlimited games</h3>
+                    <p>Upgrade to Personal for unlimited tracking and full analytics.</p>
                 </div>
+                <a href="https://bowlstrack.com/#pricing" class="btn-upgrade">View Plans</a>
             </div>
         </main>
     </div>
 
     <script>
-        const SUPABASE_URL = 'https://ckgppsxswmpzrngzpacv.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNrZ3Bwc3hzd21wenJuZ3pwYWN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIyOTU3NjUsImV4cCI6MjA4Nzg3MTc2NX0.ODkevSgXobwQKwfluwJdcJnflD5dH0NThxcbeOXW8Xo';
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        // Supabase setup
+        var SUPABASE_URL = 'https://ckgppsxswmpzrngzpacv.supabase.co';
+        var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNrZ3Bwc3hzd21wenJuZ3pwYWN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIyOTU3NjUsImV4cCI6MjA4Nzg3MTc2NX0.ODkevSgXobwQKwfluwJdcJnflD5dH0NThxcbeOXW8Xo';
 
-        async function init() {
-            const { data: { session } } = await supabase.auth.getSession();
+        var supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-            if (!session) {
+        var currentUser = null;
+        var currentOrg = null;
+
+        // Initialize
+        function init() {
+            supabaseClient.auth.getSession().then(function(response) {
+                if (!response.data.session) {
+                    window.location.href = '/app/signup/';
+                    return;
+                }
+
+                currentUser = response.data.session.user;
+                loadUserData();
+            }).catch(function(err) {
+                console.error('Session error:', err);
                 window.location.href = '/app/signup/';
-                return;
-            }
-
-            document.getElementById('user-email').textContent = session.user.email;
-            document.getElementById('loading').style.display = 'none';
-            document.getElementById('app').style.display = 'block';
+            });
         }
 
-        async function handleSignOut() {
-            await supabase.auth.signOut();
-            window.location.href = '/app/signup/';
+        function loadUserData() {
+            supabaseClient
+                .from('users')
+                .select('*, organisations(*)')
+                .eq('id', currentUser.id)
+                .single()
+                .then(function(response) {
+                    if (response.error) {
+                        console.error('User data error:', response.error);
+                        showApp();
+                        return;
+                    }
+
+                    var userData = response.data;
+                    currentOrg = userData.organisations;
+
+                    // Get name from various sources
+                    var name = 'there';
+                    if (currentUser.user_metadata && currentUser.user_metadata.full_name) {
+                        name = currentUser.user_metadata.full_name;
+                    } else if (userData.name) {
+                        name = userData.name;
+                    } else if (currentUser.email) {
+                        name = currentUser.email.split('@')[0];
+                    }
+
+                    // Update UI
+                    var firstName = name.split(' ')[0];
+                    document.getElementById('welcome-name').textContent = firstName;
+                    document.getElementById('user-name').textContent = name;
+                    document.getElementById('user-avatar').textContent = name.charAt(0).toUpperCase();
+
+                    // Update plan badge
+                    if (currentOrg && currentOrg.plan) {
+                        var planNames = {
+                            essential: 'Essential',
+                            personal: 'Personal',
+                            club: 'Club',
+                            elite: 'Elite'
+                        };
+                        document.getElementById('plan-badge').textContent = planNames[currentOrg.plan] || 'Essential';
+
+                        // Hide upgrade for paid plans
+                        if (currentOrg.plan !== 'essential') {
+                            document.getElementById('upgrade-banner').classList.add('hidden');
+                            document.getElementById('games-limit').classList.add('hidden');
+                        }
+                    }
+
+                    loadStats();
+                }).catch(function(err) {
+                    console.error('Load user error:', err);
+                    showApp();
+                });
         }
 
+        function loadStats() {
+            // Get counts
+            var gamesCount = 0;
+            var endsCount = 0;
+            var deliveriesCount = 0;
+            var playersCount = 0;
+
+            // Games
+            supabaseClient.from('games').select('*', { count: 'exact', head: true }).then(function(r) {
+                gamesCount = r.count || 0;
+                document.getElementById('stat-games').textContent = gamesCount;
+                document.getElementById('games-count').textContent = gamesCount;
+
+                // Update progress bar
+                var percentage = Math.min((gamesCount / 10) * 100, 100);
+                document.getElementById('progress-fill').style.width = percentage + '%';
+            });
+
+            // Ends
+            supabaseClient.from('ends').select('*', { count: 'exact', head: true }).then(function(r) {
+                endsCount = r.count || 0;
+                document.getElementById('stat-ends').textContent = endsCount;
+            });
+
+            // Deliveries
+            supabaseClient.from('deliveries').select('*', { count: 'exact', head: true }).then(function(r) {
+                deliveriesCount = r.count || 0;
+                document.getElementById('stat-deliveries').textContent = deliveriesCount;
+            });
+
+            // Players
+            supabaseClient.from('players').select('*', { count: 'exact', head: true }).then(function(r) {
+                playersCount = r.count || 0;
+                document.getElementById('stat-players').textContent = playersCount;
+            });
+
+            showApp();
+        }
+
+        function showApp() {
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('app').classList.remove('hidden');
+        }
+
+        // Logout
+        document.getElementById('logout-btn').addEventListener('click', function() {
+            supabaseClient.auth.signOut().then(function() {
+                window.location.href = '/app/signup/';
+            });
+        });
+
+        // Start
         init();
     </script>
 </body>
