@@ -125,32 +125,32 @@
             
             <h2 class="section-title">Quick Actions</h2>
             <div class="actions-grid">
-                <a href="https://afon-analytics.github.io/bowls-tracker/#/game/new" class="action-card">
+                <a href="https://afon-analytics.github.io/bowls-tracker/" class="action-card" onclick="navigateToApp('track')">
                     <div class="action-icon">+</div>
                     <div class="action-content">
                         <h3>New Game</h3>
                         <p>Start tracking a new match</p>
                     </div>
                 </a>
-                <a href="https://afon-analytics.github.io/bowls-tracker/#/games" class="action-card">
+                <a href="https://afon-analytics.github.io/bowls-tracker/" class="action-card" onclick="navigateToApp('games')">
                     <div class="action-icon">📋</div>
                     <div class="action-content">
                         <h3>View Games</h3>
                         <p>See your game history</p>
                     </div>
                 </a>
-                <a href="https://afon-analytics.github.io/bowls-tracker/#/players" class="action-card">
-                    <div class="action-icon">👥</div>
-                    <div class="action-content">
-                        <h3>Manage Players</h3>
-                        <p>Add or edit your squad</p>
-                    </div>
-                </a>
-                <a href="https://afon-analytics.github.io/bowls-tracker/#/analytics" class="action-card">
+                <a href="https://afon-analytics.github.io/bowls-tracker/" class="action-card" onclick="navigateToApp('analytics')">
                     <div class="action-icon">📊</div>
                     <div class="action-content">
                         <h3>Analytics</h3>
                         <p>View performance insights</p>
+                    </div>
+                </a>
+                <a href="https://afon-analytics.github.io/bowls-tracker/" class="action-card" onclick="navigateToApp('manager')">
+                    <div class="action-icon">👥</div>
+                    <div class="action-content">
+                        <h3>Team Manager</h3>
+                        <p>Live dashboard & team view</p>
                     </div>
                 </a>
             </div>
@@ -286,6 +286,12 @@
                 supabaseClient.auth.signOut().then(function() {
                     window.location.href = '/app/signup/';
                 });
+            };
+            
+            // Navigate to app with specific view
+            window.navigateToApp = function(view) {
+                // Store the target view so the app can pick it up
+                localStorage.setItem('bowlstrack_navigate_to', view);
             };
             
             // Start
