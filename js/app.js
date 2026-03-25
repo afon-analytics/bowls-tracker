@@ -22,18 +22,7 @@ let currentTier = 'essential'; // essential, personal, club, elite
 let trendChartInstance = null;
 let effectivenessChartInstance = null;
 
-// Check if dashboard sent a navigation target
-(function() {
-    var navTarget = localStorage.getItem('bowlstrack_navigate_to');
-    if (navTarget) {
-        localStorage.removeItem('bowlstrack_navigate_to');
-        setTimeout(function() {
-            if (typeof navigateTo === 'function') {
-                navigateTo(navTarget);
-            }
-        }, 100);
-    }
-})();
+// Navigation target check moved to end of file
 
 let gameState = {
   gameId: 0,
@@ -2030,6 +2019,11 @@ function setupZoomGestures() {
 function selectTier(tier, e) {
   if (e) e.stopPropagation(); // Prevent double-firing from button + parent div
   currentTier = tier;
+
+  // Add tier class to body for CSS-based feature hiding
+  document.body.classList.remove('tier-essential', 'tier-personal', 'tier-club', 'tier-elite');
+  document.body.classList.add('tier-' + currentTier);
+
   const tierNames = { essential: 'Essential', personal: 'Personal', club: 'Club', elite: 'Elite' };
   const tierLabels = { essential: 'Free Tier', personal: '\u00A310/month', club: '\u00A340/month', elite: '\u00A350/month' };
 
@@ -2640,3 +2634,17 @@ showGamesManager = function() {
 
 // Initialize app when DOM is ready
 document.addEventListener('DOMContentLoaded', initApp);
+
+// Check if dashboard sent a navigation target (add at the end of app.js)
+(function checkDashboardNavigation() {
+    var navTarget = localStorage.getItem('bowlstrack_navigate_to');
+    if (navTarget) {
+        localStorage.removeItem('bowlstrack_navigate_to');
+        // Small delay to ensure app is fully initialized
+        setTimeout(function() {
+            if (typeof navigateTo === 'function') {
+                navigateTo(navTarget);
+            }
+        }, 200);
+    }
+})();

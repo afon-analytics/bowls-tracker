@@ -1605,3 +1605,11 @@ canvas {
     max-width: 1100px;
   }
 }
+
+/* Hide premium features for Essential tier */
+body.tier-essential .tier-card.tier-3,
+body.tier-essential .tier-card.tier-4,
+body.tier-essential #homeCardManager,
+body.tier-essential #homeCardElite {
+    display: none !important;
+}
