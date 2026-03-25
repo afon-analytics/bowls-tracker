@@ -32,14 +32,11 @@
         .stat-value { font-size: 2rem; font-weight: 700; color: #155e3d; }
         .section-title { font-family: 'DM Serif Display', Georgia, serif; font-size: 1.25rem; color: #1e293b; margin-bottom: 1rem; }
         .actions-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
-        .action-card { background: white; border-radius: 12px; padding: 1.5rem; border: 1px solid #e2e8f0; text-decoration: none; color: inherit; transition: all 0.2s; display: flex; align-items: flex-start; gap: 1rem; cursor: pointer; }
+        .action-card { background: white; border-radius: 12px; padding: 1.5rem; border: 1px solid #e2e8f0; text-decoration: none; color: inherit; transition: all 0.2s; display: flex; align-items: flex-start; gap: 1rem; }
         .action-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.08); border-color: #2db572; }
-        .action-card.disabled { opacity: 0.6; cursor: not-allowed; }
-        .action-card.disabled:hover { transform: none; box-shadow: none; border-color: #e2e8f0; }
         .action-icon { width: 48px; height: 48px; background: linear-gradient(135deg, #22995f, #155e3d); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: white; font-size: 1.5rem; }
         .action-content h3 { font-size: 1.1rem; margin-bottom: 0.25rem; color: #0f3d2b; }
         .action-content p { font-size: 0.9rem; color: #64748b; }
-        .coming-soon-tag { display: inline-block; background: #fbbf24; color: #0f3d2b; font-size: 0.7rem; font-weight: 600; padding: 0.15rem 0.5rem; border-radius: 4px; margin-left: 0.5rem; }
         .upgrade-banner { background: #fefdf8; border: 2px solid #fbbf24; border-radius: 12px; padding: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
         .upgrade-content h3 { font-size: 1.1rem; color: #1e293b; margin-bottom: 0.25rem; }
         .upgrade-content p { font-size: 0.9rem; color: #64748b; }
@@ -56,15 +53,6 @@
         .loading-text { color: #64748b; font-size: 0.95rem; }
         @keyframes spin { to { transform: rotate(360deg); } }
         .hidden { display: none !important; }
-        
-        /* Modal */
-        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-        .modal { background: white; border-radius: 16px; padding: 2rem; max-width: 400px; width: 90%; text-align: center; }
-        .modal h2 { font-family: 'DM Serif Display', Georgia, serif; color: #0f3d2b; margin-bottom: 1rem; }
-        .modal p { color: #64748b; margin-bottom: 1.5rem; }
-        .modal-btn { background: #155e3d; color: white; border: none; padding: 0.75rem 2rem; border-radius: 8px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', system-ui, sans-serif; }
-        .modal-btn:hover { background: #1a7a4c; }
-        
         @media (max-width: 640px) {
             .header-inner { flex-direction: column; align-items: flex-start; }
             .user-name { display: none; }
@@ -103,7 +91,7 @@
         <main class="main">
             <div class="welcome">
                 <h1>Welcome back, <span id="welcome-name">there</span>! 👋</h1>
-                <p>Your BowlsTrack dashboard is ready. Full game tracking coming soon!</p>
+                <p>Ready to track your next game?</p>
             </div>
             
             <div class="games-limit" id="games-limit">
@@ -137,34 +125,34 @@
             
             <h2 class="section-title">Quick Actions</h2>
             <div class="actions-grid">
-                <div class="action-card" onclick="showComingSoon('New Game')">
+                <a href="https://afon-analytics.github.io/bowls-tracker/#/game/new" class="action-card">
                     <div class="action-icon">+</div>
                     <div class="action-content">
-                        <h3>New Game <span class="coming-soon-tag">Coming Soon</span></h3>
+                        <h3>New Game</h3>
                         <p>Start tracking a new match</p>
                     </div>
-                </div>
-                <div class="action-card" onclick="showComingSoon('View Games')">
+                </a>
+                <a href="https://afon-analytics.github.io/bowls-tracker/#/games" class="action-card">
                     <div class="action-icon">📋</div>
                     <div class="action-content">
-                        <h3>View Games <span class="coming-soon-tag">Coming Soon</span></h3>
+                        <h3>View Games</h3>
                         <p>See your game history</p>
                     </div>
-                </div>
-                <div class="action-card" onclick="showComingSoon('Manage Players')">
+                </a>
+                <a href="https://afon-analytics.github.io/bowls-tracker/#/players" class="action-card">
                     <div class="action-icon">👥</div>
                     <div class="action-content">
-                        <h3>Manage Players <span class="coming-soon-tag">Coming Soon</span></h3>
+                        <h3>Manage Players</h3>
                         <p>Add or edit your squad</p>
                     </div>
-                </div>
-                <div class="action-card" onclick="showComingSoon('Analytics')">
+                </a>
+                <a href="https://afon-analytics.github.io/bowls-tracker/#/analytics" class="action-card">
                     <div class="action-icon">📊</div>
                     <div class="action-content">
-                        <h3>Analytics <span class="coming-soon-tag">Coming Soon</span></h3>
+                        <h3>Analytics</h3>
                         <p>View performance insights</p>
                     </div>
-                </div>
+                </a>
             </div>
             
             <div class="upgrade-banner" id="upgrade-banner">
@@ -177,15 +165,6 @@
         </main>
     </div>
     
-    <!-- Coming Soon Modal -->
-    <div id="modal" class="modal-overlay hidden">
-        <div class="modal">
-            <h2>🚧 Coming Soon!</h2>
-            <p id="modal-text">This feature is currently in development. We're working hard to bring you the full BowlsTrack experience!</p>
-            <button class="modal-btn" onclick="hideModal()">Got it</button>
-        </div>
-    </div>
-    
     <script>
         (function() {
             // Supabase setup
@@ -196,23 +175,6 @@
             
             var currentUser = null;
             var currentOrg = null;
-            
-            // Modal functions (global)
-            window.showComingSoon = function(feature) {
-                document.getElementById('modal-text').textContent = feature + ' is currently in development. We\'re working hard to bring you the full BowlsTrack experience!';
-                document.getElementById('modal').classList.remove('hidden');
-            };
-            
-            window.hideModal = function() {
-                document.getElementById('modal').classList.add('hidden');
-            };
-            
-            // Close modal on overlay click
-            document.getElementById('modal').onclick = function(e) {
-                if (e.target === document.getElementById('modal')) {
-                    hideModal();
-                }
-            };
             
             // Initialize
             function init() {
