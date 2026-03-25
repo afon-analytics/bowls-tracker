@@ -22,6 +22,19 @@ let currentTier = 'essential'; // essential, personal, club, elite
 let trendChartInstance = null;
 let effectivenessChartInstance = null;
 
+// Check if dashboard sent a navigation target
+(function() {
+    var navTarget = localStorage.getItem('bowlstrack_navigate_to');
+    if (navTarget) {
+        localStorage.removeItem('bowlstrack_navigate_to');
+        setTimeout(function() {
+            if (typeof navigateTo === 'function') {
+                navigateTo(navTarget);
+            }
+        }, 100);
+    }
+})();
+
 let gameState = {
   gameId: 0,
   tournamentName: '',
