@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BowlsTrack - Sign Up</title>
+    <title>Sign Up | BowlsTrack</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='%23155e3d'/><circle cx='50' cy='50' r='8' fill='%23fbbf24'/></svg>">
     <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -138,133 +138,135 @@
     </footer>
     
     <script>
-        // Supabase setup
-        var SUPABASE_URL = 'https://ckgppsxswmpzrngzpacv.supabase.co';
-        var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNrZ3Bwc3hzd21wenJuZ3pwYWN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIyOTU3NjUsImV4cCI6MjA4Nzg3MTc2NX0.ODkevSgXobwQKwfluwJdcJnflD5dH0NThxcbeOXW8Xo';
-        
-        var supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        
-        // Elements
-        var tabSignup = document.getElementById('tab-signup');
-        var tabLogin = document.getElementById('tab-login');
-        var signupForm = document.getElementById('signup-form');
-        var loginForm = document.getElementById('login-form');
-        var messageEl = document.getElementById('message');
-        var signupBtn = document.getElementById('signup-btn');
-        var loginBtn = document.getElementById('login-btn');
-        
-        // Tab switching
-        tabSignup.addEventListener('click', function() {
-            tabSignup.classList.add('active');
-            tabLogin.classList.remove('active');
-            signupForm.classList.add('active');
-            loginForm.classList.remove('active');
-            messageEl.className = 'message';
-        });
-        
-        tabLogin.addEventListener('click', function() {
-            tabLogin.classList.add('active');
-            tabSignup.classList.remove('active');
-            loginForm.classList.add('active');
-            signupForm.classList.remove('active');
-            messageEl.className = 'message';
-        });
-        
-        // Show message
-        function showMessage(text, type) {
-            messageEl.textContent = text;
-            messageEl.className = 'message ' + type;
-        }
-        
-        // Set loading
-        function setLoading(btn, loading, defaultText) {
-            if (loading) {
-                btn.disabled = true;
-                btn.innerHTML = '<span class="spinner"></span> Please wait...';
-            } else {
-                btn.disabled = false;
-                btn.textContent = defaultText;
+        (function() {
+            // Supabase setup
+            var SUPABASE_URL = 'https://ckgppsxswmpzrngzpacv.supabase.co';
+            var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNrZ3Bwc3hzd21wenJuZ3pwYWN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIyOTU3NjUsImV4cCI6MjA4Nzg3MTc2NX0.ODkevSgXobwQKwfluwJdcJnflD5dH0NThxcbeOXW8Xo';
+            
+            var supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            
+            // Elements
+            var tabSignup = document.getElementById('tab-signup');
+            var tabLogin = document.getElementById('tab-login');
+            var signupForm = document.getElementById('signup-form');
+            var loginForm = document.getElementById('login-form');
+            var messageEl = document.getElementById('message');
+            var signupBtn = document.getElementById('signup-btn');
+            var loginBtn = document.getElementById('login-btn');
+            
+            // Tab switching
+            tabSignup.onclick = function() {
+                tabSignup.className = 'auth-tab active';
+                tabLogin.className = 'auth-tab';
+                signupForm.className = 'auth-form active';
+                loginForm.className = 'auth-form';
+                messageEl.className = 'message';
+            };
+            
+            tabLogin.onclick = function() {
+                tabLogin.className = 'auth-tab active';
+                tabSignup.className = 'auth-tab';
+                loginForm.className = 'auth-form active';
+                signupForm.className = 'auth-form';
+                messageEl.className = 'message';
+            };
+            
+            // Show message
+            function showMessage(text, type) {
+                messageEl.textContent = text;
+                messageEl.className = 'message ' + type;
             }
-        }
-        
-        // Sign Up
-        signupForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            messageEl.className = 'message';
             
-            var name = document.getElementById('signup-name').value.trim();
-            var email = document.getElementById('signup-email').value.trim();
-            var password = document.getElementById('signup-password').value;
-            
-            setLoading(signupBtn, true, 'Create Free Account');
-            
-            supabaseClient.auth.signUp({
-                email: email,
-                password: password,
-                options: {
-                    data: {
-                        full_name: name
-                    }
-                }
-            }).then(function(response) {
-                setLoading(signupBtn, false, 'Create Free Account');
-                
-                if (response.error) {
-                    showMessage(response.error.message, 'error');
-                    return;
-                }
-                
-                if (response.data.user && response.data.user.identities && response.data.user.identities.length === 0) {
-                    showMessage('An account with this email already exists. Please sign in instead.', 'error');
+            // Set loading
+            function setLoading(btn, loading, defaultText) {
+                if (loading) {
+                    btn.disabled = true;
+                    btn.innerHTML = '<span class="spinner"></span> Please wait...';
                 } else {
-                    showMessage('Success! Please check your email to confirm your account.', 'success');
-                    signupForm.reset();
+                    btn.disabled = false;
+                    btn.textContent = defaultText;
                 }
-            }).catch(function(err) {
-                setLoading(signupBtn, false, 'Create Free Account');
-                showMessage('An error occurred. Please try again.', 'error');
-                console.error(err);
-            });
-        });
-        
-        // Sign In
-        loginForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            messageEl.className = 'message';
-            
-            var email = document.getElementById('login-email').value.trim();
-            var password = document.getElementById('login-password').value;
-            
-            setLoading(loginBtn, true, 'Sign In');
-            
-            supabaseClient.auth.signInWithPassword({
-                email: email,
-                password: password
-            }).then(function(response) {
-                setLoading(loginBtn, false, 'Sign In');
-                
-                if (response.error) {
-                    showMessage(response.error.message, 'error');
-                    return;
-                }
-                
-                showMessage('Signed in successfully! Redirecting...', 'success');
-                setTimeout(function() {
-                    window.location.href = '/app/dashboard/';
-                }, 1000);
-            }).catch(function(err) {
-                setLoading(loginBtn, false, 'Sign In');
-                showMessage('Invalid email or password.', 'error');
-                console.error(err);
-            });
-        });
-        
-        // Check if already logged in
-        supabaseClient.auth.getSession().then(function(response) {
-            if (response.data.session) {
-                window.location.href = '/app/dashboard/';
             }
-        });
+            
+            // Sign Up
+            signupForm.onsubmit = function(e) {
+                e.preventDefault();
+                messageEl.className = 'message';
+                
+                var name = document.getElementById('signup-name').value.trim();
+                var email = document.getElementById('signup-email').value.trim();
+                var password = document.getElementById('signup-password').value;
+                
+                setLoading(signupBtn, true, 'Create Free Account');
+                
+                supabaseClient.auth.signUp({
+                    email: email,
+                    password: password,
+                    options: {
+                        data: {
+                            full_name: name
+                        }
+                    }
+                }).then(function(response) {
+                    setLoading(signupBtn, false, 'Create Free Account');
+                    
+                    if (response.error) {
+                        showMessage(response.error.message, 'error');
+                        return;
+                    }
+                    
+                    if (response.data.user && response.data.user.identities && response.data.user.identities.length === 0) {
+                        showMessage('An account with this email already exists. Please sign in instead.', 'error');
+                    } else {
+                        showMessage('Success! Please check your email to confirm your account.', 'success');
+                        signupForm.reset();
+                    }
+                }).catch(function(err) {
+                    setLoading(signupBtn, false, 'Create Free Account');
+                    showMessage('An error occurred. Please try again.', 'error');
+                    console.error(err);
+                });
+            };
+            
+            // Sign In
+            loginForm.onsubmit = function(e) {
+                e.preventDefault();
+                messageEl.className = 'message';
+                
+                var email = document.getElementById('login-email').value.trim();
+                var password = document.getElementById('login-password').value;
+                
+                setLoading(loginBtn, true, 'Sign In');
+                
+                supabaseClient.auth.signInWithPassword({
+                    email: email,
+                    password: password
+                }).then(function(response) {
+                    setLoading(loginBtn, false, 'Sign In');
+                    
+                    if (response.error) {
+                        showMessage(response.error.message, 'error');
+                        return;
+                    }
+                    
+                    showMessage('Signed in successfully! Redirecting...', 'success');
+                    setTimeout(function() {
+                        window.location.href = '/app/dashboard/';
+                    }, 1000);
+                }).catch(function(err) {
+                    setLoading(loginBtn, false, 'Sign In');
+                    showMessage('Invalid email or password.', 'error');
+                    console.error(err);
+                });
+            };
+            
+            // Check if already logged in
+            supabaseClient.auth.getSession().then(function(response) {
+                if (response.data.session) {
+                    window.location.href = '/app/dashboard/';
+                }
+            });
+        })();
     </script>
 </body>
 </html>
