@@ -2,7 +2,7 @@
   "name": "BowlsTrack",
   "short_name": "BowlsTrack",
   "description": "Multi-tier performance tracking for lawn bowls selectors and team managers",
-  "start_url": ".",
+  "start_url": "/app/tracker/",
   "display": "standalone",
   "orientation": "any",
   "theme_color": "#1e3c72",
