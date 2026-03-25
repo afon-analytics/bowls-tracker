@@ -20,7 +20,7 @@
         .user-info { display: flex; align-items: center; gap: 0.75rem; }
         .user-avatar { width: 36px; height: 36px; background: #1a7a4c; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 0.9rem; }
         .user-name { font-weight: 500; color: #334155; }
-        .btn-logout { background: transparent; border: 1px solid #cbd5e1; padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.85rem; cursor: pointer; color: #64748b; transition: all 0.2s; }
+        .btn-logout { background: transparent; border: 1px solid #cbd5e1; padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.85rem; cursor: pointer; color: #64748b; transition: all 0.2s; font-family: 'DM Sans', system-ui, sans-serif; }
         .btn-logout:hover { background: #f1f5f9; border-color: #94a3b8; }
         .main { max-width: 1200px; margin: 0 auto; padding: 2rem; }
         .welcome { background: linear-gradient(135deg, #155e3d, #0f3d2b); border-radius: 16px; padding: 2rem; color: white; margin-bottom: 2rem; }
@@ -32,15 +32,18 @@
         .stat-value { font-size: 2rem; font-weight: 700; color: #155e3d; }
         .section-title { font-family: 'DM Serif Display', Georgia, serif; font-size: 1.25rem; color: #1e293b; margin-bottom: 1rem; }
         .actions-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
-        .action-card { background: white; border-radius: 12px; padding: 1.5rem; border: 1px solid #e2e8f0; text-decoration: none; color: inherit; transition: all 0.2s; display: flex; align-items: flex-start; gap: 1rem; }
+        .action-card { background: white; border-radius: 12px; padding: 1.5rem; border: 1px solid #e2e8f0; text-decoration: none; color: inherit; transition: all 0.2s; display: flex; align-items: flex-start; gap: 1rem; cursor: pointer; }
         .action-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.08); border-color: #2db572; }
+        .action-card.disabled { opacity: 0.6; cursor: not-allowed; }
+        .action-card.disabled:hover { transform: none; box-shadow: none; border-color: #e2e8f0; }
         .action-icon { width: 48px; height: 48px; background: linear-gradient(135deg, #22995f, #155e3d); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: white; font-size: 1.5rem; }
         .action-content h3 { font-size: 1.1rem; margin-bottom: 0.25rem; color: #0f3d2b; }
         .action-content p { font-size: 0.9rem; color: #64748b; }
+        .coming-soon-tag { display: inline-block; background: #fbbf24; color: #0f3d2b; font-size: 0.7rem; font-weight: 600; padding: 0.15rem 0.5rem; border-radius: 4px; margin-left: 0.5rem; }
         .upgrade-banner { background: #fefdf8; border: 2px solid #fbbf24; border-radius: 12px; padding: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
         .upgrade-content h3 { font-size: 1.1rem; color: #1e293b; margin-bottom: 0.25rem; }
         .upgrade-content p { font-size: 0.9rem; color: #64748b; }
-        .btn-upgrade { background: #fbbf24; color: #0f3d2b; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 600; font-size: 0.95rem; cursor: pointer; text-decoration: none; transition: all 0.2s; }
+        .btn-upgrade { background: #fbbf24; color: #0f3d2b; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 600; font-size: 0.95rem; cursor: pointer; text-decoration: none; transition: all 0.2s; font-family: 'DM Sans', system-ui, sans-serif; }
         .btn-upgrade:hover { background: #fcd34d; transform: translateY(-1px); }
         .games-limit { background: white; border-radius: 12px; padding: 1.5rem; border: 1px solid #e2e8f0; margin-bottom: 2rem; }
         .limit-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
@@ -53,6 +56,15 @@
         .loading-text { color: #64748b; font-size: 0.95rem; }
         @keyframes spin { to { transform: rotate(360deg); } }
         .hidden { display: none !important; }
+        
+        /* Modal */
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+        .modal { background: white; border-radius: 16px; padding: 2rem; max-width: 400px; width: 90%; text-align: center; }
+        .modal h2 { font-family: 'DM Serif Display', Georgia, serif; color: #0f3d2b; margin-bottom: 1rem; }
+        .modal p { color: #64748b; margin-bottom: 1.5rem; }
+        .modal-btn { background: #155e3d; color: white; border: none; padding: 0.75rem 2rem; border-radius: 8px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', system-ui, sans-serif; }
+        .modal-btn:hover { background: #1a7a4c; }
+        
         @media (max-width: 640px) {
             .header-inner { flex-direction: column; align-items: flex-start; }
             .user-name { display: none; }
@@ -65,7 +77,7 @@
         <div class="spinner"></div>
         <div class="loading-text">Loading your dashboard...</div>
     </div>
-
+    
     <div id="app" class="hidden">
         <header class="header">
             <div class="header-inner">
@@ -87,13 +99,13 @@
                 </div>
             </div>
         </header>
-
+        
         <main class="main">
             <div class="welcome">
                 <h1>Welcome back, <span id="welcome-name">there</span>! 👋</h1>
-                <p>Ready to track your next game?</p>
+                <p>Your BowlsTrack dashboard is ready. Full game tracking coming soon!</p>
             </div>
-
+            
             <div class="games-limit" id="games-limit">
                 <div class="limit-header">
                     <h3>Games Used</h3>
@@ -103,7 +115,7 @@
                     <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
                 </div>
             </div>
-
+            
             <div class="stats-grid">
                 <div class="stat-card">
                     <div class="stat-label">Total Games</div>
@@ -122,39 +134,39 @@
                     <div class="stat-value" id="stat-players">0</div>
                 </div>
             </div>
-
+            
             <h2 class="section-title">Quick Actions</h2>
             <div class="actions-grid">
-                <a href="/app/game/new/" class="action-card">
+                <div class="action-card" onclick="showComingSoon('New Game')">
                     <div class="action-icon">+</div>
                     <div class="action-content">
-                        <h3>New Game</h3>
+                        <h3>New Game <span class="coming-soon-tag">Coming Soon</span></h3>
                         <p>Start tracking a new match</p>
                     </div>
-                </a>
-                <a href="/app/games/" class="action-card">
+                </div>
+                <div class="action-card" onclick="showComingSoon('View Games')">
                     <div class="action-icon">📋</div>
                     <div class="action-content">
-                        <h3>View Games</h3>
+                        <h3>View Games <span class="coming-soon-tag">Coming Soon</span></h3>
                         <p>See your game history</p>
                     </div>
-                </a>
-                <a href="/app/players/" class="action-card">
+                </div>
+                <div class="action-card" onclick="showComingSoon('Manage Players')">
                     <div class="action-icon">👥</div>
                     <div class="action-content">
-                        <h3>Manage Players</h3>
+                        <h3>Manage Players <span class="coming-soon-tag">Coming Soon</span></h3>
                         <p>Add or edit your squad</p>
                     </div>
-                </a>
-                <a href="/app/analytics/" class="action-card">
+                </div>
+                <div class="action-card" onclick="showComingSoon('Analytics')">
                     <div class="action-icon">📊</div>
                     <div class="action-content">
-                        <h3>Analytics</h3>
+                        <h3>Analytics <span class="coming-soon-tag">Coming Soon</span></h3>
                         <p>View performance insights</p>
                     </div>
-                </a>
+                </div>
             </div>
-
+            
             <div class="upgrade-banner" id="upgrade-banner">
                 <div class="upgrade-content">
                     <h3>🚀 Unlock unlimited games</h3>
@@ -164,142 +176,159 @@
             </div>
         </main>
     </div>
-
+    
+    <!-- Coming Soon Modal -->
+    <div id="modal" class="modal-overlay hidden">
+        <div class="modal">
+            <h2>🚧 Coming Soon!</h2>
+            <p id="modal-text">This feature is currently in development. We're working hard to bring you the full BowlsTrack experience!</p>
+            <button class="modal-btn" onclick="hideModal()">Got it</button>
+        </div>
+    </div>
+    
     <script>
-        // Supabase setup
-        var SUPABASE_URL = 'https://ckgppsxswmpzrngzpacv.supabase.co';
-        var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNrZ3Bwc3hzd21wenJuZ3pwYWN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIyOTU3NjUsImV4cCI6MjA4Nzg3MTc2NX0.ODkevSgXobwQKwfluwJdcJnflD5dH0NThxcbeOXW8Xo';
-
-        var supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-        var currentUser = null;
-        var currentOrg = null;
-
-        // Initialize
-        function init() {
-            supabaseClient.auth.getSession().then(function(response) {
-                if (!response.data.session) {
-                    window.location.href = '/app/signup/';
-                    return;
+        (function() {
+            // Supabase setup
+            var SUPABASE_URL = 'https://ckgppsxswmpzrngzpacv.supabase.co';
+            var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNrZ3Bwc3hzd21wenJuZ3pwYWN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIyOTU3NjUsImV4cCI6MjA4Nzg3MTc2NX0.ODkevSgXobwQKwfluwJdcJnflD5dH0NThxcbeOXW8Xo';
+            
+            var supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            
+            var currentUser = null;
+            var currentOrg = null;
+            
+            // Modal functions (global)
+            window.showComingSoon = function(feature) {
+                document.getElementById('modal-text').textContent = feature + ' is currently in development. We\'re working hard to bring you the full BowlsTrack experience!';
+                document.getElementById('modal').classList.remove('hidden');
+            };
+            
+            window.hideModal = function() {
+                document.getElementById('modal').classList.add('hidden');
+            };
+            
+            // Close modal on overlay click
+            document.getElementById('modal').onclick = function(e) {
+                if (e.target === document.getElementById('modal')) {
+                    hideModal();
                 }
-
-                currentUser = response.data.session.user;
-                loadUserData();
-            }).catch(function(err) {
-                console.error('Session error:', err);
-                window.location.href = '/app/signup/';
-            });
-        }
-
-        function loadUserData() {
-            supabaseClient
-                .from('users')
-                .select('*, organisations(*)')
-                .eq('id', currentUser.id)
-                .single()
-                .then(function(response) {
-                    if (response.error) {
-                        console.error('User data error:', response.error);
-                        showApp();
+            };
+            
+            // Initialize
+            function init() {
+                supabaseClient.auth.getSession().then(function(response) {
+                    if (!response.data.session) {
+                        window.location.href = '/app/signup/';
                         return;
                     }
-
-                    var userData = response.data;
-                    currentOrg = userData.organisations;
-
-                    // Get name from various sources
-                    var name = 'there';
-                    if (currentUser.user_metadata && currentUser.user_metadata.full_name) {
-                        name = currentUser.user_metadata.full_name;
-                    } else if (userData.name) {
-                        name = userData.name;
-                    } else if (currentUser.email) {
-                        name = currentUser.email.split('@')[0];
-                    }
-
-                    // Update UI
-                    var firstName = name.split(' ')[0];
-                    document.getElementById('welcome-name').textContent = firstName;
-                    document.getElementById('user-name').textContent = name;
-                    document.getElementById('user-avatar').textContent = name.charAt(0).toUpperCase();
-
-                    // Update plan badge
-                    if (currentOrg && currentOrg.plan) {
-                        var planNames = {
-                            essential: 'Essential',
-                            personal: 'Personal',
-                            club: 'Club',
-                            elite: 'Elite'
-                        };
-                        document.getElementById('plan-badge').textContent = planNames[currentOrg.plan] || 'Essential';
-
-                        // Hide upgrade for paid plans
-                        if (currentOrg.plan !== 'essential') {
-                            document.getElementById('upgrade-banner').classList.add('hidden');
-                            document.getElementById('games-limit').classList.add('hidden');
-                        }
-                    }
-
-                    loadStats();
+                    
+                    currentUser = response.data.session.user;
+                    loadUserData();
                 }).catch(function(err) {
-                    console.error('Load user error:', err);
-                    showApp();
+                    console.error('Session error:', err);
+                    window.location.href = '/app/signup/';
                 });
-        }
-
-        function loadStats() {
-            // Get counts
-            var gamesCount = 0;
-            var endsCount = 0;
-            var deliveriesCount = 0;
-            var playersCount = 0;
-
-            // Games
-            supabaseClient.from('games').select('*', { count: 'exact', head: true }).then(function(r) {
-                gamesCount = r.count || 0;
-                document.getElementById('stat-games').textContent = gamesCount;
-                document.getElementById('games-count').textContent = gamesCount;
-
-                // Update progress bar
-                var percentage = Math.min((gamesCount / 10) * 100, 100);
-                document.getElementById('progress-fill').style.width = percentage + '%';
-            });
-
-            // Ends
-            supabaseClient.from('ends').select('*', { count: 'exact', head: true }).then(function(r) {
-                endsCount = r.count || 0;
-                document.getElementById('stat-ends').textContent = endsCount;
-            });
-
-            // Deliveries
-            supabaseClient.from('deliveries').select('*', { count: 'exact', head: true }).then(function(r) {
-                deliveriesCount = r.count || 0;
-                document.getElementById('stat-deliveries').textContent = deliveriesCount;
-            });
-
-            // Players
-            supabaseClient.from('players').select('*', { count: 'exact', head: true }).then(function(r) {
-                playersCount = r.count || 0;
-                document.getElementById('stat-players').textContent = playersCount;
-            });
-
-            showApp();
-        }
-
-        function showApp() {
-            document.getElementById('loading').classList.add('hidden');
-            document.getElementById('app').classList.remove('hidden');
-        }
-
-        // Logout
-        document.getElementById('logout-btn').addEventListener('click', function() {
-            supabaseClient.auth.signOut().then(function() {
-                window.location.href = '/app/signup/';
-            });
-        });
-
-        // Start
-        init();
+            }
+            
+            function loadUserData() {
+                supabaseClient
+                    .from('users')
+                    .select('*, organisations(*)')
+                    .eq('id', currentUser.id)
+                    .single()
+                    .then(function(response) {
+                        if (response.error) {
+                            console.error('User data error:', response.error);
+                            showApp();
+                            return;
+                        }
+                        
+                        var userData = response.data;
+                        currentOrg = userData.organisations;
+                        
+                        // Get name from various sources
+                        var name = 'there';
+                        if (currentUser.user_metadata && currentUser.user_metadata.full_name) {
+                            name = currentUser.user_metadata.full_name;
+                        } else if (userData.name) {
+                            name = userData.name;
+                        } else if (currentUser.email) {
+                            name = currentUser.email.split('@')[0];
+                        }
+                        
+                        // Update UI
+                        var firstName = name.split(' ')[0];
+                        document.getElementById('welcome-name').textContent = firstName;
+                        document.getElementById('user-name').textContent = name;
+                        document.getElementById('user-avatar').textContent = name.charAt(0).toUpperCase();
+                        
+                        // Update plan badge
+                        if (currentOrg && currentOrg.plan) {
+                            var planNames = {
+                                essential: 'Essential',
+                                personal: 'Personal',
+                                club: 'Club',
+                                elite: 'Elite'
+                            };
+                            document.getElementById('plan-badge').textContent = planNames[currentOrg.plan] || 'Essential';
+                            
+                            // Hide upgrade for paid plans
+                            if (currentOrg.plan !== 'essential') {
+                                document.getElementById('upgrade-banner').classList.add('hidden');
+                                document.getElementById('games-limit').classList.add('hidden');
+                            }
+                        }
+                        
+                        loadStats();
+                    }).catch(function(err) {
+                        console.error('Load user error:', err);
+                        showApp();
+                    });
+            }
+            
+            function loadStats() {
+                // Games
+                supabaseClient.from('games').select('*', { count: 'exact', head: true }).then(function(r) {
+                    var gamesCount = r.count || 0;
+                    document.getElementById('stat-games').textContent = gamesCount;
+                    document.getElementById('games-count').textContent = gamesCount;
+                    var percentage = Math.min((gamesCount / 10) * 100, 100);
+                    document.getElementById('progress-fill').style.width = percentage + '%';
+                });
+                
+                // Ends
+                supabaseClient.from('ends').select('*', { count: 'exact', head: true }).then(function(r) {
+                    document.getElementById('stat-ends').textContent = r.count || 0;
+                });
+                
+                // Deliveries
+                supabaseClient.from('deliveries').select('*', { count: 'exact', head: true }).then(function(r) {
+                    document.getElementById('stat-deliveries').textContent = r.count || 0;
+                });
+                
+                // Players
+                supabaseClient.from('players').select('*', { count: 'exact', head: true }).then(function(r) {
+                    document.getElementById('stat-players').textContent = r.count || 0;
+                });
+                
+                showApp();
+            }
+            
+            function showApp() {
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('app').classList.remove('hidden');
+            }
+            
+            // Logout
+            document.getElementById('logout-btn').onclick = function() {
+                supabaseClient.auth.signOut().then(function() {
+                    window.location.href = '/app/signup/';
+                });
+            };
+            
+            // Start
+            init();
+        })();
     </script>
 </body>
 </html>
