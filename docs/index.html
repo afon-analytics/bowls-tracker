@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
     <title>BowlsTrack - Performance Analytics for Lawn Bowls</title>
     <meta name="description" content="Track every delivery, analyse performance, and make data-driven selection decisions. The only lawn bowls analytics platform with dartboard position capture.">
-
-    <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='%23155e3d'/><circle cx='50' cy='50' r='8' fill='%23fbbf24'/></svg>">
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -572,11 +572,58 @@
                 text-align: center;
             }
         }
+
+        /* Skip link for accessibility */
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: var(--green-800);
+            color: white;
+            padding: 8px 16px;
+            z-index: 1001;
+            transition: top 0.3s;
+            text-decoration: none;
+        }
+
+        .skip-link:focus {
+            top: 0;
+        }
+
+        /* Improved focus indicators for accessibility */
+        a:focus-visible,
+        button:focus-visible,
+        input:focus-visible,
+        textarea:focus-visible,
+        select:focus-visible {
+            outline: 3px solid var(--green-600);
+            outline-offset: 2px;
+        }
+
+        .btn:focus-visible {
+            outline: 3px solid var(--green-600);
+            outline-offset: 2px;
+            box-shadow: 0 0 0 6px rgba(34, 153, 95, 0.2);
+        }
+
+        /* Visually hidden but accessible to screen readers */
+        .visually-hidden {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
     </style>
 </head>
 <body>
+    <a href="#main" class="skip-link">Skip to main content</a>
     <!-- Navigation -->
-    <nav class="nav">
+    <nav class="nav" aria-label="Main navigation">
         <div class="nav-inner">
             <a href="/" class="logo">
                 <svg class="logo-icon" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -593,7 +640,7 @@
                 <a href="#pricing">Pricing</a>
                 <a href="/app/signup/" class="btn btn-primary">Sign In</a>
             </div>
-            <button class="mobile-menu-btn" onclick="document.querySelector('.nav-links').classList.toggle('active')">
+            <button class="mobile-menu-btn" aria-label="Toggle navigation menu" aria-expanded="false">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path d="M4 6h16M4 12h16M4 18h16"/>
                 </svg>
@@ -601,6 +648,7 @@
         </div>
     </nav>
 
+    <main id="main">
     <!-- Hero -->
     <section class="hero">
         <div class="hero-inner">
@@ -608,7 +656,7 @@
                 <h1>Track Every Delivery. <span>Elevate Your Game.</span></h1>
                 <p>The only lawn bowls analytics platform with dartboard position capture. Make data-driven selection decisions and unlock performance insights.</p>
                 <div class="hero-buttons">
-                    <a href="/app/signup/" class="btn btn-primary">Get Started Free</a>
+                    <a href="#pricing" class="btn btn-primary">Get Started Free</a>
                     <a href="#pricing" class="btn btn-secondary">View Plans</a>
                 </div>
             </div>
@@ -799,6 +847,7 @@
         </div>
     </section>
 
+    </main>
     <!-- Footer -->
     <footer class="footer">
         <div class="footer-inner">
@@ -819,5 +868,26 @@
             </div>
         </div>
     </footer>
+    <script>
+        // Mobile navigation toggle
+        const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+        const navLinks = document.querySelector('.nav-links');
+
+        if (mobileMenuBtn && navLinks) {
+            mobileMenuBtn.addEventListener('click', () => {
+                const isExpanded = mobileMenuBtn.getAttribute('aria-expanded') === 'true';
+                mobileMenuBtn.setAttribute('aria-expanded', !isExpanded);
+                navLinks.classList.toggle('active');
+            });
+
+            // Close menu when clicking a link
+            navLinks.querySelectorAll('a').forEach(link => {
+                link.addEventListener('click', () => {
+                    mobileMenuBtn.setAttribute('aria-expanded', 'false');
+                    navLinks.classList.remove('active');
+                });
+            });
+        }
+    </script>
 </body>
 </html>
