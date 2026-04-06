@@ -107,6 +107,14 @@
             color: var(--green-700);
         }
 
+        .nav-links .btn-primary {
+            color: white;
+        }
+
+        .nav-links .btn-primary:hover {
+            color: white;
+        }
+
         .btn {
             display: inline-flex;
             align-items: center;
@@ -583,17 +591,69 @@
             margin: 0 auto;
         }
 
+        /* Contact form card */
         .contact-form-embed {
             background: #ffffff;
-            border-radius: 12px;
-            padding: 1.5rem;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-            max-width: 540px;
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 4px 24px rgba(15, 61, 43, 0.1);
+            max-width: 640px;
         }
 
-        .contact-form-embed iframe {
-            display: block;
+        /* Custom contact form */
+        .contact-form .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .contact-form .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .contact-form label {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--green-900);
+        }
+
+        .contact-form input,
+        .contact-form textarea {
+            padding: 0.75rem 1rem;
+            border: 1.5px solid var(--slate-200);
             border-radius: 8px;
+            background: var(--cream);
+            font-family: var(--font-body);
+            font-size: 0.95rem;
+            color: var(--slate-900);
+            transition: border-color 0.2s, box-shadow 0.2s;
+            outline: none;
+        }
+
+        .contact-form input:focus,
+        .contact-form textarea:focus {
+            border-color: var(--green-600);
+            box-shadow: 0 0 0 3px rgba(34, 153, 95, 0.15);
+        }
+
+        .contact-form textarea {
+            resize: vertical;
+            min-height: 130px;
+        }
+
+        .contact-form .btn {
+            width: 100%;
+            padding: 0.875rem;
+            font-size: 1rem;
+        }
+
+        @media (max-width: 600px) {
+            .contact-form .form-row {
+                grid-template-columns: 1fr;
+            }
         }
 
         /* Footer newsletter section */
@@ -881,16 +941,29 @@
                 <p>Have a question or want to learn more? We'd love to hear from you.</p>
             </div>
             <div class="contact-form-embed">
-                <iframe
-                    width="100%"
-                    height="520px"
-                    src="https://forms.cloud.microsoft/e/ppuy86xUie?embed=true"
-                    frameborder="0"
-                    marginwidth="0"
-                    marginheight="0"
-                    style="border: none; max-width: 100%; max-height: 100vh;"
-                    allowfullscreen webkitallowfullscreen mozallowfullscreen msallowfullscreen>
-                </iframe>
+                <form class="contact-form" id="contactForm" action="https://formspree.io/f/YOUR_FORM_ID" method="POST">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="name">Name</label>
+                            <input type="text" id="name" name="name" placeholder="Your name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Email</label>
+                            <input type="email" id="email" name="email" placeholder="your@email.com" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="club">Club (optional)</label>
+                        <input type="text" id="club" name="club" placeholder="Your bowls club">
+                    </div>
+                    <div class="form-group">
+                        <label for="message">Message</label>
+                        <textarea id="message" name="message" rows="5" placeholder="Tell us how we can help..." required></textarea>
+                    </div>
+                    <input type="hidden" name="_subject" value="New BowlsTrack enquiry">
+                    <input type="text" name="_gotcha" style="display:none">
+                    <button type="submit" class="btn btn-primary">Send Message</button>
+                </form>
             </div>
         </div>
     </section>
