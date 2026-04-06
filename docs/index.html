@@ -733,6 +733,7 @@
             <div class="nav-links">
                 <a href="#features">Features</a>
                 <a href="#pricing">Pricing</a>
+                <a href="https://outlook.office.com/book/AfonAnalytics1@afonanalytics.co.uk/" target="_blank" class="btn btn-gold">Book a Demo</a>
                 <a href="/app/signup/" class="btn btn-primary">Sign In</a>
             </div>
             <button class="mobile-menu-btn" aria-label="Toggle navigation menu" aria-expanded="false">
@@ -752,6 +753,7 @@
                 <p>The only lawn bowls analytics platform with dartboard position capture. Make data-driven selection decisions and unlock performance insights.</p>
                 <div class="hero-buttons">
                     <a href="#pricing" class="btn btn-primary">Get Started Free</a>
+                    <a href="https://outlook.office.com/book/AfonAnalytics1@afonanalytics.co.uk/" target="_blank" class="btn btn-gold">Book a Demo</a>
                     <a href="#pricing" class="btn btn-secondary">View Plans</a>
                 </div>
             </div>
@@ -941,7 +943,7 @@
                 <p>Have a question or want to learn more? We'd love to hear from you.</p>
             </div>
             <div class="contact-form-embed">
-                <form class="contact-form" id="contactForm" action="https://formspree.io/f/YOUR_FORM_ID" method="POST">
+                <form class="contact-form" id="contactForm" action="#" method="POST">
                     <div class="form-row">
                         <div class="form-group">
                             <label for="name">Name</label>
@@ -960,8 +962,6 @@
                         <label for="message">Message</label>
                         <textarea id="message" name="message" rows="5" placeholder="Tell us how we can help..." required></textarea>
                     </div>
-                    <input type="hidden" name="_subject" value="New BowlsTrack enquiry">
-                    <input type="text" name="_gotcha" style="display:none">
                     <button type="submit" class="btn btn-primary">Send Message</button>
                 </form>
             </div>
@@ -1021,6 +1021,39 @@
                     mobileMenuBtn.setAttribute('aria-expanded', 'false');
                     navLinks.classList.remove('active');
                 });
+            });
+        }
+
+        // Contact form — opens email client pre-filled
+        const contactForm = document.getElementById('contactForm');
+        if (contactForm) {
+            contactForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const name    = this.elements['name'].value.trim();
+                const email   = this.elements['email'].value.trim();
+                const club    = this.elements['club'].value.trim();
+                const message = this.elements['message'].value.trim();
+
+                const subject = encodeURIComponent('BowlsTrack Enquiry from ' + name);
+                const body = encodeURIComponent(
+                    'Name: ' + name + '\n' +
+                    'Email: ' + email + '\n' +
+                    (club ? 'Club: ' + club + '\n' : '') +
+                    '\nMessage:\n' + message
+                );
+
+                window.location.href = 'mailto:hello@bowlstrack.com?subject=' + subject + '&body=' + body;
+
+                // Show confirmation in case email client doesn't open
+                this.innerHTML =
+                    '<div style="text-align:center;padding:1.5rem 0;color:var(--green-800)">' +
+                    '<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" style="margin-bottom:1rem">' +
+                    '<path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>' +
+                    '</svg>' +
+                    '<h3 style="font-family:var(--font-display);font-size:1.5rem;margin-bottom:0.5rem">Your email client should open now</h3>' +
+                    '<p style="color:var(--slate-600);font-size:0.95rem">If it didn\'t open, email us directly at ' +
+                    '<a href="mailto:hello@bowlstrack.com" style="color:var(--green-700)">hello@bowlstrack.com</a>' +
+                    '</p></div>';
             });
         }
     </script>
