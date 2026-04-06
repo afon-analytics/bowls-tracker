@@ -427,6 +427,51 @@
             width: 100%;
         }
 
+        /* Billing toggle */
+        .pricing-toggle-wrapper {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2.5rem;
+        }
+
+        .pricing-toggle {
+            display: inline-flex;
+            background: var(--slate-200);
+            border-radius: 100px;
+            padding: 4px;
+            gap: 4px;
+        }
+
+        .toggle-option {
+            padding: 0.5rem 1.25rem;
+            border-radius: 100px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            color: var(--slate-700);
+            transition: background 0.2s, color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-family: var(--font-body);
+        }
+
+        .toggle-option.active {
+            background: var(--green-800);
+            color: white;
+        }
+
+        .save-badge {
+            background: var(--gold-500);
+            color: var(--green-900);
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 0.15rem 0.5rem;
+            border-radius: 100px;
+        }
+
         /* CTA */
         .cta {
             padding: 5rem 2rem;
@@ -864,12 +909,20 @@
                 <h2>Simple, Transparent Pricing</h2>
                 <p>Start free, upgrade when you need more. No hidden fees, cancel anytime.</p>
             </div>
+            <div class="pricing-toggle-wrapper">
+                <div class="pricing-toggle" role="group" aria-label="Billing period">
+                    <button class="toggle-option" id="toggle-monthly" aria-pressed="false">Monthly</button>
+                    <button class="toggle-option active" id="toggle-yearly" aria-pressed="true">
+                        Yearly <span class="save-badge">Save 17%</span>
+                    </button>
+                </div>
+            </div>
             <div class="pricing-grid">
                 <div class="pricing-card">
                     <div class="pricing-tier">Free</div>
                     <div class="pricing-name">Essential</div>
                     <div class="pricing-price">
-                        <span class="amount">£0</span>
+                        <span class="amount" data-yearly="£0" data-monthly="£0">£0</span>
                         <span class="period">/year</span>
                     </div>
                     <div class="pricing-description">For individual bowlers getting started</div>
@@ -884,7 +937,7 @@
                     <div class="pricing-tier">Individual</div>
                     <div class="pricing-name">Personal</div>
                     <div class="pricing-price">
-                        <span class="amount">£100</span>
+                        <span class="amount" data-yearly="£100" data-monthly="£10">£100</span>
                         <span class="period">/year</span>
                     </div>
                     <div class="pricing-description">For serious players tracking their game</div>
@@ -901,7 +954,7 @@
                     <div class="pricing-tier">Teams</div>
                     <div class="pricing-name">Club</div>
                     <div class="pricing-price">
-                        <span class="amount">£400</span>
+                        <span class="amount" data-yearly="£400" data-monthly="£40">£400</span>
                         <span class="period">/year</span>
                     </div>
                     <div class="pricing-description">For clubs and team managers</div>
@@ -918,7 +971,7 @@
                     <div class="pricing-tier">Professional</div>
                     <div class="pricing-name">Elite</div>
                     <div class="pricing-price">
-                        <span class="amount">£500</span>
+                        <span class="amount" data-yearly="£500" data-monthly="£50">£500</span>
                         <span class="period">/year</span>
                     </div>
                     <div class="pricing-description">For national selectors and associations</div>
@@ -1015,6 +1068,26 @@
         </div>
     </footer>
     <script>
+        // Pricing billing toggle
+        const toggleMonthly = document.getElementById('toggle-monthly');
+        const toggleYearly  = document.getElementById('toggle-yearly');
+
+        function setBilling(yearly) {
+            toggleMonthly.classList.toggle('active', !yearly);
+            toggleYearly.classList.toggle('active', yearly);
+            toggleMonthly.setAttribute('aria-pressed', !yearly);
+            toggleYearly.setAttribute('aria-pressed', yearly);
+            document.querySelectorAll('.amount').forEach(el => {
+                el.textContent = yearly ? el.dataset.yearly : el.dataset.monthly;
+            });
+            document.querySelectorAll('.period').forEach(el => {
+                el.textContent = yearly ? '/year' : '/month';
+            });
+        }
+
+        toggleMonthly.addEventListener('click', () => setBilling(false));
+        toggleYearly.addEventListener('click',  () => setBilling(true));
+
         // Mobile navigation toggle
         const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
         const navLinks = document.querySelector('.nav-links');
