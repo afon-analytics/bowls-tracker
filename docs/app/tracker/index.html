@@ -85,6 +85,11 @@
                     <div class="game-card-title">Analytics</div>
                     <div class="game-card-info">Player stats &amp; comparison</div>
                 </div>
+                <div class="game-card" onclick="start40BowlTest()" style="text-align: center;">
+                    <div style="font-size: 28px; margin-bottom: 6px;">&#127942;</div>
+                    <div class="game-card-title">40-Bowl Test</div>
+                    <div class="game-card-info">Standard benchmark test for bowlers</div>
+                </div>
                 <div class="game-card tier-card tier-3 role-manager-only" id="homeCardManager" onclick="navigateTo('manager')" style="text-align: center;">
                     <div style="font-size: 28px; margin-bottom: 6px;">&#128101;</div>
                     <div class="game-card-title">Team Manager</div>
@@ -187,6 +192,7 @@
                 <div class="radio-group" id="gameTypeGroup">
                     <div class="radio-btn active" onclick="selectGameType('game')">Game</div>
                     <div class="radio-btn" onclick="selectGameType('trial')">Trial</div>
+                    <div class="radio-btn" onclick="selectGameType('40bowl')">40-Bowl Test</div>
                 </div>
             </div>
 
@@ -601,6 +607,181 @@
                     </div>
                     <div id="recommendationResult"></div>
                 </div>
+            </div>
+        </div>
+
+        <!-- 40-Bowl Test Setup Screen -->
+        <div id="fortyBowlSetupScreen" class="screen">
+            <div class="breadcrumbs">
+                <a href="#" onclick="navigateTo('home'); return false;">Home</a> &rsaquo; 40-Bowl Test
+            </div>
+            <h2 style="margin-bottom: 10px;">40-Bowl Test</h2>
+            <p style="text-align: center; color: var(--text-secondary); font-size: 13px; margin-bottom: 20px;">
+                The standard benchmark test: 40 bowls across 4 sub-sets.<br>
+                Score 1 point for each bowl within 1 mat length (4ft) of the jack.
+            </p>
+            <div class="forty-bowl-benchmarks" style="margin-bottom: 20px;">
+                <h3 style="text-align: center; margin-bottom: 10px;">Division Benchmarks</h3>
+                <div style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;">
+                    <span class="benchmark-tag benchmark-novice">8-12: Novice</span>
+                    <span class="benchmark-tag benchmark-div5">13-16: Div 5</span>
+                    <span class="benchmark-tag benchmark-div2">17-22: Div 2</span>
+                    <span class="benchmark-tag benchmark-state">23-30: State Squad</span>
+                    <span class="benchmark-tag benchmark-rep">31+: State Singles Rep</span>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="fortyBowlPlayerName">Player Name</label>
+                <input type="text" id="fortyBowlPlayerName" placeholder="Enter your name">
+            </div>
+            <button class="btn-block" onclick="startFortyBowlSession()">Start Test</button>
+            <button class="btn-secondary btn-block" onclick="navigateTo('home')" style="margin-top: 10px;">Back</button>
+        </div>
+
+        <!-- 40-Bowl Test Active Screen -->
+        <div id="fortyBowlScreen" class="screen">
+            <div class="breadcrumbs">
+                <a href="#" onclick="navigateTo('home'); return false;">Home</a> &rsaquo;
+                <a href="#" onclick="abandon40BowlTest(); return false;">40-Bowl Test</a> &rsaquo; In Progress
+            </div>
+
+            <div class="forty-bowl-header">
+                <div class="forty-bowl-progress">
+                    <div class="forty-bowl-subset-indicators" id="fortyBowlSubsetIndicators">
+                        <div class="subset-indicator active" data-subset="0">FH Short</div>
+                        <div class="subset-indicator" data-subset="1">FH Long</div>
+                        <div class="subset-indicator" data-subset="2">BH Short</div>
+                        <div class="subset-indicator" data-subset="3">BH Long</div>
+                    </div>
+                    <div class="forty-bowl-status" id="fortyBowlStatus">
+                        <span class="subset-label" id="fortyBowlSubsetLabel">FH Short</span>
+                        <span class="subset-count" id="fortyBowlSubsetCount">Bowl 1/10</span>
+                        <span class="subset-score" id="fortyBowlSubsetScore">Score: 0/0</span>
+                    </div>
+                </div>
+                <div class="forty-bowl-total" id="fortyBowlTotal">
+                    Total: 0/40
+                </div>
+            </div>
+
+            <div class="game-layout">
+                <div class="game-layout-arena">
+                    <div class="legend">
+                        <div class="legend-item">
+                            <div class="legend-circle" style="background: #4CAF50; border-color: #1B5E20;"></div>
+                            <span>Your Bowl</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-circle" style="background: #FFD700; border-color: #FFA500;"></div>
+                            <span>Jack</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-circle forty-bowl-mat-range" style="border: 2px dashed #4CAF50; background: transparent;"></div>
+                            <span>1 Mat (4ft)</span>
+                        </div>
+                    </div>
+
+                    <div style="text-align: center; margin-bottom: 3px;">
+                        <span style="font-weight: 600; color: var(--primary); font-size: 12px;">MAT END</span>
+                    </div>
+
+                    <div class="green-canvas-wrapper">
+                        <div class="green-canvas">
+                            <canvas id="fortyBowlCanvas"></canvas>
+                        </div>
+                    </div>
+
+                    <div style="text-align: center; margin-top: 3px;">
+                        <span style="font-weight: 600; color: var(--primary); font-size: 12px;">DITCH END</span>
+                    </div>
+                </div>
+
+                <div class="game-layout-controls">
+                    <div class="forty-bowl-info-panel">
+                        <div class="forty-bowl-hand-display" id="fortyBowlHandDisplay">
+                            <span class="hand-label">Hand:</span>
+                            <span class="hand-value" id="fortyBowlHandValue">Forehand</span>
+                        </div>
+                        <div class="forty-bowl-jack-display" id="fortyBowlJackDisplay">
+                            <span class="jack-label">Jack:</span>
+                            <span class="jack-value" id="fortyBowlJackValue">Short (15-18m)</span>
+                        </div>
+                    </div>
+
+                    <div class="forty-bowl-last-bowl" id="fortyBowlLastBowl" style="display: none;">
+                        <div class="last-bowl-result" id="fortyBowlLastResult"></div>
+                    </div>
+
+                    <div class="forty-bowl-subset-summary" id="fortyBowlSubsetSummary">
+                        <h3>Sub-set Scores</h3>
+                        <div class="subset-scores-grid" id="subsetScoresGrid">
+                            <div class="subset-score-item" id="subsetScore0"><span>FH Short</span><span>-</span></div>
+                            <div class="subset-score-item" id="subsetScore1"><span>FH Long</span><span>-</span></div>
+                            <div class="subset-score-item" id="subsetScore2"><span>BH Short</span><span>-</span></div>
+                            <div class="subset-score-item" id="subsetScore3"><span>BH Long</span><span>-</span></div>
+                        </div>
+                    </div>
+
+                    <div class="action-buttons" style="margin-top: 10px;">
+                        <button class="btn-secondary" onclick="undoFortyBowl()">Undo Last</button>
+                        <button class="btn-secondary" style="background: var(--danger); color: white;" onclick="abandon40BowlTest()">Abandon</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 40-Bowl Test Results Screen -->
+        <div id="fortyBowlResultsScreen" class="screen">
+            <div class="breadcrumbs">
+                <a href="#" onclick="navigateTo('home'); return false;">Home</a> &rsaquo; 40-Bowl Test Results
+            </div>
+            <h2 style="margin-bottom: 15px;">40-Bowl Test Results</h2>
+
+            <div class="forty-bowl-results">
+                <div class="results-total" id="fortyBowlResultTotal">
+                    <div class="results-score-big" id="resultScoreBig">0</div>
+                    <div class="results-out-of">/40</div>
+                </div>
+                <div class="results-benchmark" id="resultBenchmark"></div>
+                <div class="results-personal-best" id="resultPersonalBest" style="display: none;"></div>
+
+                <div class="results-subscores" id="resultSubscores">
+                    <div class="results-subscore" id="resultFHShort">
+                        <div class="subscore-label">FH Short</div>
+                        <div class="subscore-value">0/10</div>
+                        <div class="subscore-bar"><div class="subscore-bar-fill"></div></div>
+                    </div>
+                    <div class="results-subscore" id="resultFHLong">
+                        <div class="subscore-label">FH Long</div>
+                        <div class="subscore-value">0/10</div>
+                        <div class="subscore-bar"><div class="subscore-bar-fill"></div></div>
+                    </div>
+                    <div class="results-subscore" id="resultBHShort">
+                        <div class="subscore-label">BH Short</div>
+                        <div class="subscore-value">0/10</div>
+                        <div class="subscore-bar"><div class="subscore-bar-fill"></div></div>
+                    </div>
+                    <div class="results-subscore" id="resultBHLong">
+                        <div class="subscore-label">BH Long</div>
+                        <div class="subscore-value">0/10</div>
+                        <div class="subscore-bar"><div class="subscore-bar-fill"></div></div>
+                    </div>
+                </div>
+
+                <div class="results-upgrade" id="resultUpgradePrompt" style="display: none;">
+                    <p>Sign up for Personal (&pound;35/yr) to save your scores and track progress over time</p>
+                    <button class="btn-small" onclick="navigateTo('tiers')">View Plans</button>
+                </div>
+
+                <div class="results-history" id="resultHistory" style="display: none;">
+                    <h3>Recent Scores</h3>
+                    <div class="results-trend" id="resultTrend"></div>
+                </div>
+            </div>
+
+            <div class="action-buttons" style="margin-top: 20px;">
+                <button class="btn-block" onclick="start40BowlTest()">Test Again</button>
+                <button class="btn-secondary btn-block" onclick="navigateTo('home')" style="margin-top: 10px;">Back to Home</button>
             </div>
         </div>
 
