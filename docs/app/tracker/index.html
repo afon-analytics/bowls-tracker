@@ -107,6 +107,11 @@
                     <div class="game-card-info">Heatmaps, rankings &amp; recommendations</div>
                     <span class="tier-lock-badge">ELITE</span>
                 </div>
+                <div class="game-card" id="homeCardSettings" onclick="navigateTo('settings')" style="text-align: center;">
+                    <div style="font-size: 28px; margin-bottom: 6px;">&#9881;</div>
+                    <div class="game-card-title">My Settings</div>
+                    <div class="game-card-info">Data sharing &amp; preferences</div>
+                </div>
             </div>
 
             <div style="text-align: center; margin-top: 10px;">
@@ -474,6 +479,7 @@
                 <div class="export-buttons">
                     <button class="btn-secondary btn-small" onclick="exportAllPlayerStats()">All Players</button>
                     <button class="btn-secondary btn-small" onclick="exportTournamentSummary()">Tournament Summary</button>
+                    <button class="btn-small" id="seasonReportBtn" onclick="showSeasonReport()" style="background: var(--tier-2);">Download My Season Report</button>
                 </div>
             </div>
         </div>
@@ -490,11 +496,22 @@
 
             <div class="manager-tabs">
                 <div class="analytics-tab active" data-mtab="live" onclick="setManagerTab('live')">Live Games</div>
+                <div class="analytics-tab" data-mtab="squad" onclick="setManagerTab('squad')">Squad Data</div>
                 <div class="analytics-tab" data-mtab="players" onclick="setManagerTab('players')">Player History</div>
                 <div class="analytics-tab" data-mtab="comparison" onclick="setManagerTab('comparison')">Compare</div>
             </div>
 
             <div id="managerContent">
+                <div id="managerSquad" class="manager-panel" style="display: none;">
+                    <div id="squadSharingBanner" class="squad-sharing-banner"></div>
+                    <div id="squadTierLock" class="tier-lock-message" style="display: none;">
+                        <div class="tier-lock-icon">&#128274;</div>
+                        <p>Squad Data view is available on <strong>Club</strong> tier and above.</p>
+                        <button class="btn-small" onclick="navigateTo('tiers')">Upgrade to unlock</button>
+                    </div>
+                    <div id="squadDataContent"></div>
+                </div>
+
                 <div id="managerLive" class="manager-panel">
                     <div class="manager-live-header">
                         <h3>Active Rinks</h3>
@@ -982,6 +999,101 @@
             </div>
         </div>
 
+        <!-- Player Settings Screen -->
+        <div id="settingsScreen" class="screen">
+            <div class="breadcrumbs">
+                <a href="#" onclick="navigateTo('home'); return false;">Home</a> &rsaquo; My Settings
+            </div>
+            <h2 style="margin-bottom: 20px;">My Settings</h2>
+
+            <!-- Data Sharing Section -->
+            <div class="settings-section" id="dataSharingSection">
+                <div class="settings-section-header">
+                    <h3 style="margin: 0;">Share with Selector</h3>
+                    <span class="settings-section-subtitle">Your data, your control</span>
+                </div>
+
+                <div id="dataSharingLocked" class="tier-lock-message" style="display: none;">
+                    <div class="tier-lock-icon">&#128274;</div>
+                    <p>Data sharing is available on <strong>Personal</strong> tier and above.</p>
+                    <p style="font-size: 12px; color: var(--text-muted);">Share your performance with your club selector to support team selection.</p>
+                    <button class="btn-small" onclick="navigateTo('tiers')">Upgrade to unlock</button>
+                </div>
+
+                <div id="dataSharingControls" style="display: none;">
+                    <p class="sharing-empowerment">Share it if you want. Keep it private if you don't.</p>
+
+                    <div class="toggle-row master-toggle">
+                        <label class="toggle-label" for="shareEnabled">Share my performance data with my club selector</label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="shareEnabled" onchange="toggleMasterShare()">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+
+                    <div id="granularControls" class="granular-controls" style="display: none;">
+                        <div class="toggle-row">
+                            <label class="toggle-label" for="shareMlPct">Share my ML%</label>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="shareMlPct" checked onchange="saveSharingPreferences()">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                        <div class="toggle-row">
+                            <label class="toggle-label" for="share40Bowl">Share my 40-Bowl Test scores</label>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="share40Bowl" checked onchange="saveSharingPreferences()">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                        <div class="toggle-row">
+                            <label class="toggle-label" for="shareFhBh">Share my Forehand/Backhand split</label>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="shareFhBh" checked onchange="saveSharingPreferences()">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                        <div class="toggle-row">
+                            <label class="toggle-label" for="shareDrills">Share my drill scores</label>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="shareDrills" checked onchange="saveSharingPreferences()">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                        <div class="toggle-row">
+                            <label class="toggle-label" for="shareSeasonTrend">Share my season trend</label>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="shareSeasonTrend" checked onchange="saveSharingPreferences()">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+
+                        <button class="btn-secondary btn-small" onclick="showSharingPreview()" style="margin-top: 12px; width: 100%;">Preview my shared profile</button>
+                    </div>
+
+                    <div id="sharingSaveStatus" class="sharing-save-status" style="display: none;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sharing Preview Modal -->
+        <div id="sharingPreviewModal" class="modal">
+            <div class="modal-content" style="max-width: 550px;">
+                <h2>What your selector sees</h2>
+                <p style="text-align: center; color: var(--text-secondary); font-size: 13px; margin-bottom: 15px;">This is exactly how your data appears to selectors and managers.</p>
+                <div id="sharingPreviewContent"></div>
+                <div class="action-buttons" style="margin-top: 15px;">
+                    <button onclick="closeSharingPreview()">Close</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- My Season Report Modal -->
+        <div id="seasonReportModal" class="modal">
+            <div class="modal-content season-report-content" id="seasonReportContent" style="max-width: 650px;">
+            </div>
+        </div>
+
         <!-- Onboarding Overlay -->
         <div id="onboardingOverlay" class="onboarding-overlay">
             <div class="onboarding-card" id="onboardingCard"></div>
@@ -1028,6 +1140,7 @@
     <script src="js/analytics.js"></script>
     <script src="js/export.js"></script>
     <script src="js/drills.js"></script>
+    <script src="js/sharing.js"></script>
     <script src="js/app.js"></script>
 </body>
 </html>
