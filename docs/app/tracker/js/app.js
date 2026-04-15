@@ -2030,7 +2030,7 @@ function selectTier(tier, e) {
   document.body.classList.add('tier-' + currentTier);
 
   const tierNames = { essential: 'Essential', personal: 'Personal', club: 'Club', elite: 'Elite' };
-  const tierLabels = { essential: 'Free Tier', personal: '\u00A310/month', club: '\u00A340/month', elite: '\u00A350/month' };
+  const tierLabels = { essential: 'Free Tier', personal: '\u00A33/month', club: '\u00A340/month', elite: '\u00A350/month' };
 
   const badge = document.getElementById('tierBadge');
   const label = document.getElementById('tierLabel');
