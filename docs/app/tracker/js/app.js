@@ -221,7 +221,7 @@ function dismissInstallBanner() {
 function navigateTo(view) {
   // Role-based guard: selectors can only access track, games, and home
   if (typeof userRole !== 'undefined' && userRole === 'selector') {
-    const selectorAllowed = ['track', 'games', 'home', 'fortyBowlSetup', 'fortyBowl', 'fortyBowlResults'];
+    const selectorAllowed = ['track', 'games', 'home', 'drills', 'fortyBowlSetup', 'fortyBowl', 'fortyBowlResults'];
     if (!selectorAllowed.includes(view)) {
       console.warn('[App] Selector role blocked from view:', view);
       view = 'track';
@@ -262,6 +262,10 @@ function navigateTo(view) {
     case 'elite':
       document.getElementById('eliteScreen').classList.add('active');
       initEliteView();
+      break;
+    case 'drills':
+      document.getElementById('drillsScreen').classList.add('active');
+      if (typeof renderDrillLibrary === 'function') renderDrillLibrary('all');
       break;
     case 'tiers':
       document.getElementById('tiersScreen').classList.add('active');
