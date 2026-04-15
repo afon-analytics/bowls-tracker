@@ -480,3 +480,212 @@
     grid-template-columns: 1fr 1fr;
   }
 }
+
+/* ===== ANALYTICS CARDS (FH/BH & JACK LENGTH) ===== */
+
+.analytics-card {
+  background: var(--surface-alt);
+  padding: 16px;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  margin-bottom: 16px;
+}
+
+.analytics-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.analytics-card-header h4 {
+  color: var(--primary);
+  font-size: 14px;
+  margin: 0;
+}
+
+/* Locked card state */
+.analytics-card-locked {
+  position: relative;
+  border: 1px dashed var(--border);
+}
+
+.analytics-card-locked-preview {
+  position: relative;
+}
+
+.blurred {
+  filter: blur(6px);
+  user-select: none;
+  pointer-events: none;
+}
+
+.analytics-upgrade-prompt {
+  text-align: center;
+  padding: 10px 12px;
+  margin-top: 10px;
+  background: #e3f2fd;
+  color: #1565c0;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* FH/BH Accuracy Boxes */
+.hand-accuracy-boxes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.hand-accuracy-box {
+  text-align: center;
+  padding: 12px 8px;
+  background: var(--bg);
+  border-radius: var(--radius-md);
+}
+
+.hand-accuracy-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.hand-accuracy-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+
+.hand-accuracy-detail {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* Gap bar */
+.hand-gap-bar {
+  display: flex;
+  gap: 4px;
+  height: 10px;
+  border-radius: 5px;
+  overflow: hidden;
+  background: var(--border);
+  margin-bottom: 4px;
+}
+
+.hand-gap-fill {
+  height: 100%;
+  border-radius: 5px;
+  transition: width 0.3s ease;
+}
+
+.hand-gap-fh {
+  background: #2a5298;
+}
+
+.hand-gap-bh {
+  background: #f44336;
+}
+
+.hand-gap-bar-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.hand-gap-message {
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px;
+  border-radius: var(--radius-md);
+  margin-top: 4px;
+}
+
+.hand-gap-green {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.hand-gap-amber {
+  background: #fff3e0;
+  color: #e65100;
+}
+
+.hand-gap-advisory {
+  text-align: center;
+  font-size: 12px;
+  color: #e65100;
+  font-style: italic;
+  margin-top: 6px;
+  padding: 0 8px;
+}
+
+/* Jack Length Columns */
+.jack-length-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.jack-length-col {
+  text-align: center;
+  padding: 12px 6px;
+  background: var(--bg);
+  border-radius: var(--radius-md);
+}
+
+.jack-length-pct {
+  font-size: 26px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.jack-length-green {
+  color: #2e7d32;
+}
+
+.jack-length-amber {
+  color: #e65100;
+}
+
+.jack-length-red {
+  color: #c62828;
+}
+
+.jack-length-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.jack-length-count {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.jack-length-strongest {
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-secondary);
+  padding: 8px;
+  background: #e8f5e9;
+  border-radius: var(--radius-md);
+}
+
+/* End-of-session hand summary */
+.end-game-hand-summary {
+  background: #e3f2fd;
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  color: #1565c0;
+  text-align: center;
+  margin-bottom: 16px;
+}
