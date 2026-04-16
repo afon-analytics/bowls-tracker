@@ -1618,6 +1618,31 @@ function showEndGameDialog() {
   document.getElementById('endGameSummary').textContent =
     `${yourTeam} vs ${oppTeam} - End ${gameState.currentEnd} of ${gameState.totalEnds}`;
   document.getElementById('gameNotes').value = gameState.gameNotes || '';
+
+  // FH/BH session summary
+  const handSummaryEl = document.getElementById('endGameHandSummary');
+  if (handSummaryEl) {
+    const yourBowls = gameState.bowls.filter(b => b.team === 'yours' || gameState.gameType === 'trial');
+    let fhTotal = 0, fhGood = 0, bhTotal = 0, bhGood = 0;
+    yourBowls.forEach(b => {
+      const hand = (b.hand || 'forehand') === 'backhand' ? 'backhand' : 'forehand';
+      const dist = b.distanceInFeet || b.distance || 0;
+      if (hand === 'forehand') { fhTotal++; if (dist <= 4) fhGood++; }
+      else { bhTotal++; if (dist <= 4) bhGood++; }
+    });
+
+    if (fhTotal >= 4 && bhTotal >= 4) {
+      const fhPct = Math.round((fhGood / fhTotal) * 100);
+      const bhPct = Math.round((bhGood / bhTotal) * 100);
+      handSummaryEl.innerHTML = `
+        <div class="end-game-hand-summary">
+          This session: <strong>Forehand ${fhPct}%</strong> | <strong>Backhand ${bhPct}%</strong>
+        </div>`;
+    } else {
+      handSummaryEl.innerHTML = '';
+    }
+  }
+
   document.getElementById('endGameModal').classList.add('active');
 }
 

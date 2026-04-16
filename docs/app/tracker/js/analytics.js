@@ -152,6 +152,89 @@ async function getPlayerStats(playerName, filterGameId) {
     if (directionBreakdown[dir] !== undefined) directionBreakdown[dir]++;
   });
 
+  // ===== FH/BH SPLIT ACCURACY =====
+  const handAccuracy = {
+    forehand: { total: 0, withinMatLength: 0, close: 0, wide: 0, accuracy: 0, avgDistance: 0 },
+    backhand: { total: 0, withinMatLength: 0, close: 0, wide: 0, accuracy: 0, avgDistance: 0 },
+    gap: 0
+  };
+
+  const fhDistances = [];
+  const bhDistances = [];
+
+  playerBowls.forEach(b => {
+    const hand = (b.hand || 'forehand') === 'backhand' ? 'backhand' : 'forehand';
+    const dist = b.distance || b.distanceInFeet || 0;
+    handAccuracy[hand].total++;
+    if (dist <= 4) handAccuracy[hand].withinMatLength++;
+    if (dist <= 2) handAccuracy[hand].close++;
+    if (dist > 6) handAccuracy[hand].wide++;
+    if (hand === 'forehand') fhDistances.push(dist);
+    else bhDistances.push(dist);
+  });
+
+  if (handAccuracy.forehand.total > 0) {
+    handAccuracy.forehand.accuracy = handAccuracy.forehand.withinMatLength / handAccuracy.forehand.total;
+    handAccuracy.forehand.avgDistance = fhDistances.reduce((s, d) => s + d, 0) / fhDistances.length;
+    handAccuracy.forehand.avgDistance = Math.round(handAccuracy.forehand.avgDistance * 100) / 100;
+  }
+  if (handAccuracy.backhand.total > 0) {
+    handAccuracy.backhand.accuracy = handAccuracy.backhand.withinMatLength / handAccuracy.backhand.total;
+    handAccuracy.backhand.avgDistance = bhDistances.reduce((s, d) => s + d, 0) / bhDistances.length;
+    handAccuracy.backhand.avgDistance = Math.round(handAccuracy.backhand.avgDistance * 100) / 100;
+  }
+  handAccuracy.gap = Math.round((handAccuracy.forehand.accuracy - handAccuracy.backhand.accuracy) * 100) / 100;
+
+  // ===== JACK LENGTH SEGMENTATION =====
+  // jackLength is stored per bowl: 'short', 'medium', 'long'
+  const jackLengthAccuracy = {
+    short: { forehand: { total: 0, withinMatLength: 0, accuracy: 0 }, backhand: { total: 0, withinMatLength: 0, accuracy: 0 }, combined: { total: 0, withinMatLength: 0, accuracy: 0 } },
+    medium: { forehand: { total: 0, withinMatLength: 0, accuracy: 0 }, backhand: { total: 0, withinMatLength: 0, accuracy: 0 }, combined: { total: 0, withinMatLength: 0, accuracy: 0 } },
+    long: { forehand: { total: 0, withinMatLength: 0, accuracy: 0 }, backhand: { total: 0, withinMatLength: 0, accuracy: 0 }, combined: { total: 0, withinMatLength: 0, accuracy: 0 } }
+  };
+
+  playerBowls.forEach(b => {
+    const jl = b.jackLength || 'medium';
+    if (!jackLengthAccuracy[jl]) return;
+    const hand = (b.hand || 'forehand') === 'backhand' ? 'backhand' : 'forehand';
+    const dist = b.distance || b.distanceInFeet || 0;
+    const withinMat = dist <= 4 ? 1 : 0;
+
+    jackLengthAccuracy[jl][hand].total++;
+    jackLengthAccuracy[jl][hand].withinMatLength += withinMat;
+    jackLengthAccuracy[jl].combined.total++;
+    jackLengthAccuracy[jl].combined.withinMatLength += withinMat;
+  });
+
+  ['short', 'medium', 'long'].forEach(jl => {
+    ['forehand', 'backhand', 'combined'].forEach(h => {
+      const d = jackLengthAccuracy[jl][h];
+      d.accuracy = d.total > 0 ? d.withinMatLength / d.total : 0;
+    });
+  });
+
+  // ===== PER-GAME HAND ACCURACY (for trend charts) =====
+  const handAccuracyByGame = [];
+  for (const gid of gameIds) {
+    const gameBowls = playerBowls.filter(b => b.gameId === gid);
+    const game = allGames.find(g => g.id === gid);
+    let fhTotal = 0, fhGood = 0, bhTotal = 0, bhGood = 0;
+    gameBowls.forEach(b => {
+      const hand = (b.hand || 'forehand') === 'backhand' ? 'backhand' : 'forehand';
+      const dist = b.distance || b.distanceInFeet || 0;
+      if (hand === 'forehand') { fhTotal++; if (dist <= 4) fhGood++; }
+      else { bhTotal++; if (dist <= 4) bhGood++; }
+    });
+    handAccuracyByGame.push({
+      gameId: gid,
+      gameName: game ? `Game ${game.gameNumber || gameIds.indexOf(gid) + 1}` : gid,
+      date: game ? game.date : '',
+      forehandAccuracy: fhTotal > 0 ? fhGood / fhTotal : null,
+      backhandAccuracy: bhTotal > 0 ? bhGood / bhTotal : null
+    });
+  }
+  handAccuracyByGame.sort((a, b) => new Date(a.date) - new Date(b.date));
+
   const stats = {
     playerName,
     totalBowls: playerBowls.length,
@@ -167,7 +250,10 @@ async function getPlayerStats(playerName, filterGameId) {
     worstEnd,
     consistency: Math.round(consistency * 100) / 100,
     clutchAvg: Math.round(clutchAvg * 100) / 100,
-    directionBreakdown
+    directionBreakdown,
+    handAccuracy,
+    jackLengthAccuracy,
+    handAccuracyByGame
   };
 
   analyticsCache[cacheKey] = stats;
@@ -357,6 +443,8 @@ function renderPlayerStatsHTML(stats) {
       </div>
     </div>
     <div class="stat-detail">Position(s): ${positionText}</div>
+    ${renderHandAccuracyCard(stats)}
+    ${renderJackLengthCard(stats)}
     <div class="charts-grid">
       <div class="chart-container">
         <h4>Score Trend Across Games</h4>
@@ -378,8 +466,181 @@ function renderPlayerStatsHTML(stats) {
         <h4>Score Distribution</h4>
         <canvas id="scoreDistChart"></canvas>
       </div>
+      ${renderHandAccuracyTrendChartHTML()}
     </div>
   `;
+}
+
+// ===== FH/BH SPLIT CARD =====
+
+function renderHandAccuracyCard(stats) {
+  if (!stats || !stats.handAccuracy) return '';
+
+  const isLocked = typeof currentTier !== 'undefined' && currentTier === 'essential';
+  const ha = stats.handAccuracy;
+  const fhPct = Math.round(ha.forehand.accuracy * 100);
+  const bhPct = Math.round(ha.backhand.accuracy * 100);
+  const gapPct = Math.round(Math.abs(ha.gap) * 100);
+  const stronger = ha.gap >= 0 ? 'forehand' : 'backhand';
+  const weaker = ha.gap >= 0 ? 'backhand' : 'forehand';
+
+  if (isLocked) {
+    return `
+      <div class="analytics-card analytics-card-locked">
+        <div class="analytics-card-header">
+          <h4>Forehand / Backhand Accuracy</h4>
+          <span class="tier-lock-badge" style="position:static;">PERSONAL+</span>
+        </div>
+        <div class="analytics-card-locked-preview">
+          <div class="hand-accuracy-boxes">
+            <div class="hand-accuracy-box">
+              <div class="hand-accuracy-value blurred">68%</div>
+              <div class="hand-accuracy-label">Forehand</div>
+            </div>
+            <div class="hand-accuracy-box">
+              <div class="hand-accuracy-value blurred">54%</div>
+              <div class="hand-accuracy-label">Backhand</div>
+            </div>
+          </div>
+          <div class="analytics-upgrade-prompt">
+            Unlock FH/BH accuracy split with Personal plan (\u00A335/yr)
+          </div>
+        </div>
+      </div>`;
+  }
+
+  const noData = ha.forehand.total === 0 && ha.backhand.total === 0;
+  if (noData) {
+    return `
+      <div class="analytics-card">
+        <div class="analytics-card-header"><h4>Forehand / Backhand Accuracy</h4></div>
+        <div class="analytics-empty" style="padding:20px 10px;">No hand accuracy data yet. Play sessions with bowls on both hands.</div>
+      </div>`;
+  }
+
+  let gapMessage = '';
+  if (ha.forehand.total > 0 && ha.backhand.total > 0) {
+    if (gapPct === 0) {
+      gapMessage = `<div class="hand-gap-message hand-gap-green">Your forehand and backhand are equally accurate</div>`;
+    } else {
+      const gapClass = gapPct > 20 ? 'hand-gap-amber' : 'hand-gap-green';
+      gapMessage = `<div class="hand-gap-message ${gapClass}">You are ${gapPct}% more accurate on your ${stronger}</div>`;
+      if (gapPct > 20) {
+        gapMessage += `<div class="hand-gap-advisory">Consider practising your ${weaker} \u2014 the Corridor Drill targets this directly</div>`;
+      }
+    }
+  }
+
+  return `
+    <div class="analytics-card">
+      <div class="analytics-card-header"><h4>Forehand / Backhand Accuracy</h4></div>
+      <div class="hand-accuracy-boxes">
+        <div class="hand-accuracy-box">
+          <div class="hand-accuracy-value">${fhPct}%</div>
+          <div class="hand-accuracy-label">Forehand</div>
+          <div class="hand-accuracy-detail">${ha.forehand.withinMatLength}/${ha.forehand.total} within mat length</div>
+          <div class="hand-accuracy-detail">Avg ${ha.forehand.avgDistance}ft from jack</div>
+        </div>
+        <div class="hand-accuracy-box">
+          <div class="hand-accuracy-value">${bhPct}%</div>
+          <div class="hand-accuracy-label">Backhand</div>
+          <div class="hand-accuracy-detail">${ha.backhand.withinMatLength}/${ha.backhand.total} within mat length</div>
+          <div class="hand-accuracy-detail">Avg ${ha.backhand.avgDistance}ft from jack</div>
+        </div>
+      </div>
+      <div class="hand-gap-bar">
+        <div class="hand-gap-fill hand-gap-fh" style="width:${Math.max(fhPct, 5)}%"></div>
+        <div class="hand-gap-fill hand-gap-bh" style="width:${Math.max(bhPct, 5)}%"></div>
+      </div>
+      <div class="hand-gap-bar-labels"><span>FH ${fhPct}%</span><span>BH ${bhPct}%</span></div>
+      ${gapMessage}
+    </div>`;
+}
+
+// ===== JACK LENGTH CARD =====
+
+function renderJackLengthCard(stats) {
+  if (!stats || !stats.jackLengthAccuracy) return '';
+
+  const isLocked = typeof currentTier !== 'undefined' && currentTier === 'essential';
+  const jla = stats.jackLengthAccuracy;
+
+  if (isLocked) {
+    return `
+      <div class="analytics-card analytics-card-locked">
+        <div class="analytics-card-header">
+          <h4>Accuracy by Jack Length</h4>
+          <span class="tier-lock-badge" style="position:static;">PERSONAL+</span>
+        </div>
+        <div class="analytics-card-locked-preview">
+          <div class="jack-length-columns">
+            <div class="jack-length-col"><div class="jack-length-pct blurred">62%</div><div class="jack-length-label">Short</div></div>
+            <div class="jack-length-col"><div class="jack-length-pct blurred">71%</div><div class="jack-length-label">Medium</div></div>
+            <div class="jack-length-col"><div class="jack-length-pct blurred">45%</div><div class="jack-length-label">Long</div></div>
+          </div>
+          <div class="analytics-upgrade-prompt">
+            Unlock jack length analysis with Personal plan (\u00A335/yr)
+          </div>
+        </div>
+      </div>`;
+  }
+
+  const totalBowls = jla.short.combined.total + jla.medium.combined.total + jla.long.combined.total;
+  if (totalBowls === 0) {
+    return `
+      <div class="analytics-card">
+        <div class="analytics-card-header"><h4>Accuracy by Jack Length</h4></div>
+        <div class="analytics-empty" style="padding:20px 10px;">No jack length data yet. Play sessions to see accuracy by length.</div>
+      </div>`;
+  }
+
+  function pctColor(pct) {
+    if (pct > 60) return 'jack-length-green';
+    if (pct >= 40) return 'jack-length-amber';
+    return 'jack-length-red';
+  }
+
+  const lengths = ['short', 'medium', 'long'];
+  const labels = { short: 'Short', medium: 'Medium', long: 'Long' };
+  let bestLength = 'medium';
+  let bestAccuracy = -1;
+  lengths.forEach(l => {
+    if (jla[l].combined.total > 0 && jla[l].combined.accuracy > bestAccuracy) {
+      bestAccuracy = jla[l].combined.accuracy;
+      bestLength = l;
+    }
+  });
+
+  const cols = lengths.map(l => {
+    const pct = Math.round(jla[l].combined.accuracy * 100);
+    const colorClass = pctColor(pct);
+    const count = jla[l].combined.total;
+    return `
+      <div class="jack-length-col">
+        <div class="jack-length-pct ${colorClass}">${count > 0 ? pct + '%' : '-'}</div>
+        <div class="jack-length-label">${labels[l]}</div>
+        <div class="jack-length-count">${count} bowls</div>
+      </div>`;
+  }).join('');
+
+  return `
+    <div class="analytics-card">
+      <div class="analytics-card-header"><h4>Accuracy by Jack Length</h4></div>
+      <div class="jack-length-columns">${cols}</div>
+      <div class="jack-length-strongest">Your strongest length is <strong>${labels[bestLength]}</strong> ends</div>
+    </div>`;
+}
+
+// ===== FH/BH TREND CHART HTML =====
+
+function renderHandAccuracyTrendChartHTML() {
+  const isLocked = typeof currentTier !== 'undefined' && currentTier === 'essential';
+  if (isLocked) return '';
+  return `
+    <div class="chart-container">
+      <h4>FH vs BH Accuracy Trend</h4>
+      <canvas id="handAccuracyTrendChart"></canvas>
+    </div>`;
 }
 
 function renderPlayerCharts(stats) {
@@ -503,6 +764,50 @@ function renderPlayerCharts(stats) {
         maintainAspectRatio: false,
         scales: { y: { beginAtZero: true, title: { display: true, text: 'Bowls' } } },
         plugins: { legend: { display: false } }
+      }
+    });
+  }
+
+  // FH vs BH Accuracy Trend Chart
+  const handTrendCtx = document.getElementById('handAccuracyTrendChart');
+  if (handTrendCtx && stats.handAccuracyByGame && stats.handAccuracyByGame.length > 0) {
+    const recent = stats.handAccuracyByGame.slice(-10);
+    new Chart(handTrendCtx, {
+      type: 'line',
+      data: {
+        labels: recent.map(g => g.gameName),
+        datasets: [
+          {
+            label: 'Forehand',
+            data: recent.map(g => g.forehandAccuracy !== null ? (g.forehandAccuracy * 100).toFixed(1) : null),
+            borderColor: '#2a5298',
+            backgroundColor: 'rgba(42, 82, 152, 0.1)',
+            fill: false,
+            tension: 0.3,
+            pointRadius: 5,
+            pointBackgroundColor: '#2a5298',
+            spanGaps: true
+          },
+          {
+            label: 'Backhand',
+            data: recent.map(g => g.backhandAccuracy !== null ? (g.backhandAccuracy * 100).toFixed(1) : null),
+            borderColor: '#f44336',
+            backgroundColor: 'rgba(244, 67, 54, 0.1)',
+            fill: false,
+            tension: 0.3,
+            pointRadius: 5,
+            pointBackgroundColor: '#f44336',
+            spanGaps: true
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: { beginAtZero: true, max: 100, title: { display: true, text: 'Accuracy %' } }
+        },
+        plugins: { legend: { position: 'bottom' } }
       }
     });
   }
