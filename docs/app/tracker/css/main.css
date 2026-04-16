@@ -1952,3 +1952,492 @@ body.embedded-in-dashboard #loginScreen {
         flex-wrap: wrap;
     }
 }
+/* ===== DRILL LIBRARY ===== */
+
+.drill-category-tabs {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding-bottom: 8px;
+    margin-bottom: 15px;
+    -webkit-overflow-scrolling: touch;
+}
+
+.drill-tab {
+    padding: 6px 14px;
+    border-radius: var(--radius-xl);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    background: var(--surface-alt);
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+    transition: var(--transition);
+}
+
+.drill-tab.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+.drill-library-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+}
+
+.drill-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 14px;
+    cursor: pointer;
+    transition: var(--transition);
+    position: relative;
+}
+
+.drill-card:hover {
+    box-shadow: var(--shadow-card);
+    border-color: var(--primary-light);
+}
+
+.drill-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 6px;
+}
+
+.drill-card-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.drill-card-desc {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 10px;
+    line-height: 1.4;
+}
+
+.drill-card-meta {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.drill-badge {
+    padding: 2px 8px;
+    border-radius: var(--radius-sm);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.drill-badge-line { background: #E3F2FD; color: #1565C0; }
+.drill-badge-weight { background: #FFF3E0; color: #E65100; }
+.drill-badge-consistency { background: #E8F5E9; color: #2E7D32; }
+.drill-badge-tactical { background: #F3E5F5; color: #7B1FA2; }
+
+.drill-badge-difficulty {
+    padding: 2px 8px;
+    border-radius: var(--radius-sm);
+    font-size: 10px;
+    font-weight: 600;
+    background: var(--surface-alt);
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+}
+
+.drill-badge-position {
+    padding: 2px 8px;
+    border-radius: var(--radius-sm);
+    font-size: 10px;
+    font-weight: 600;
+    background: var(--surface-alt);
+    color: var(--text-muted);
+}
+
+.drill-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.drill-card-history {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.drill-card-history-scores {
+    display: flex;
+    gap: 3px;
+    align-items: baseline;
+    margin-top: 2px;
+}
+
+.drill-card-history-dot {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--text-muted);
+    display: inline-block;
+}
+
+.drill-card-pb {
+    font-size: 11px;
+    color: var(--success);
+    font-weight: 600;
+}
+
+.drill-start-btn {
+    padding: 6px 16px;
+    border-radius: var(--radius-md);
+    font-size: 12px;
+    font-weight: 700;
+    background: var(--primary);
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.drill-start-btn:hover {
+    background: var(--primary-light);
+}
+
+/* Drill sparkline (mini bar chart) */
+.drill-sparkline {
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    height: 20px;
+}
+
+.drill-sparkline-bar {
+    width: 6px;
+    border-radius: 2px 2px 0 0;
+    background: var(--primary-light);
+    opacity: 0.6;
+    min-height: 2px;
+}
+
+.drill-sparkline-bar:last-child {
+    opacity: 1;
+}
+
+/* ===== DRILL SESSION ===== */
+
+.drill-session-header {
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+.drill-progress-bar {
+    width: 100%;
+    height: 6px;
+    background: var(--surface-alt);
+    border-radius: 3px;
+    margin: 10px 0;
+    overflow: hidden;
+}
+
+.drill-progress-fill {
+    height: 100%;
+    background: var(--primary);
+    border-radius: 3px;
+    transition: width 0.3s ease;
+}
+
+.drill-session-info {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.drill-session-info span {
+    font-weight: 600;
+    color: var(--primary);
+}
+
+/* Manual scoring buttons */
+.drill-score-buttons {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin: 15px 0;
+}
+
+.drill-score-btn {
+    padding: 12px 20px;
+    border-radius: var(--radius-md);
+    font-size: 16px;
+    font-weight: 700;
+    border: 2px solid var(--border);
+    cursor: pointer;
+    transition: var(--transition);
+    background: var(--surface);
+    color: var(--text-primary);
+    min-width: 60px;
+    text-align: center;
+}
+
+.drill-score-btn:hover {
+    border-color: var(--primary);
+}
+
+.drill-score-btn.selected {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+.drill-score-btn-0 { border-color: #ef9a9a; }
+.drill-score-btn-0.selected { background: #f44336; border-color: #f44336; }
+.drill-score-btn-1 { border-color: #FFE082; }
+.drill-score-btn-1.selected { background: #FFA000; border-color: #FFA000; }
+.drill-score-btn-2 { border-color: #A5D6A7; }
+.drill-score-btn-2.selected { background: #4CAF50; border-color: #4CAF50; }
+.drill-score-btn-3 { border-color: #90CAF9; }
+.drill-score-btn-3.selected { background: #1976D2; border-color: #1976D2; }
+
+/* Drill instruction card */
+.drill-instruction {
+    background: var(--surface-alt);
+    border-radius: var(--radius-md);
+    padding: 12px;
+    margin-bottom: 12px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    text-align: center;
+    border-left: 3px solid var(--primary);
+}
+
+/* Drill running score display */
+.drill-running-score {
+    text-align: center;
+    padding: 10px;
+    background: var(--surface-alt);
+    border-radius: var(--radius-md);
+    margin: 10px 0;
+}
+
+.drill-running-score-value {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.drill-running-score-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+/* Timer overlay */
+.drill-timer-overlay {
+    position: fixed;
+    top: 60px;
+    right: 20px;
+    z-index: 800;
+    background: rgba(0,0,0,0.8);
+    color: white;
+    border-radius: var(--radius-lg);
+    padding: 10px 18px;
+}
+
+.drill-timer-display {
+    font-size: 24px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Hand indicator in drill */
+.drill-hand-indicator {
+    text-align: center;
+    padding: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--primary);
+    background: var(--surface-alt);
+    border-radius: var(--radius-sm);
+    margin-bottom: 8px;
+}
+
+/* ===== DRILL RESULTS ===== */
+
+.drill-results-card {
+    text-align: center;
+    padding: 20px;
+}
+
+.drill-results-score {
+    font-size: 48px;
+    font-weight: 700;
+    color: var(--primary);
+    margin: 10px 0;
+}
+
+.drill-results-max {
+    font-size: 18px;
+    color: var(--text-muted);
+    font-weight: 400;
+}
+
+.drill-results-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 5px;
+}
+
+.drill-benchmark-bar {
+    width: 100%;
+    height: 24px;
+    background: var(--surface-alt);
+    border-radius: 12px;
+    position: relative;
+    margin: 15px 0;
+    overflow: visible;
+}
+
+.drill-benchmark-fill {
+    height: 100%;
+    border-radius: 12px;
+    transition: width 0.5s ease;
+}
+
+.drill-benchmark-marker {
+    position: absolute;
+    top: -6px;
+    width: 2px;
+    height: 36px;
+    background: var(--text-muted);
+    opacity: 0.5;
+}
+
+.drill-benchmark-marker-label {
+    position: absolute;
+    top: 32px;
+    font-size: 9px;
+    color: var(--text-muted);
+    white-space: nowrap;
+    transform: translateX(-50%);
+}
+
+.drill-benchmark-legend {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 5px;
+}
+
+.drill-results-benchmark {
+    font-size: 14px;
+    font-weight: 600;
+    padding: 8px 16px;
+    border-radius: var(--radius-md);
+    margin: 10px 0;
+    display: inline-block;
+}
+
+.benchmark-beginner { background: #FFF3E0; color: #E65100; }
+.benchmark-intermediate { background: #E3F2FD; color: #1565C0; }
+.benchmark-advanced { background: #E8F5E9; color: #2E7D32; }
+.benchmark-elite { background: #F3E5F5; color: #7B1FA2; }
+.benchmark-below { background: #FFEBEE; color: #C62828; }
+
+.drill-results-pb {
+    font-size: 14px;
+    margin: 10px 0;
+    padding: 8px 16px;
+    border-radius: var(--radius-md);
+    background: #FFF8E1;
+    color: #F57F17;
+    font-weight: 600;
+}
+
+.drill-results-pb-new {
+    background: #E8F5E9;
+    color: #2E7D32;
+}
+
+.drill-upgrade-prompt {
+    margin-top: 15px;
+    padding: 12px;
+    background: var(--surface-alt);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+    text-align: center;
+}
+
+.drill-upgrade-prompt p {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+}
+
+.drill-upgrade-prompt .btn-small {
+    font-size: 12px;
+}
+
+/* Drill sub-scores list */
+.drill-sub-scores {
+    list-style: none;
+    padding: 0;
+    margin: 15px 0;
+    text-align: left;
+}
+
+.drill-sub-scores li {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+}
+
+.drill-sub-scores li:last-child {
+    border-bottom: none;
+}
+
+/* Match simulation text area */
+.drill-scenario-input {
+    width: 100%;
+    padding: 10px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+    font-family: var(--font-family);
+    font-size: 13px;
+    resize: vertical;
+    min-height: 60px;
+}
+
+@media (min-width: 768px) {
+    .drill-library-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+.btn-danger {
+    background: var(--danger);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btn-danger:hover {
+    opacity: 0.9;
+}

@@ -80,6 +80,11 @@
                     <div class="game-card-title">Open Games</div>
                     <div class="game-card-info">Continue in-progress games</div>
                 </div>
+                <div class="game-card" onclick="navigateTo('drills')" style="text-align: center;">
+                    <div style="font-size: 28px; margin-bottom: 6px;">&#127942;</div>
+                    <div class="game-card-title">Drills</div>
+                    <div class="game-card-info">Practice drills &amp; benchmarks</div>
+                </div>
                 <div class="game-card role-manager-only" id="homeCardAnalytics" onclick="navigateTo('analytics')" style="text-align: center;">
                     <div style="font-size: 28px; margin-bottom: 6px;">&#128202;</div>
                     <div class="game-card-title">Analytics</div>
@@ -785,6 +790,114 @@
             </div>
         </div>
 
+        <!-- Drill Library Screen -->
+        <div id="drillsScreen" class="screen">
+            <div class="breadcrumbs">
+                <a href="#" onclick="navigateTo('home'); return false;">Home</a> &rsaquo; Drills
+            </div>
+            <h2 style="margin-bottom: 10px;">Drill Library</h2>
+            <p style="text-align: center; color: var(--text-secondary); font-size: 13px; margin-bottom: 15px;">Structured practice drills to sharpen every skill</p>
+
+            <div class="drill-category-tabs" id="drillCategoryTabs">
+                <div class="drill-tab active" data-category="all" onclick="filterDrills('all')">All</div>
+                <div class="drill-tab" data-category="line" onclick="filterDrills('line')">Line Control</div>
+                <div class="drill-tab" data-category="weight" onclick="filterDrills('weight')">Weight Control</div>
+                <div class="drill-tab" data-category="consistency" onclick="filterDrills('consistency')">Consistency</div>
+                <div class="drill-tab" data-category="tactical" onclick="filterDrills('tactical')">Tactical</div>
+            </div>
+
+            <div id="drillLibraryCards" class="drill-library-grid"></div>
+        </div>
+
+        <!-- Drill Session Screen -->
+        <div id="drillSessionScreen" class="screen">
+            <div class="breadcrumbs">
+                <a href="#" onclick="navigateTo('drills'); return false;">Drills</a> &rsaquo; <span id="drillSessionBreadcrumb">Drill</span>
+            </div>
+
+            <div id="drillSessionHeader" class="drill-session-header">
+                <h2 id="drillSessionTitle">Drill</h2>
+                <p id="drillSessionDesc" style="text-align: center; color: var(--text-secondary); font-size: 13px; margin: 5px 0;"></p>
+                <div class="drill-progress-bar">
+                    <div class="drill-progress-fill" id="drillProgressFill" style="width: 0%;"></div>
+                </div>
+                <div class="drill-session-info" id="drillSessionInfo"></div>
+            </div>
+
+            <!-- Dartboard area (used by canvas-based drills) -->
+            <div id="drillCanvasArea" style="display: none;">
+                <div class="game-layout">
+                    <div class="game-layout-arena">
+                        <div style="text-align: center; margin-bottom: 3px;">
+                            <span style="font-weight: 600; color: var(--primary); font-size: 12px;">MAT END</span>
+                        </div>
+                        <div class="green-canvas-wrapper">
+                            <div class="green-canvas">
+                                <canvas id="drillCanvas"></canvas>
+                            </div>
+                        </div>
+                        <div style="text-align: center; margin-top: 3px;">
+                            <span style="font-weight: 600; color: var(--primary); font-size: 12px;">DITCH END</span>
+                        </div>
+                    </div>
+                    <div class="game-layout-controls">
+                        <div class="controls">
+                            <div class="control-group">
+                                <h3>Delivery</h3>
+                                <div class="radio-group" id="drillHandGroup">
+                                    <div class="radio-btn active" onclick="selectDrillHand('forehand')">Forehand</div>
+                                    <div class="radio-btn" onclick="selectDrillHand('backhand')">Backhand</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="drillCanvasControls"></div>
+                        <div class="action-buttons" style="margin-top: 10px;">
+                            <button class="btn-secondary" onclick="undoDrillBowl()">Undo Last</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Manual scoring area (used by tap-score drills) -->
+            <div id="drillManualArea" style="display: none;">
+                <div id="drillManualContent"></div>
+            </div>
+
+            <!-- Timer overlay (for match simulation) -->
+            <div id="drillTimerOverlay" class="drill-timer-overlay" style="display: none;">
+                <div class="drill-timer-display" id="drillTimerDisplay">30</div>
+            </div>
+
+            <div class="action-buttons" style="margin-top: 15px;">
+                <button id="drillNextBtn" onclick="drillNextStep()" style="display: none;">Next Bowl</button>
+                <button class="btn-secondary" onclick="confirmAbandonDrill()">Abandon Drill</button>
+            </div>
+        </div>
+
+        <!-- Drill Results Screen -->
+        <div id="drillResultsScreen" class="screen">
+            <div class="breadcrumbs">
+                <a href="#" onclick="navigateTo('drills'); return false;">Drills</a> &rsaquo; Results
+            </div>
+            <div id="drillResultsContent"></div>
+            <div class="action-buttons" style="margin-top: 20px;">
+                <button onclick="navigateTo('drills')">Back to Drills</button>
+                <button class="btn-secondary" onclick="restartDrill()">Try Again</button>
+            </div>
+        </div>
+
+        <!-- Drill Results Modal (for abandon confirm) -->
+        <div id="drillAbandonModal" class="modal">
+            <div class="modal-content">
+                <h2>Abandon Drill?</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 15px;">Your progress will not be saved.</p>
+                <div class="action-buttons">
+                    <button class="btn-danger" onclick="abandonDrill()">Abandon</button>
+                    <button class="btn-secondary" onclick="closeDrillAbandonModal()">Continue Drill</button>
+                </div>
+            </div>
+        </div>
+
         <!-- Bowl Scoring Modal -->
         <div id="bowlScoringModal" class="modal">
             <div class="modal-content">
@@ -889,6 +1002,10 @@
             <span class="nav-icon">&#128203;</span>
             <span>Games</span>
         </div>
+        <div class="nav-item" data-view="drills" onclick="navigateTo('drills')">
+            <span class="nav-icon">&#127942;</span>
+            <span>Drills</span>
+        </div>
         <div class="nav-item role-manager-only" data-view="analytics" onclick="navigateTo('analytics')">
             <span class="nav-icon">&#128202;</span>
             <span>Analytics</span>
@@ -910,6 +1027,7 @@
     <script src="js/demo-data.js"></script>
     <script src="js/analytics.js"></script>
     <script src="js/export.js"></script>
+    <script src="js/drills.js"></script>
     <script src="js/app.js"></script>
 </body>
 </html>
