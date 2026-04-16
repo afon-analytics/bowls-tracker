@@ -2441,3 +2441,388 @@ body.embedded-in-dashboard #loginScreen {
 .btn-danger:hover {
     opacity: 0.9;
 }
+
+/* ===== DATA SHARING SETTINGS ===== */
+
+.settings-section {
+  background: var(--surface-alt);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  margin-bottom: 15px;
+}
+
+.settings-section-header {
+  margin-bottom: 12px;
+}
+
+.settings-section-header h3 {
+  color: var(--primary);
+  font-size: 16px;
+}
+
+.settings-section-subtitle {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.sharing-empowerment {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-style: italic;
+  margin-bottom: 12px;
+}
+
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.toggle-row:last-child {
+  border-bottom: none;
+}
+
+.toggle-row.master-toggle {
+  padding: 12px;
+  background: var(--surface);
+  border-radius: var(--radius-md);
+  margin-bottom: 10px;
+  border-bottom: none;
+}
+
+.toggle-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 0;
+  flex: 1;
+  padding-right: 12px;
+}
+
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 48px;
+  height: 26px;
+  flex-shrink: 0;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: 0.3s;
+  border-radius: 26px;
+}
+
+.toggle-slider::before {
+  content: "";
+  position: absolute;
+  height: 20px;
+  width: 20px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.3s;
+  border-radius: 50%;
+}
+
+.toggle-switch input:checked + .toggle-slider {
+  background-color: var(--success);
+}
+
+.toggle-switch input:checked + .toggle-slider::before {
+  transform: translateX(22px);
+}
+
+.granular-controls {
+  padding: 8px 0;
+}
+
+.sharing-save-status {
+  text-align: center;
+  color: var(--success);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px;
+  margin-top: 8px;
+}
+
+.tier-lock-message {
+  text-align: center;
+  padding: 24px 16px;
+}
+
+.tier-lock-icon {
+  font-size: 36px;
+  margin-bottom: 8px;
+}
+
+.tier-lock-message p {
+  color: var(--text-secondary);
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+/* ===== SHARING PREVIEW ===== */
+
+.preview-card {
+  background: var(--surface-alt);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+}
+
+.preview-player-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.preview-metrics {
+  display: grid;
+  gap: 8px;
+}
+
+.preview-metric {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: var(--surface);
+  border-radius: var(--radius-sm);
+}
+
+.preview-metric-label {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.preview-metric-value {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+/* ===== SQUAD DATA TABLE ===== */
+
+.squad-sharing-banner {
+  padding: 10px 14px;
+  background: #e3f2fd;
+  color: #1565C0;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.squad-table-wrapper {
+  overflow-x: auto;
+}
+
+.squad-data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.squad-data-table th {
+  background: var(--primary);
+  color: white;
+  padding: 8px 10px;
+  text-align: left;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.squad-data-table th.sortable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.squad-data-table th.sortable:hover {
+  background: var(--primary-light);
+}
+
+.squad-data-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.squad-data-table tr:nth-child(even) {
+  background: var(--surface-alt);
+}
+
+.squad-row-anonymous {
+  opacity: 0.6;
+}
+
+.squad-row-anonymous td:first-child {
+  font-style: italic;
+  color: var(--text-muted);
+}
+
+.trend-improving {
+  color: var(--success);
+  font-weight: 600;
+}
+
+.trend-declining {
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.trend-stable {
+  color: var(--warning);
+  font-weight: 600;
+}
+
+/* ===== MY SEASON REPORT ===== */
+
+.season-report {
+  padding: 16px;
+}
+
+.season-report-header {
+  text-align: center;
+  margin-bottom: 20px;
+  border-bottom: 2px solid var(--primary);
+  padding-bottom: 12px;
+}
+
+.season-report-logo {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.season-report-player {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-top: 4px;
+}
+
+.season-report-dates {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.season-report-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin: 16px 0;
+}
+
+.season-report-stat {
+  text-align: center;
+  padding: 12px;
+  background: var(--surface-alt);
+  border-radius: var(--radius-md);
+}
+
+.season-report-stat-value {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.season-report-stat-label {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.season-report-section {
+  margin: 12px 0;
+  padding: 12px;
+  background: var(--surface-alt);
+  border-radius: var(--radius-md);
+}
+
+.season-report-section h4 {
+  color: var(--primary);
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.season-report-hand-bar {
+  display: flex;
+  height: 28px;
+  border-radius: 14px;
+  overflow: hidden;
+  font-size: 12px;
+  font-weight: 600;
+  color: white;
+}
+
+.hand-bar-fh {
+  background: var(--primary-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+}
+
+.hand-bar-bh {
+  background: var(--danger);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+}
+
+.season-report-trend {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.season-report-narrative {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-top: 8px;
+  line-height: 1.5;
+}
+
+.season-report-footer {
+  text-align: center;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 20px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+.season-report-actions {
+  padding: 0 16px 8px;
+}
+
+.season-report-content {
+  padding: 0;
+}
+
+/* Print styles for season report */
+@media print {
+  .season-report-actions,
+  .bottom-nav,
+  .fab,
+  .tier-banner,
+  .user-bar {
+    display: none !important;
+  }
+}

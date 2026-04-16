@@ -221,7 +221,7 @@ function dismissInstallBanner() {
 function navigateTo(view) {
   // Role-based guard: selectors can only access track, games, and home
   if (typeof userRole !== 'undefined' && userRole === 'selector') {
-    const selectorAllowed = ['track', 'games', 'home', 'drills', 'fortyBowlSetup', 'fortyBowl', 'fortyBowlResults'];
+    const selectorAllowed = ['track', 'games', 'home', 'drills', 'fortyBowlSetup', 'fortyBowl', 'fortyBowlResults', 'settings'];
     if (!selectorAllowed.includes(view)) {
       console.warn('[App] Selector role blocked from view:', view);
       view = 'track';
@@ -279,6 +279,10 @@ function navigateTo(view) {
       break;
     case 'fortyBowlResults':
       document.getElementById('fortyBowlResultsScreen').classList.add('active');
+      break;
+    case 'settings':
+      document.getElementById('settingsScreen').classList.add('active');
+      if (typeof initSharingSettings === 'function') initSharingSettings();
       break;
   }
 
@@ -2154,8 +2158,13 @@ function setManagerTab(tab) {
   if (activeTab) activeTab.classList.add('active');
 
   document.getElementById('managerLive').style.display = tab === 'live' ? 'block' : 'none';
+  document.getElementById('managerSquad').style.display = tab === 'squad' ? 'block' : 'none';
   document.getElementById('managerPlayers').style.display = tab === 'players' ? 'block' : 'none';
   document.getElementById('managerComparison').style.display = tab === 'comparison' ? 'block' : 'none';
+
+  if (tab === 'squad' && typeof initSquadDataView === 'function') {
+    initSquadDataView();
+  }
 }
 
 function refreshManagerView() {
