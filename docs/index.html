@@ -427,6 +427,23 @@
             width: 100%;
         }
 
+        .pricing-btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .elite-setup-note {
+            font-size: 0.78rem;
+            color: var(--slate-500);
+            margin-top: 0.75rem;
+            line-height: 1.4;
+        }
+
+        .elite-setup-note a {
+            color: var(--green-700);
+        }
+
         /* Billing toggle */
         .pricing-toggle-wrapper {
             display: flex;
@@ -951,7 +968,21 @@
                         <li>Historical data export</li>
                         <li>Priority support</li>
                     </ul>
-                    <a href="https://monzo.com/pay/r/afon-analytics_UulXRqSY0oQN6k" class="btn btn-primary">Contact Us</a>
+                    <div class="pricing-btn-group">
+                        <a href="https://buy.stripe.com/8x27sKdPPeAXacX8y05EY01"
+                           class="btn btn-primary btn-subscribe btn-yearly"
+                           target="_blank"
+                           rel="noopener noreferrer"
+                           data-tier="personal"
+                           data-billing="yearly">Subscribe Yearly</a>
+                        <a href="https://buy.stripe.com/3cI28qaDDfF12Kv4hK5EY02"
+                           class="btn btn-secondary btn-subscribe btn-monthly"
+                           target="_blank"
+                           rel="noopener noreferrer"
+                           data-tier="personal"
+                           data-billing="monthly"
+                           style="display:none;">Subscribe Monthly</a>
+                    </div>
                 </div>
                 <div class="pricing-card featured">
                     <div class="pricing-badge">Most Popular</div>
@@ -969,7 +1000,21 @@
                         <li>Team comparison reports</li>
                         <li>Role-based access</li>
                     </ul>
-                    <a href="https://monzo.com/pay/r/afon-analytics_Y8jW3mjZgwt95e" class="btn btn-primary">Contact Us</a>
+                    <div class="pricing-btn-group">
+                        <a href="https://buy.stripe.com/9B67sKh21gJ55WH7tW5EY03"
+                           class="btn btn-primary btn-subscribe btn-yearly"
+                           target="_blank"
+                           rel="noopener noreferrer"
+                           data-tier="club"
+                           data-billing="yearly">Subscribe Yearly</a>
+                        <a href="https://buy.stripe.com/eVq14mh21eAXetdcOg5EY04"
+                           class="btn btn-secondary btn-subscribe btn-monthly"
+                           target="_blank"
+                           rel="noopener noreferrer"
+                           data-tier="club"
+                           data-billing="monthly"
+                           style="display:none;">Subscribe Monthly</a>
+                    </div>
                 </div>
                 <div class="pricing-card">
                     <div class="pricing-tier">Professional</div>
@@ -990,7 +1035,22 @@
                         <li>Unlimited user seats</li>
                         <li>Priority support + onboarding</li>
                     </ul>
-                    <a href="https://monzo.com/pay/r/afon-analytics_kkhEir7DEauUiR" class="btn btn-primary">Contact Us</a>
+                    <div class="pricing-btn-group">
+                        <a href="https://buy.stripe.com/aFa7sK4ffeAX70L8y05EY05"
+                           class="btn btn-primary btn-subscribe btn-yearly"
+                           target="_blank"
+                           rel="noopener noreferrer"
+                           data-tier="elite"
+                           data-billing="yearly">Subscribe Yearly</a>
+                        <a href="https://buy.stripe.com/3cI8wOeTTboLbh115y5EY06"
+                           class="btn btn-secondary btn-subscribe btn-monthly"
+                           target="_blank"
+                           rel="noopener noreferrer"
+                           data-tier="elite"
+                           data-billing="monthly"
+                           style="display:none;">Subscribe Monthly</a>
+                    </div>
+                    <p class="elite-setup-note">* A one-time setup fee of &pound;200 applies to Elite subscriptions. <a href="#contact">Contact us</a> to discuss your requirements.</p>
                 </div>
             </div>
         </div>
@@ -1090,6 +1150,12 @@
             });
             document.querySelectorAll('.period').forEach(el => {
                 el.textContent = yearly ? '/year' : '/month';
+            });
+            document.querySelectorAll('.btn-yearly').forEach(el => {
+                el.style.display = yearly ? '' : 'none';
+            });
+            document.querySelectorAll('.btn-monthly').forEach(el => {
+                el.style.display = yearly ? 'none' : '';
             });
         }
 
