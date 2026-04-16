@@ -1620,3 +1620,335 @@ body.embedded-in-dashboard .tier-banner,
 body.embedded-in-dashboard #loginScreen {
     display: none !important;
 }
+
+/* ===== 40-BOWL TEST ===== */
+
+.benchmark-tag {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    font-weight: 600;
+    color: white;
+}
+
+.benchmark-novice { background: #9E9E9E; }
+.benchmark-div5 { background: #81C784; }
+.benchmark-div2 { background: #4CAF50; }
+.benchmark-state { background: #2E7D32; }
+.benchmark-rep { background: #F59E0B; }
+
+/* Header / Progress */
+.forty-bowl-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    padding: 10px;
+    background: var(--surface-alt);
+    border-radius: var(--radius-md);
+}
+
+.forty-bowl-progress {
+    flex: 1;
+}
+
+.forty-bowl-subset-indicators {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 8px;
+}
+
+.subset-indicator {
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+    font-size: 11px;
+    font-weight: 600;
+    background: var(--surface-hover);
+    color: var(--text-muted);
+    transition: var(--transition);
+}
+
+.subset-indicator.active {
+    background: var(--primary);
+    color: white;
+}
+
+.subset-indicator.completed {
+    background: var(--success);
+    color: white;
+}
+
+.forty-bowl-status {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.subset-label {
+    font-weight: 700;
+    color: var(--primary);
+    font-size: 14px;
+}
+
+.subset-count {
+    color: var(--text-secondary);
+    font-size: 13px;
+}
+
+.subset-score {
+    color: var(--success);
+    font-weight: 600;
+    font-size: 13px;
+}
+
+.forty-bowl-total {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--primary);
+    white-space: nowrap;
+    padding-left: 10px;
+}
+
+/* Info panel */
+.forty-bowl-info-panel {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 10px;
+    padding: 10px;
+    background: var(--surface-alt);
+    border-radius: var(--radius-md);
+}
+
+.forty-bowl-hand-display,
+.forty-bowl-jack-display {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.hand-label,
+.jack-label {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.hand-value,
+.jack-value {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--primary);
+}
+
+/* Last bowl result */
+.forty-bowl-last-bowl {
+    padding: 8px 12px;
+    border-radius: var(--radius-md);
+    margin-bottom: 10px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.forty-bowl-last-bowl.scored {
+    background: rgba(76, 175, 80, 0.15);
+    color: #2E7D32;
+    border: 1px solid #4CAF50;
+}
+
+.forty-bowl-last-bowl.missed {
+    background: rgba(244, 67, 54, 0.1);
+    color: #C62828;
+    border: 1px solid #f44336;
+}
+
+/* Sub-set scores grid */
+.forty-bowl-subset-summary {
+    margin-top: 10px;
+}
+
+.subset-scores-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+}
+
+.subset-score-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 10px;
+    background: var(--surface-alt);
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+}
+
+.subset-score-item.active {
+    border: 2px solid var(--primary);
+    background: rgba(30, 60, 114, 0.05);
+}
+
+.subset-score-item.completed {
+    border: 2px solid var(--success);
+    background: rgba(76, 175, 80, 0.05);
+}
+
+/* Results Screen */
+.forty-bowl-results {
+    text-align: center;
+}
+
+.results-total {
+    display: flex;
+    justify-content: center;
+    align-items: baseline;
+    margin-bottom: 10px;
+}
+
+.results-score-big {
+    font-size: 72px;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.results-out-of {
+    font-size: 28px;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+.results-benchmark {
+    padding: 8px 20px;
+    border-radius: var(--radius-lg);
+    display: inline-block;
+    font-size: 16px;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 15px;
+}
+
+.results-personal-best {
+    padding: 6px 16px;
+    background: linear-gradient(135deg, #F59E0B, #D97706);
+    color: white;
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    font-weight: 700;
+    display: inline-block;
+    margin-bottom: 15px;
+}
+
+.results-subscores {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin: 20px 0;
+    text-align: left;
+}
+
+.results-subscore {
+    padding: 12px;
+    background: var(--surface-alt);
+    border-radius: var(--radius-md);
+}
+
+.subscore-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.subscore-value {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--primary);
+    margin: 4px 0;
+}
+
+.subscore-bar {
+    height: 6px;
+    background: var(--surface-hover);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.subscore-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: var(--success);
+    transition: width 0.5s ease;
+}
+
+/* Upgrade prompt */
+.results-upgrade {
+    margin: 20px 0;
+    padding: 15px;
+    background: linear-gradient(135deg, rgba(30, 60, 114, 0.05), rgba(42, 82, 152, 0.1));
+    border: 1px solid var(--primary-light);
+    border-radius: var(--radius-md);
+}
+
+.results-upgrade p {
+    color: var(--text-secondary);
+    font-size: 14px;
+    margin-bottom: 10px;
+}
+
+/* History / Trend */
+.results-history {
+    margin-top: 20px;
+    text-align: left;
+}
+
+.results-trend {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin-top: 10px;
+    flex-wrap: wrap;
+}
+
+.trend-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 8px 12px;
+    background: var(--surface-alt);
+    border-radius: var(--radius-md);
+    min-width: 60px;
+}
+
+.trend-item-score {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.trend-item-date {
+    font-size: 10px;
+    color: var(--text-muted);
+}
+
+.trend-item.current {
+    border: 2px solid var(--primary);
+    background: rgba(30, 60, 114, 0.08);
+}
+
+/* Mobile adjustments for 40-bowl */
+@media (max-width: 768px) {
+    .forty-bowl-header {
+        flex-direction: column;
+        gap: 8px;
+    }
+    .forty-bowl-total {
+        padding-left: 0;
+        text-align: center;
+    }
+    .results-subscores {
+        grid-template-columns: 1fr;
+    }
+    .forty-bowl-subset-indicators {
+        flex-wrap: wrap;
+    }
+}

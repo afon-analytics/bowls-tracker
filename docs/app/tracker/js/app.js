@@ -221,7 +221,7 @@ function dismissInstallBanner() {
 function navigateTo(view) {
   // Role-based guard: selectors can only access track, games, and home
   if (typeof userRole !== 'undefined' && userRole === 'selector') {
-    const selectorAllowed = ['track', 'games', 'home'];
+    const selectorAllowed = ['track', 'games', 'home', 'fortyBowlSetup', 'fortyBowl', 'fortyBowlResults'];
     if (!selectorAllowed.includes(view)) {
       console.warn('[App] Selector role blocked from view:', view);
       view = 'track';
@@ -266,6 +266,15 @@ function navigateTo(view) {
     case 'tiers':
       document.getElementById('tiersScreen').classList.add('active');
       updateTierButtons();
+      break;
+    case 'fortyBowlSetup':
+      document.getElementById('fortyBowlSetupScreen').classList.add('active');
+      break;
+    case 'fortyBowl':
+      document.getElementById('fortyBowlScreen').classList.add('active');
+      break;
+    case 'fortyBowlResults':
+      document.getElementById('fortyBowlResultsScreen').classList.add('active');
       break;
   }
 
@@ -402,6 +411,12 @@ async function handleLoadDemoData() {
 // ===== GAME TYPE SELECTION =====
 
 function selectGameType(type) {
+  // If 40-bowl test selected, redirect to the dedicated setup screen
+  if (type === '40bowl') {
+    start40BowlTest();
+    return;
+  }
+
   selectedGameType = type;
   const buttons = document.querySelectorAll('#gameTypeGroup .radio-btn');
   buttons.forEach((btn, idx) => {
@@ -2636,6 +2651,473 @@ showGamesManager = function() {
     }
   });
 };
+
+// ===== 40-BOWL TEST =====
+
+const FORTY_BOWL_SUBSETS = [
+  { name: 'FH Short', hand: 'forehand', jackDesc: 'Short (15-18m)', jackY: 200 },
+  { name: 'FH Long', hand: 'forehand', jackDesc: 'Long (23-25m)', jackY: 320 },
+  { name: 'BH Short', hand: 'backhand', jackDesc: 'Short (15-18m)', jackY: 200 },
+  { name: 'BH Long', hand: 'backhand', jackDesc: 'Long (23-25m)', jackY: 320 }
+];
+
+const FORTY_BOWL_BENCHMARKS = [
+  { min: 0, max: 7, label: 'Below Novice', cssClass: 'benchmark-novice' },
+  { min: 8, max: 12, label: 'Novice', cssClass: 'benchmark-novice' },
+  { min: 13, max: 16, label: 'Division 5', cssClass: 'benchmark-div5' },
+  { min: 17, max: 22, label: 'Division 2', cssClass: 'benchmark-div2' },
+  { min: 23, max: 30, label: 'State Squad', cssClass: 'benchmark-state' },
+  { min: 31, max: 40, label: 'State Singles Rep', cssClass: 'benchmark-rep' }
+];
+
+const BOWLS_PER_SUBSET = 10;
+const MAT_LENGTH_FEET = 4; // 1 mat length = ~4 feet
+
+let fortyBowlState = null;
+let fortyBowlCanvas = null;
+let fortyBowlCtx = null;
+
+function start40BowlTest() {
+  navigateTo('fortyBowlSetup');
+}
+
+function startFortyBowlSession() {
+  const playerName = document.getElementById('fortyBowlPlayerName').value.trim();
+  if (!playerName) {
+    alert('Please enter your name');
+    return;
+  }
+
+  fortyBowlState = {
+    playerName: playerName,
+    currentSubset: 0,
+    bowls: [], // all 40 bowls
+    subsetScores: [0, 0, 0, 0],
+    subsetBowlCounts: [0, 0, 0, 0],
+    startTime: new Date().toISOString()
+  };
+
+  // Show the test screen
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('fortyBowlScreen').classList.add('active');
+  currentView = 'fortyBowl';
+
+  initFortyBowlCanvas();
+  updateFortyBowlUI();
+}
+
+function initFortyBowlCanvas() {
+  fortyBowlCanvas = document.getElementById('fortyBowlCanvas');
+  fortyBowlCtx = fortyBowlCanvas.getContext('2d');
+  fortyBowlCanvas.width = 500;
+  fortyBowlCanvas.height = 500;
+
+  fortyBowlCanvas.addEventListener('click', handleFortyBowlCanvasClick);
+
+  drawFortyBowlGreen();
+}
+
+function drawFortyBowlGreen() {
+  if (!fortyBowlCtx) return;
+  const ctx = fortyBowlCtx;
+  const cvs = fortyBowlCanvas;
+  ctx.clearRect(0, 0, cvs.width, cvs.height);
+
+  const centerX = cvs.width / 2;
+  const centerY = cvs.height / 2;
+  const maxRadius = Math.min(cvs.width, cvs.height) / 2 - 10;
+
+  // Draw concentric distance rings
+  for (let i = 5; i >= 1; i--) {
+    const radius = (maxRadius / 5) * i;
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+    ctx.strokeStyle = '#1a3810';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    ctx.fillStyle = '#4a7035';
+    ctx.font = '12px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText(`${i}ft`, centerX, centerY - radius + 15);
+  }
+
+  if (!fortyBowlState) return;
+
+  const subset = FORTY_BOWL_SUBSETS[fortyBowlState.currentSubset];
+  const jackX = centerX;
+  const jackY = subset.jackY;
+
+  // Draw mat length zone (4ft = 400px)
+  ctx.beginPath();
+  ctx.arc(jackX, jackY, MAT_LENGTH_FEET * 100, 0, 2 * Math.PI);
+  ctx.strokeStyle = 'rgba(76, 175, 80, 0.4)';
+  ctx.setLineDash([8, 4]);
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Draw jack
+  ctx.beginPath();
+  ctx.arc(jackX, jackY, 10, 0, 2 * Math.PI);
+  ctx.fillStyle = '#FFD700';
+  ctx.fill();
+  ctx.strokeStyle = '#FFA500';
+  ctx.lineWidth = 3;
+  ctx.stroke();
+
+  // Draw bowls for current subset
+  const currentSubsetBowls = fortyBowlState.bowls.filter(b => b.subset === fortyBowlState.currentSubset);
+  currentSubsetBowls.forEach(bowl => {
+    ctx.beginPath();
+    ctx.arc(bowl.x, bowl.y, 18, 0, 2 * Math.PI);
+    ctx.fillStyle = bowl.scored ? '#4CAF50' : '#f44336';
+    ctx.fill();
+    ctx.strokeStyle = bowl.hand === 'forehand' ? '#1B5E20' : '#B71C1C';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+
+    // Show score indicator
+    ctx.fillStyle = 'white';
+    ctx.font = 'bold 14px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(bowl.scored ? '1' : '0', bowl.x, bowl.y);
+  });
+}
+
+function getFortyBowlCanvasCoordinates(e) {
+  const rect = fortyBowlCanvas.getBoundingClientRect();
+  const scaleX = fortyBowlCanvas.width / rect.width;
+  const scaleY = fortyBowlCanvas.height / rect.height;
+
+  let clientX, clientY;
+  if (e.touches) {
+    clientX = e.touches[0].clientX;
+    clientY = e.touches[0].clientY;
+  } else {
+    clientX = e.clientX;
+    clientY = e.clientY;
+  }
+
+  return {
+    x: (clientX - rect.left) * scaleX,
+    y: (clientY - rect.top) * scaleY
+  };
+}
+
+function handleFortyBowlCanvasClick(e) {
+  if (!fortyBowlState) return;
+
+  const subsetIdx = fortyBowlState.currentSubset;
+  if (subsetIdx >= FORTY_BOWL_SUBSETS.length) return;
+
+  const bowlCount = fortyBowlState.subsetBowlCounts[subsetIdx];
+  if (bowlCount >= BOWLS_PER_SUBSET) return;
+
+  const coords = getFortyBowlCanvasCoordinates(e);
+  const subset = FORTY_BOWL_SUBSETS[subsetIdx];
+
+  const jackX = fortyBowlCanvas.width / 2;
+  const jackY = subset.jackY;
+
+  const distPx = calculateDistance(coords.x, coords.y, jackX, jackY);
+  const distFeet = pixelsToFeet(distPx);
+  const scored = distFeet <= MAT_LENGTH_FEET;
+
+  const bowl = {
+    x: coords.x,
+    y: coords.y,
+    subset: subsetIdx,
+    subsetName: subset.name,
+    hand: subset.hand,
+    distanceInFeet: distFeet,
+    scored: scored,
+    point: scored ? 1 : 0,
+    timestamp: new Date().toISOString()
+  };
+
+  fortyBowlState.bowls.push(bowl);
+  fortyBowlState.subsetBowlCounts[subsetIdx]++;
+  if (scored) {
+    fortyBowlState.subsetScores[subsetIdx]++;
+  }
+
+  // Show last bowl feedback
+  showFortyBowlFeedback(bowl);
+
+  // Check if subset is complete
+  if (fortyBowlState.subsetBowlCounts[subsetIdx] >= BOWLS_PER_SUBSET) {
+    // Check if all subsets done
+    if (subsetIdx >= FORTY_BOWL_SUBSETS.length - 1) {
+      // Test complete
+      setTimeout(() => showFortyBowlResults(), 800);
+    } else {
+      // Advance to next subset
+      fortyBowlState.currentSubset++;
+      setTimeout(() => {
+        drawFortyBowlGreen();
+        updateFortyBowlUI();
+      }, 600);
+    }
+  }
+
+  drawFortyBowlGreen();
+  updateFortyBowlUI();
+}
+
+function showFortyBowlFeedback(bowl) {
+  const el = document.getElementById('fortyBowlLastBowl');
+  if (!el) return;
+
+  el.style.display = 'block';
+  el.className = 'forty-bowl-last-bowl ' + (bowl.scored ? 'scored' : 'missed');
+  el.querySelector('#fortyBowlLastResult').textContent = bowl.scored
+    ? `Within mat length (${bowl.distanceInFeet.toFixed(1)}ft) - 1 point!`
+    : `Outside mat length (${bowl.distanceInFeet.toFixed(1)}ft) - 0 points`;
+}
+
+function updateFortyBowlUI() {
+  if (!fortyBowlState) return;
+
+  const subsetIdx = fortyBowlState.currentSubset;
+  const subset = FORTY_BOWL_SUBSETS[subsetIdx] || FORTY_BOWL_SUBSETS[FORTY_BOWL_SUBSETS.length - 1];
+
+  // Update subset indicators
+  const indicators = document.querySelectorAll('#fortyBowlSubsetIndicators .subset-indicator');
+  indicators.forEach((ind, i) => {
+    ind.classList.remove('active', 'completed');
+    if (i < subsetIdx) ind.classList.add('completed');
+    else if (i === subsetIdx) ind.classList.add('active');
+  });
+
+  // Update status
+  const bowlCount = fortyBowlState.subsetBowlCounts[subsetIdx] || 0;
+  const subsetScore = fortyBowlState.subsetScores[subsetIdx] || 0;
+  document.getElementById('fortyBowlSubsetLabel').textContent = subset.name;
+  document.getElementById('fortyBowlSubsetCount').textContent = `Bowl ${Math.min(bowlCount + 1, BOWLS_PER_SUBSET)}/${BOWLS_PER_SUBSET}`;
+  document.getElementById('fortyBowlSubsetScore').textContent = `Score: ${subsetScore}/${bowlCount}`;
+
+  // Update total
+  const totalScore = fortyBowlState.subsetScores.reduce((a, b) => a + b, 0);
+  const totalBowls = fortyBowlState.subsetBowlCounts.reduce((a, b) => a + b, 0);
+  document.getElementById('fortyBowlTotal').textContent = `Total: ${totalScore}/${totalBowls}`;
+
+  // Update hand/jack display
+  document.getElementById('fortyBowlHandValue').textContent = subset.hand === 'forehand' ? 'Forehand' : 'Backhand';
+  document.getElementById('fortyBowlJackValue').textContent = subset.jackDesc;
+
+  // Update subset scores grid
+  for (let i = 0; i < 4; i++) {
+    const el = document.getElementById(`subsetScore${i}`);
+    if (!el) continue;
+    const count = fortyBowlState.subsetBowlCounts[i];
+    const score = fortyBowlState.subsetScores[i];
+    el.innerHTML = `<span>${FORTY_BOWL_SUBSETS[i].name}</span><span>${count > 0 ? score + '/' + count : '-'}</span>`;
+    el.className = 'subset-score-item';
+    if (i === subsetIdx) el.classList.add('active');
+    else if (count >= BOWLS_PER_SUBSET) el.classList.add('completed');
+  }
+}
+
+function undoFortyBowl() {
+  if (!fortyBowlState || fortyBowlState.bowls.length === 0) return;
+
+  const lastBowl = fortyBowlState.bowls.pop();
+  const si = lastBowl.subset;
+
+  // If we moved to the next subset, go back
+  if (fortyBowlState.currentSubset > si) {
+    fortyBowlState.currentSubset = si;
+  }
+
+  fortyBowlState.subsetBowlCounts[si]--;
+  if (lastBowl.scored) {
+    fortyBowlState.subsetScores[si]--;
+  }
+
+  document.getElementById('fortyBowlLastBowl').style.display = 'none';
+  drawFortyBowlGreen();
+  updateFortyBowlUI();
+}
+
+function abandon40BowlTest() {
+  if (fortyBowlState && fortyBowlState.bowls.length > 0) {
+    if (!confirm('Abandon this test? Your progress will be lost.')) return;
+  }
+  fortyBowlState = null;
+  if (fortyBowlCanvas) {
+    fortyBowlCanvas.removeEventListener('click', handleFortyBowlCanvasClick);
+  }
+  navigateTo('home');
+}
+
+function getBenchmarkForScore(score) {
+  for (const b of FORTY_BOWL_BENCHMARKS) {
+    if (score >= b.min && score <= b.max) return b;
+  }
+  return FORTY_BOWL_BENCHMARKS[0];
+}
+
+function showFortyBowlResults() {
+  if (!fortyBowlState) return;
+
+  const totalScore = fortyBowlState.subsetScores.reduce((a, b) => a + b, 0);
+  const benchmark = getBenchmarkForScore(totalScore);
+
+  // Show results screen
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('fortyBowlResultsScreen').classList.add('active');
+  currentView = 'fortyBowlResults';
+
+  // Total score with colour
+  const scoreBig = document.getElementById('resultScoreBig');
+  scoreBig.textContent = totalScore;
+
+  // Benchmark display
+  const benchmarkEl = document.getElementById('resultBenchmark');
+  benchmarkEl.textContent = benchmark.label;
+  benchmarkEl.className = 'results-benchmark ' + benchmark.cssClass;
+
+  // Sub-scores
+  const subIds = ['resultFHShort', 'resultFHLong', 'resultBHShort', 'resultBHLong'];
+  const subLabels = ['FH Short', 'FH Long', 'BH Short', 'BH Long'];
+  for (let i = 0; i < 4; i++) {
+    const el = document.getElementById(subIds[i]);
+    if (!el) continue;
+    const score = fortyBowlState.subsetScores[i];
+    el.querySelector('.subscore-label').textContent = subLabels[i];
+    el.querySelector('.subscore-value').textContent = `${score}/10`;
+    el.querySelector('.subscore-bar-fill').style.width = `${score * 10}%`;
+
+    // Colour the bar based on score
+    const barFill = el.querySelector('.subscore-bar-fill');
+    if (score >= 8) barFill.style.background = '#2E7D32';
+    else if (score >= 6) barFill.style.background = '#4CAF50';
+    else if (score >= 4) barFill.style.background = '#FF9800';
+    else barFill.style.background = '#f44336';
+  }
+
+  // Personal best check + save
+  const pbKey = `bowlstrack_40bowl_pb_${fortyBowlState.playerName}`;
+  const prevPB = parseInt(localStorage.getItem(pbKey) || '0', 10);
+  const pbEl = document.getElementById('resultPersonalBest');
+
+  if (totalScore > prevPB) {
+    localStorage.setItem(pbKey, totalScore.toString());
+    pbEl.style.display = 'inline-block';
+    pbEl.textContent = prevPB > 0 ? `New Personal Best! (was ${prevPB})` : 'New Personal Best!';
+  } else {
+    if (prevPB > 0) {
+      pbEl.style.display = 'inline-block';
+      pbEl.textContent = `Personal Best: ${prevPB}`;
+      pbEl.style.background = 'var(--surface-alt)';
+      pbEl.style.color = 'var(--text-secondary)';
+    } else {
+      pbEl.style.display = 'none';
+    }
+  }
+
+  // Tier-based save or upgrade prompt
+  const upgradeEl = document.getElementById('resultUpgradePrompt');
+  const historyEl = document.getElementById('resultHistory');
+
+  if (currentTier === 'essential') {
+    upgradeEl.style.display = 'block';
+    historyEl.style.display = 'none';
+  } else {
+    upgradeEl.style.display = 'none';
+    saveDrillSessionToSupabase(totalScore);
+    loadDrillHistory();
+  }
+
+  // Clean up canvas listener
+  if (fortyBowlCanvas) {
+    fortyBowlCanvas.removeEventListener('click', handleFortyBowlCanvasClick);
+  }
+}
+
+// ===== DRILL SESSION PERSISTENCE (Supabase) =====
+
+async function saveDrillSessionToSupabase(totalScore) {
+  if (!isAuthenticated() || currentTier === 'essential') return;
+
+  const session = {
+    drill_type: '40bowl_test',
+    player_name: fortyBowlState.playerName,
+    score: totalScore,
+    max_score: 40,
+    sub_scores: {
+      fh_short: fortyBowlState.subsetScores[0],
+      fh_long: fortyBowlState.subsetScores[1],
+      bh_short: fortyBowlState.subsetScores[2],
+      bh_long: fortyBowlState.subsetScores[3]
+    },
+    metadata: {
+      bowls: fortyBowlState.bowls.map(b => ({
+        subset: b.subsetName,
+        hand: b.hand,
+        distance: b.distanceInFeet,
+        scored: b.scored
+      }))
+    },
+    completed_at: new Date().toISOString()
+  };
+
+  if (navigator.onLine) {
+    try {
+      const { error } = await db.from('drill_sessions').insert(session);
+      if (error) {
+        console.warn('[40Bowl] Supabase save queued:', error.message);
+        enqueue({ type: 'insert_drill_session', data: session });
+      }
+    } catch (err) {
+      console.warn('[40Bowl] Supabase save failed, queued:', err.message);
+      enqueue({ type: 'insert_drill_session', data: session });
+    }
+  } else {
+    enqueue({ type: 'insert_drill_session', data: session });
+  }
+}
+
+async function loadDrillHistory() {
+  const historyEl = document.getElementById('resultHistory');
+  const trendEl = document.getElementById('resultTrend');
+  if (!historyEl || !trendEl) return;
+
+  if (!isAuthenticated()) {
+    historyEl.style.display = 'none';
+    return;
+  }
+
+  try {
+    const { data, error } = await db.from('drill_sessions')
+      .select('score, completed_at')
+      .eq('drill_type', '40bowl_test')
+      .eq('player_name', fortyBowlState.playerName)
+      .order('completed_at', { ascending: false })
+      .limit(5);
+
+    if (error || !data || data.length === 0) {
+      historyEl.style.display = 'none';
+      return;
+    }
+
+    historyEl.style.display = 'block';
+    trendEl.innerHTML = data.reverse().map((item, idx) => {
+      const date = new Date(item.completed_at);
+      const dateStr = date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+      const isLatest = idx === data.length - 1;
+      return `<div class="trend-item${isLatest ? ' current' : ''}">
+        <span class="trend-item-score">${item.score}</span>
+        <span class="trend-item-date">${dateStr}</span>
+      </div>`;
+    }).join('');
+  } catch (err) {
+    console.warn('[40Bowl] Failed to load history:', err.message);
+    historyEl.style.display = 'none';
+  }
+}
 
 // Initialize app when DOM is ready
 document.addEventListener('DOMContentLoaded', initApp);

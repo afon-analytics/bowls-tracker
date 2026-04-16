@@ -146,6 +146,11 @@ async function executeQueuedOp(op) {
       await db.from('games').delete().eq('id', op.gameId);
       break;
     }
+    case 'insert_drill_session': {
+      const { error } = await db.from('drill_sessions').insert(op.data);
+      if (error) throw error;
+      break;
+    }
     default:
       console.warn('[Supabase] Unknown queue op:', op.type);
   }
