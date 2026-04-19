@@ -128,6 +128,7 @@ async function initApp() {
       console.log('[App] Resuming session as', sessionResult.role);
       try { await pullDataFromSupabase(); } catch {}
       try { await processQueue(); } catch {}
+      try { await applyTierClass(); } catch {}
     }
 
     // Load open games from IndexedDB
@@ -2068,6 +2069,28 @@ function setupZoomGestures() {
 }
 
 // ===== TIER SYSTEM =====
+
+const PAYMENT_LINKS = {
+  personal_yearly:  "https://buy.stripe.com/8x27sKdPPeAXacX8y05EY01",
+  personal_monthly: "https://buy.stripe.com/3cI28qaDDfF12Kv4hK5EY02",
+  personal_founder: "https://buy.stripe.com/9B69ASfXXeAXfxh3dG5EY07",
+  club_yearly:      "https://buy.stripe.com/9B67sKh21gJ55WH7tW5EY03",
+  club_monthly:     "https://buy.stripe.com/eVq14mh21eAXetdcOg5EY04",
+  elite_yearly:     "https://buy.stripe.com/aFa7sK4ffeAX70L8y05EY05",
+  elite_monthly:    "https://buy.stripe.com/3cI8wOeTTboLbh115y5EY06",
+};
+
+async function getSubscribeUrl(basePaymentLinkUrl) {
+  const { data: { user } } = await db.auth.getUser();
+  if (!user) return basePaymentLinkUrl;
+  return `${basePaymentLinkUrl}?client_reference_id=${user.id}`;
+}
+
+async function openSubscription(planKey, e) {
+  if (e) e.stopPropagation();
+  const url = await getSubscribeUrl(PAYMENT_LINKS[planKey]);
+  window.open(url, '_blank');
+}
 
 function selectTier(tier, e) {
   if (e) e.stopPropagation(); // Prevent double-firing from button + parent div

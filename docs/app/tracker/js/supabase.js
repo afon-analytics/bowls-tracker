@@ -663,6 +663,38 @@ function applyRoleVisibility(role) {
   });
 }
 
+// ===== SUBSCRIPTION TIER =====
+
+async function getUserTier() {
+  const { data: { user } } = await db.auth.getUser();
+  if (!user) return 'essential';
+
+  const { data: userData } = await db
+    .from('users')
+    .select('org_id')
+    .eq('id', user.id)
+    .single();
+
+  if (!userData?.org_id) return 'essential';
+
+  const { data: org } = await db
+    .from('organisations')
+    .select('plan')
+    .eq('id', userData.org_id)
+    .single();
+
+  return org?.plan ?? 'essential';
+}
+
+async function applyTierClass() {
+  const tier = await getUserTier();
+  document.body.classList.remove('tier-essential', 'tier-personal', 'tier-club', 'tier-elite');
+  document.body.classList.add(`tier-${tier}`);
+  if (typeof currentTier !== 'undefined') currentTier = tier;
+  if (typeof updateTierButtons === 'function') updateTierButtons();
+  return tier;
+}
+
 // Enter key triggers login
 document.addEventListener('DOMContentLoaded', () => {
   const pwField = document.getElementById('loginPassword');
