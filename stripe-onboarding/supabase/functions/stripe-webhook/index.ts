@@ -1,309 +1,250 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { createClient } from "jsr:@supabase/supabase-js@2";
+import Stripe from "https://esm.sh/stripe@14.21.0?target=deno";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
-const PRICE_TO_PLAN: Record<string, string> = {
-  "price_1ABC123...": "personal", // Replace with actual Personal plan price ID
-  "price_1DEF456...": "club", // Replace with actual Club plan price ID
-  "price_1GHI789...": "elite", // Replace with actual Elite plan price ID
+const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, {
+  apiVersion: "2024-06-20",
+});
+
+const supabaseAdmin = createClient(
+  Deno.env.get("SUPABASE_URL")!,
+  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+);
+
+const endpointSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET")!;
+
+// ─── Price ID → Tier mapping ───────────────────────────────────────────────
+// Update this map if new prices are added in Stripe
+const PRICE_TIER_MAP: Record<string, { tier: string; maxSeats: number }> = {
+  "price_1TMuoVD3rGwRS4aVnW37CGUp": { tier: "personal", maxSeats: 1 },  // Personal Yearly £35
+  "price_1TMuvAD3rGwRS4aVFaIBcyXi": { tier: "personal", maxSeats: 1 },  // Personal Monthly £3.99
+  "price_1TNu6aD3rGwRS4aV9EVcayew": { tier: "personal", maxSeats: 1 },  // Personal Founder Yearly £29
+  "price_1TMuppD3rGwRS4aV6VYqyx1w": { tier: "club",     maxSeats: 20 }, // Club Yearly £400
+  "price_1TMuppD3rGwRS4aV5TGf5cK6": { tier: "club",     maxSeats: 20 }, // Club Monthly £39.99
+  "price_1TMurzD3rGwRS4aVafCVXXCB": { tier: "elite",    maxSeats: 50 }, // Elite Yearly £500
+  "price_1TMurzD3rGwRS4aVhyvXAP5c": { tier: "elite",    maxSeats: 50 }, // Elite Monthly £49.99
 };
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, stripe-signature",
-};
-
-async function verifyStripeSignature(
-  payload: string,
-  signature: string,
-  secret: string
-): Promise<boolean> {
-  const encoder = new TextEncoder();
-  const parts = signature.split(",");
-  const timestamp = parts
-    .find((p) => p.startsWith("t="))
-    ?.substring(2);
-  const sig = parts
-    .find((p) => p.startsWith("v1="))
-    ?.substring(3);
-
-  if (!timestamp || !sig) return false;
-
-  // Reject timestamps older than 5 minutes
-  const age = Math.floor(Date.now() / 1000) - parseInt(timestamp);
-  if (age > 300) return false;
-
-  const signedPayload = `${timestamp}.${payload}`;
-  const key = await crypto.subtle.importKey(
-    "raw",
-    encoder.encode(secret),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"]
-  );
-  const mac = await crypto.subtle.sign("HMAC", key, encoder.encode(signedPayload));
-  const expectedSig = Array.from(new Uint8Array(mac))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-
-  return expectedSig === sig;
+function getTierFromPriceId(priceId: string): { tier: string; maxSeats: number } {
+  return PRICE_TIER_MAP[priceId] ?? { tier: "personal", maxSeats: 1 };
 }
 
-Deno.serve(async (req: Request) => {
-  // Handle CORS preflight
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+// ─── Main handler ──────────────────────────────────────────────────────────
+Deno.serve(async (req) => {
+  if (req.method !== "POST") {
+    return new Response("Method not allowed", { status: 405 });
   }
 
+  const signature = req.headers.get("stripe-signature");
+  if (!signature) {
+    return new Response("No signature", { status: 400 });
+  }
+
+  const body = await req.text();
+  let event: Stripe.Event;
+
   try {
-    const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
-    const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET");
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-
-    if (!stripeSecretKey || !webhookSecret) {
-      console.error("Missing Stripe environment variables");
-      return new Response(
-        JSON.stringify({ error: "Server configuration error" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    const body = await req.text();
-    const signature = req.headers.get("stripe-signature");
-
-    if (!signature) {
-      return new Response(
-        JSON.stringify({ error: "Missing stripe-signature header" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    const isValid = await verifyStripeSignature(body, signature, webhookSecret);
-    if (!isValid) {
-      console.error("Invalid Stripe signature");
-      return new Response(
-        JSON.stringify({ error: "Invalid signature" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    const event = JSON.parse(body);
-    console.log(`Received Stripe event: ${event.type} (${event.id})`);
-
-    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-      auth: { autoRefreshToken: false, persistSession: false },
+    event = await stripe.webhooks.constructEventAsync(body, signature, endpointSecret);
+  } catch (err) {
+    console.error("Webhook signature verification failed:", err.message);
+    return new Response(JSON.stringify({ error: "Invalid signature" }), {
+      status: 400,
+      headers: { "Content-Type": "application/json" },
     });
+  }
 
+  console.log(`Received event: ${event.type}`);
+
+  try {
     switch (event.type) {
-      case "checkout.session.completed": {
-        await handleCheckoutCompleted(supabase, event.data.object, stripeSecretKey);
+      case "checkout.session.completed":
+        await handleCheckoutCompleted(event.data.object as Stripe.Checkout.Session);
         break;
-      }
-      case "customer.subscription.updated": {
-        await handleSubscriptionUpdated(supabase, event.data.object);
+      case "customer.subscription.updated":
+        await handleSubscriptionUpdated(event.data.object as Stripe.Subscription);
         break;
-      }
-      case "customer.subscription.deleted": {
-        await handleSubscriptionDeleted(supabase, event.data.object);
+      case "customer.subscription.deleted":
+        await handleSubscriptionDeleted(event.data.object as Stripe.Subscription);
         break;
-      }
-      case "invoice.payment_failed": {
-        await handlePaymentFailed(supabase, event.data.object);
+      case "invoice.payment_failed":
+        await handlePaymentFailed(event.data.object as Stripe.Invoice);
         break;
-      }
       default:
         console.log(`Unhandled event type: ${event.type}`);
     }
 
     return new Response(JSON.stringify({ received: true }), {
       status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json" },
     });
   } catch (err) {
-    console.error("Webhook error:", err);
-    return new Response(
-      JSON.stringify({ error: "Webhook handler failed" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    console.error("Error processing webhook:", err);
+    return new Response(JSON.stringify({ error: err.message }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 });
 
-async function handleCheckoutCompleted(
-  supabase: ReturnType<typeof createClient>,
-  session: Record<string, unknown>,
-  stripeSecretKey: string
-) {
-  console.log("Processing checkout.session.completed");
+// ─── checkout.session.completed ────────────────────────────────────────────
+// Fired when a user completes payment via a Stripe Payment Link.
+// Uses client_reference_id to link the Supabase user to the subscription.
+async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
+  console.log("Processing checkout:", session.id);
+
+  const supabaseUserId = session.client_reference_id;
+  const customerEmail = session.customer_details?.email;
+
+  if (!supabaseUserId) {
+    console.error("No client_reference_id on session — cannot link user. Email:", customerEmail);
+    // Still log to console so Laura can manually link if needed
+    return;
+  }
 
   const customerId = session.customer as string;
   const subscriptionId = session.subscription as string;
-  const customerEmail = session.customer_email as string || session.customer_details?.email as string;
-  const orgName =
-    (session.metadata as Record<string, string>)?.org_name ||
-    (session.custom_fields as Array<{ key: string; text: { value: string } }>)?.find(
-      (f) => f.key === "organisationname" || f.key === "org_name" || f.key === "club_name"
-    )?.text?.value ||
-    `Organisation`;
 
-  if (!customerEmail) {
-    console.error("No customer email found in session");
+  const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+  const priceId = subscription.items.data[0].price.id;
+  const { tier, maxSeats } = getTierFromPriceId(priceId);
+
+  console.log(`User: ${supabaseUserId}, Tier: ${tier}, Max seats: ${maxSeats}`);
+
+  // Find the user's existing organisation
+  const { data: user, error: userError } = await supabaseAdmin
+    .from("users")
+    .select("org_id")
+    .eq("id", supabaseUserId)
+    .single();
+
+  if (userError || !user?.org_id) {
+    console.error("Could not find org for user:", supabaseUserId, userError);
     return;
   }
 
-  // Fetch subscription details from Stripe to get price ID
-  const subResponse = await fetch(
-    `https://api.stripe.com/v1/subscriptions/${subscriptionId}`,
-    {
-      headers: { Authorization: `Bearer ${stripeSecretKey}` },
-    }
-  );
-  const subscription = await subResponse.json();
-  const priceId = subscription.items?.data?.[0]?.price?.id || "";
-  const plan = PRICE_TO_PLAN[priceId] || "personal";
+  const orgId = user.org_id;
 
-  console.log(`Customer: ${customerEmail}, Org: ${orgName}, Plan: ${plan}`);
+  // Update organisation plan and stripe_customer_id
+  await supabaseAdmin
+    .from("organisations")
+    .update({
+      plan: tier,
+      stripe_customer_id: customerId,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", orgId);
 
-  // Create or get user in Supabase Auth
-  let userId: string;
+  // Upsert subscription record
+  await supabaseAdmin
+    .from("subscriptions")
+    .upsert({
+      org_id: orgId,
+      stripe_subscription_id: subscriptionId,
+      stripe_price_id: priceId,
+      status: "active",
+      current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
+      current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+      seat_count: 1,
+      max_seats: maxSeats,
+      updated_at: new Date().toISOString(),
+    }, { onConflict: "org_id" });
 
-  // Check if user already exists
-  const { data: existingUsers } = await supabase.auth.admin.listUsers();
-  const existingUser = existingUsers?.users?.find(
-    (u: { email?: string }) => u.email === customerEmail
-  );
-
-  if (existingUser) {
-    userId = existingUser.id;
-    console.log(`Found existing user: ${userId}`);
-  } else {
-    // Create new user with a random password (they'll use magic link)
-    const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
-      email: customerEmail,
-      email_confirm: true,
-    });
-
-    if (createError || !newUser.user) {
-      console.error("Failed to create user:", createError);
-      return;
-    }
-    userId = newUser.user.id;
-    console.log(`Created new user: ${userId}`);
-  }
-
-  // Create organisation using database function
-  const slug = orgName
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
-
-  const { data, error } = await supabase.rpc("create_organisation_for_customer", {
-    p_name: orgName,
-    p_slug: slug,
-    p_plan: plan,
-    p_owner_id: userId,
-    p_stripe_customer_id: customerId,
-    p_stripe_subscription_id: subscriptionId,
-    p_stripe_price_id: priceId,
-  });
-
-  if (error) {
-    console.error("Failed to create organisation:", error);
-    return;
-  }
-
-  console.log("Organisation created:", data);
-
-  // Send magic link email
-  const { error: magicLinkError } = await supabase.auth.admin.generateLink({
-    type: "magiclink",
-    email: customerEmail,
-    options: {
-      redirectTo: `https://bowlstrack.co.uk/welcome?org=${slug}`,
-    },
-  });
-
-  if (magicLinkError) {
-    console.error("Failed to send magic link:", magicLinkError);
-  } else {
-    console.log(`Magic link sent to ${customerEmail}`);
-  }
+  console.log(`Upgraded org ${orgId} to ${tier}`);
 }
 
-async function handleSubscriptionUpdated(
-  supabase: ReturnType<typeof createClient>,
-  subscription: Record<string, unknown>
-) {
-  console.log("Processing customer.subscription.updated");
+// ─── customer.subscription.updated ────────────────────────────────────────
+// Fired on renewals, plan changes, and status changes.
+// Updates BOTH the subscriptions table AND organisations.plan.
+async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
+  console.log(`Subscription updated: ${subscription.id}`);
 
-  const subscriptionId = subscription.id as string;
-  const status = subscription.status as string;
-  const priceId =
-    (subscription.items as { data: Array<{ price: { id: string } }> })?.data?.[0]?.price?.id || "";
-  const plan = PRICE_TO_PLAN[priceId] || "personal";
-  const currentPeriodEnd = subscription.current_period_end as number;
+  const priceId = subscription.items.data[0].price.id;
+  const { tier, maxSeats } = getTierFromPriceId(priceId);
 
-  const { error } = await supabase
+  const status = mapStripeStatus(subscription.status);
+
+  // Update subscriptions table
+  const { data: sub, error } = await supabaseAdmin
     .from("subscriptions")
     .update({
       status,
-      plan,
       stripe_price_id: priceId,
-      current_period_end: new Date(currentPeriodEnd * 1000).toISOString(),
+      max_seats: maxSeats,
+      current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
+      current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
       updated_at: new Date().toISOString(),
     })
-    .eq("stripe_subscription_id", subscriptionId);
+    .eq("stripe_subscription_id", subscription.id)
+    .select("org_id")
+    .single();
 
   if (error) {
-    console.error("Failed to update subscription:", error);
-  } else {
-    console.log(`Subscription ${subscriptionId} updated to ${status} (${plan})`);
+    console.error("Error updating subscription:", error);
+    throw error;
+  }
+
+  // Also update organisations.plan to reflect new tier
+  if (sub?.org_id) {
+    const newPlan = status === "active" ? tier : "essential";
+    await supabaseAdmin
+      .from("organisations")
+      .update({ plan: newPlan, updated_at: new Date().toISOString() })
+      .eq("id", sub.org_id);
+
+    console.log(`Updated org ${sub.org_id} plan to ${newPlan}`);
   }
 }
 
-async function handleSubscriptionDeleted(
-  supabase: ReturnType<typeof createClient>,
-  subscription: Record<string, unknown>
-) {
-  console.log("Processing customer.subscription.deleted");
+// ─── customer.subscription.deleted ────────────────────────────────────────
+// Fired when a subscription is fully cancelled.
+// Downgrades the organisation to essential.
+async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
+  console.log(`Subscription cancelled: ${subscription.id}`);
 
-  const subscriptionId = subscription.id as string;
-
-  const { error } = await supabase
+  const { data: sub, error } = await supabaseAdmin
     .from("subscriptions")
-    .update({
-      status: "cancelled",
-      updated_at: new Date().toISOString(),
-    })
-    .eq("stripe_subscription_id", subscriptionId);
+    .update({ status: "canceled", updated_at: new Date().toISOString() })
+    .eq("stripe_subscription_id", subscription.id)
+    .select("org_id")
+    .single();
 
   if (error) {
-    console.error("Failed to cancel subscription:", error);
-  } else {
-    console.log(`Subscription ${subscriptionId} cancelled`);
+    console.error("Error marking subscription canceled:", error);
+    throw error;
+  }
+
+  if (sub?.org_id) {
+    await supabaseAdmin
+      .from("organisations")
+      .update({ plan: "essential", updated_at: new Date().toISOString() })
+      .eq("id", sub.org_id);
+
+    console.log(`Downgraded org ${sub.org_id} to essential`);
   }
 }
 
-async function handlePaymentFailed(
-  supabase: ReturnType<typeof createClient>,
-  invoice: Record<string, unknown>
-) {
-  console.log("Processing invoice.payment_failed");
-
+// ─── invoice.payment_failed ────────────────────────────────────────────────
+async function handlePaymentFailed(invoice: Stripe.Invoice) {
+  console.log(`Payment failed for invoice: ${invoice.id}`);
   const subscriptionId = invoice.subscription as string;
   if (!subscriptionId) return;
 
-  const { error } = await supabase
+  await supabaseAdmin
     .from("subscriptions")
-    .update({
-      status: "past_due",
-      updated_at: new Date().toISOString(),
-    })
+    .update({ status: "past_due", updated_at: new Date().toISOString() })
     .eq("stripe_subscription_id", subscriptionId);
+}
 
-  if (error) {
-    console.error("Failed to update subscription status:", error);
-  } else {
-    console.log(`Subscription ${subscriptionId} marked as past_due`);
-  }
+// ─── Helpers ───────────────────────────────────────────────────────────────
+function mapStripeStatus(stripeStatus: string): string {
+  const map: Record<string, string> = {
+    active: "active",
+    trialing: "active",
+    past_due: "past_due",
+    canceled: "canceled",
+    incomplete: "incomplete",
+    incomplete_expired: "canceled",
+    unpaid: "past_due",
+  };
+  return map[stripeStatus] ?? "active";
 }
