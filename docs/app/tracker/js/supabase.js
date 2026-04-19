@@ -645,12 +645,12 @@ function showAuthenticatedUI(role) {
   // Apply role-based UI visibility
   applyRoleVisibility(role);
 
-  // Route based on role
-  if (role === 'manager') {
-    navigateTo('manager');
-  } else {
-    // Selector goes straight to bowl entry
-    navigateTo('track');
+  // Always land on the home screen
+  navigateTo('home');
+
+  // Show install prompt on first login
+  if (typeof checkAndShowInstallPrompt === 'function') {
+    checkAndShowInstallPrompt();
   }
 }
 

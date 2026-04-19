@@ -251,7 +251,7 @@
                     
                     showMessage('Signed in successfully! Redirecting...', 'success');
                     setTimeout(function() {
-                        window.location.href = '/app/dashboard/';
+                        window.location.href = '/app/tracker/';
                     }, 1000);
                 }).catch(function(err) {
                     setLoading(loginBtn, false, 'Sign In');
@@ -263,7 +263,7 @@
             // Check if already logged in
             supabaseClient.auth.getSession().then(function(response) {
                 if (response.data.session) {
-                    window.location.href = '/app/dashboard/';
+                    window.location.href = '/app/tracker/';
                 }
             });
         })();

@@ -243,6 +243,7 @@ function navigateTo(view) {
   switch (view) {
     case 'home':
       document.getElementById('homeScreen').classList.add('active');
+      updateHomeScreen();
       break;
     case 'track':
       document.getElementById('setupScreen').classList.add('active');
@@ -304,6 +305,90 @@ function setAnalyticsTab(tab) {
   const activeTab = document.querySelector(`.analytics-tab[data-tab="${tab}"]`);
   if (activeTab) activeTab.classList.add('active');
   renderAnalytics(tab);
+}
+
+// ===== HOME SCREEN =====
+
+function updateHomeScreen() {
+  const nameEl = document.getElementById('homeWelcomeName');
+  if (nameEl) {
+    const fullName = (typeof playerRecord !== 'undefined' && playerRecord?.name) ||
+                     (typeof currentUser !== 'undefined' && (
+                       currentUser?.user_metadata?.full_name ||
+                       currentUser?.email?.split('@')[0]
+                     )) || 'there';
+    nameEl.textContent = fullName.split(' ')[0];
+  }
+  loadHomeStats();
+}
+
+async function loadHomeStats() {
+  if (typeof currentUser === 'undefined' || !currentUser) return;
+  try {
+    const [games, ends, deliveries, players] = await Promise.all([
+      db.from('games').select('*', { count: 'exact', head: true }),
+      db.from('ends').select('*', { count: 'exact', head: true }),
+      db.from('deliveries').select('*', { count: 'exact', head: true }),
+      db.from('players').select('*', { count: 'exact', head: true })
+    ]);
+    const set = (id, val) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = (val ?? 0).toString();
+    };
+    set('homeStatGames', games.count ?? 0);
+    set('homeStatEnds', ends.count ?? 0);
+    set('homeStatDeliveries', deliveries.count ?? 0);
+    set('homeStatPlayers', players.count ?? 0);
+  } catch (err) {
+    console.warn('[Home] Stats load failed:', err);
+  }
+}
+
+// ===== PWA INSTALL PROMPT =====
+
+function getDevicePlatform() {
+  const ua = navigator.userAgent;
+  if (/iPad|iPhone|iPod/.test(ua)) return 'ios';
+  if (/Android/.test(ua)) return 'android';
+  return 'other';
+}
+
+function shouldShowInstallPrompt() {
+  return !localStorage.getItem('bowlstrack_install_prompted');
+}
+
+function markInstallPromptShown() {
+  localStorage.setItem('bowlstrack_install_prompted', 'true');
+}
+
+function checkAndShowInstallPrompt() {
+  if (!shouldShowInstallPrompt()) return;
+  setTimeout(showPwaInstallModal, 800);
+}
+
+function showPwaInstallModal() {
+  const platform = getDevicePlatform();
+  document.getElementById('pwaInstallIOS').style.display = platform === 'ios' ? 'block' : 'none';
+  document.getElementById('pwaInstallAndroid').style.display = platform === 'android' ? 'block' : 'none';
+  document.getElementById('pwaInstallOther').style.display = platform === 'other' ? 'block' : 'none';
+
+  const modal = document.getElementById('pwaInstallModal');
+  if (!modal) return;
+  modal.classList.add('active');
+
+  function handleBackdropClick(e) {
+    if (e.target === modal) {
+      closePwaInstallModal(true);
+      modal.removeEventListener('click', handleBackdropClick);
+    }
+  }
+  modal.addEventListener('click', handleBackdropClick);
+}
+
+function closePwaInstallModal(permanent) {
+  const modal = document.getElementById('pwaInstallModal');
+  if (modal) modal.classList.remove('active');
+  if (permanent) markInstallPromptShown();
 }
 
 // ===== ONBOARDING =====
