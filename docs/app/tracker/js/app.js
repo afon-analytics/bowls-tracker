@@ -319,6 +319,8 @@ function updateHomeScreen() {
                      )) || 'there';
     nameEl.textContent = fullName.split(' ')[0];
   }
+  // Ensure tier class is on body so CSS hiding rules take effect
+  if (typeof applyTierClass === 'function') applyTierClass();
   loadHomeStats();
 }
 
