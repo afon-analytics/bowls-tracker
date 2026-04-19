@@ -1,8 +1,9 @@
 {
-  "name": "BowlsTrack",
-  "short_name": "BowlsTrack",
-  "description": "Multi-tier performance tracking for lawn bowls selectors and team managers",
-  "start_url": "/app/tracker/",
+  "name": "BowlsTrack DEV",
+  "short_name": "BT Dev",
+  "description": "BowlsTrack development and testing environment",
+  "start_url": "/bowls-tracker-dev/app/tracker/",
+  "scope": "/bowls-tracker-dev/",
   "display": "standalone",
   "orientation": "any",
   "theme_color": "#1e3c72",

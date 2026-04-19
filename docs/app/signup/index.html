@@ -56,9 +56,23 @@
     </style>
 </head>
 <body>
+    <div id="dev-banner" style="
+      background: #e65c00;
+      color: white;
+      text-align: center;
+      padding: 6px 12px;
+      font-size: 13px;
+      font-weight: bold;
+      letter-spacing: 0.5px;
+      position: sticky;
+      top: 0;
+      z-index: 9999;
+    ">
+      ⚠️ DEV / TEST ENVIRONMENT — Not live
+    </div>
     <header class="header">
         <div class="header-inner">
-            <a href="https://bowlstrack.com" class="logo">
+            <a href="https://afon-analytics.github.io/bowls-tracker-dev" class="logo">
                 <svg class="logo-icon" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <circle cx="50" cy="50" r="45" fill="#155e3d"/>
                     <circle cx="50" cy="50" r="35" stroke="#1a7a4c" stroke-width="2" fill="none"/>
@@ -68,7 +82,7 @@
                 </svg>
                 <span class="logo-text">BowlsTrack</span>
             </a>
-            <a href="https://bowlstrack.com" class="back-link">← Back to website</a>
+            <a href="https://afon-analytics.github.io/bowls-tracker-dev" class="back-link">← Back to website</a>
         </div>
     </header>
     
@@ -134,7 +148,7 @@
     </main>
     
     <footer class="footer">
-        <p>By signing up, you agree to our <a href="https://bowlstrack.com/terms">Terms</a> and <a href="https://bowlstrack.com/privacy">Privacy Policy</a>.</p>
+        <p>By signing up, you agree to our <a href="https://afon-analytics.github.io/bowls-tracker-dev/terms.html">Terms</a> and <a href="https://afon-analytics.github.io/bowls-tracker-dev/privacy.html">Privacy Policy</a>.</p>
     </footer>
     
     <script>
@@ -251,7 +265,7 @@
                     
                     showMessage('Signed in successfully! Redirecting...', 'success');
                     setTimeout(function() {
-                        window.location.href = '/app/tracker/';
+                        window.location.href = '/bowls-tracker-dev/app/tracker/';
                     }, 1000);
                 }).catch(function(err) {
                     setLoading(loginBtn, false, 'Sign In');
@@ -263,7 +277,7 @@
             // Check if already logged in
             supabaseClient.auth.getSession().then(function(response) {
                 if (response.data.session) {
-                    window.location.href = '/app/tracker/';
+                    window.location.href = '/bowls-tracker-dev/app/tracker/';
                 }
             });
         })();
