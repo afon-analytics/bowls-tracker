@@ -65,56 +65,78 @@
 
         <!-- Home Screen -->
         <div id="homeScreen" class="screen active">
-            <h1>BowlsTrack</h1>
-            <p style="text-align: center; color: var(--text-secondary); font-size: 13px; margin: -10px 0 15px;">Performance tracking for lawn bowls selectors</p>
-            <div id="homeStatus" style="text-align: center; color: var(--primary-light); font-size: 14px; margin-bottom: 15px;"></div>
+            <!-- Welcome Banner -->
+            <div class="home-welcome">
+                <h2>Welcome back, <span id="homeWelcomeName">there</span>!</h2>
+                <p>Ready to track your next game?</p>
+            </div>
+
+            <!-- Stats Row -->
+            <div class="home-stats-grid">
+                <div class="home-stat-card">
+                    <div class="home-stat-label">Total Games</div>
+                    <div class="home-stat-value" id="homeStatGames">—</div>
+                </div>
+                <div class="home-stat-card">
+                    <div class="home-stat-label">Total Ends</div>
+                    <div class="home-stat-value" id="homeStatEnds">—</div>
+                </div>
+                <div class="home-stat-card">
+                    <div class="home-stat-label">Deliveries Tracked</div>
+                    <div class="home-stat-value" id="homeStatDeliveries">—</div>
+                </div>
+                <div class="home-stat-card">
+                    <div class="home-stat-label">Players</div>
+                    <div class="home-stat-value" id="homeStatPlayers">—</div>
+                </div>
+            </div>
+
+            <div class="home-section-title">Features</div>
 
             <div class="home-grid">
-                <div class="game-card" onclick="navigateTo('track')" style="text-align: center;">
-                    <div style="font-size: 28px; margin-bottom: 6px;">&#127919;</div>
-                    <div class="game-card-title">Selector App</div>
-                    <div class="game-card-info">Record bowls with interactive green</div>
+                <div class="game-card tile-game-tracker" onclick="navigateTo('track')">
+                    <div class="tile-icon">&#127919;</div>
+                    <div class="game-card-title">Game Tracker</div>
+                    <div class="game-card-info">Track a game live — play yourself or have someone mark for you</div>
                 </div>
-                <div class="game-card" onclick="navigateTo('games')" style="text-align: center;">
-                    <div style="font-size: 28px; margin-bottom: 6px;">&#128203;</div>
+                <div class="game-card tile-open-games" onclick="navigateTo('games')">
+                    <div class="tile-icon">&#128203;</div>
                     <div class="game-card-title">Open Games</div>
                     <div class="game-card-info">Continue in-progress games</div>
                 </div>
-                <div class="game-card" onclick="navigateTo('drills')" style="text-align: center;">
-                    <div style="font-size: 28px; margin-bottom: 6px;">&#127942;</div>
+                <div class="game-card tile-drills" onclick="navigateTo('drills')">
+                    <div class="tile-icon">&#127942;</div>
                     <div class="game-card-title">Drills</div>
                     <div class="game-card-info">Practice drills &amp; benchmarks</div>
                 </div>
-                <div class="game-card role-manager-only" id="homeCardAnalytics" onclick="navigateTo('analytics')" style="text-align: center;">
-                    <div style="font-size: 28px; margin-bottom: 6px;">&#128202;</div>
+                <div class="game-card tile-analytics role-manager-only" id="homeCardAnalytics" onclick="navigateTo('analytics')">
+                    <div class="tile-icon">&#128202;</div>
                     <div class="game-card-title">Analytics</div>
                     <div class="game-card-info">Player stats &amp; comparison</div>
                 </div>
-                <div class="game-card" onclick="start40BowlTest()" style="text-align: center;">
-                    <div style="font-size: 28px; margin-bottom: 6px;">&#127942;</div>
+                <div class="game-card tile-40bowl" onclick="start40BowlTest()">
+                    <div class="tile-icon">&#127942;</div>
                     <div class="game-card-title">40-Bowl Test</div>
                     <div class="game-card-info">Standard benchmark test for bowlers</div>
                 </div>
-                <div class="game-card tier-card tier-3 role-manager-only" id="homeCardManager" onclick="navigateTo('manager')" style="text-align: center;">
-                    <div style="font-size: 28px; margin-bottom: 6px;">&#128101;</div>
+                <div class="game-card tile-team-manager role-manager-only" id="homeCardManager" onclick="navigateTo('manager')">
+                    <div class="tile-icon">&#128101;</div>
                     <div class="game-card-title">Team Manager</div>
                     <div class="game-card-info">Live dashboard &amp; team view</div>
-                    <span class="tier-lock-badge">CLUB+</span>
                 </div>
-                <div class="game-card tier-card tier-4 role-manager-only" id="homeCardElite" onclick="navigateTo('elite')" style="text-align: center;">
-                    <div style="font-size: 28px; margin-bottom: 6px;">&#9733;</div>
+                <div class="game-card tile-elite-analytics role-manager-only" id="homeCardElite" onclick="navigateTo('elite')">
+                    <div class="tile-icon">&#9733;</div>
                     <div class="game-card-title">Elite Analytics</div>
                     <div class="game-card-info">Heatmaps, rankings &amp; recommendations</div>
-                    <span class="tier-lock-badge">ELITE</span>
                 </div>
-                <div class="game-card" id="homeCardSettings" onclick="navigateTo('settings')" style="text-align: center;">
-                    <div style="font-size: 28px; margin-bottom: 6px;">&#9881;</div>
+                <div class="game-card tile-settings" id="homeCardSettings" onclick="navigateTo('settings')">
+                    <div class="tile-icon">&#9881;</div>
                     <div class="game-card-title">My Settings</div>
                     <div class="game-card-info">Data sharing &amp; preferences</div>
                 </div>
             </div>
 
-            <div style="text-align: center; margin-top: 10px;">
+            <div style="text-align: center; margin-top: 12px;">
                 <button class="btn-secondary btn-small" onclick="handleLoadDemoData()">Load Demo Data</button>
                 <span class="tooltip-trigger" tabindex="0">?
                     <span class="tooltip-content">Load sample tournament data to explore analytics features</span>
@@ -1097,6 +1119,41 @@
         <!-- Onboarding Overlay -->
         <div id="onboardingOverlay" class="onboarding-overlay">
             <div class="onboarding-card" id="onboardingCard"></div>
+        </div>
+
+        <!-- PWA Install Prompt Modal -->
+        <div id="pwaInstallModal" class="modal">
+            <div class="modal-content" style="text-align: center; max-width: 440px;">
+                <div style="font-size: 48px; margin-bottom: 12px;">&#127968;</div>
+                <h2 style="color: #155e3d; margin-bottom: 8px; font-size: 1.2rem; text-align: center;">Add BowlsTrack to your Home Screen</h2>
+                <p style="color: #64748b; font-size: 0.9rem; margin-bottom: 20px; text-align: left;">Get the full app experience — instant access from your home screen, just like a native app.</p>
+
+                <div id="pwaInstallIOS" style="display:none; text-align: left;">
+                    <ol style="padding-left: 1.2rem; color: #334155; font-size: 0.9rem; line-height: 1.8; margin-bottom: 12px;">
+                        <li>Tap the <strong>Share</strong> button at the bottom of your browser (&nbsp;&#9633;&#8593;&nbsp;)</li>
+                        <li>Scroll down and tap <strong>"Add to Home Screen"</strong></li>
+                        <li>Tap <strong>"Add"</strong> in the top right corner</li>
+                    </ol>
+                    <p style="font-size: 0.8rem; color: #94a3b8; font-style: italic; margin-bottom: 16px;">Make sure you're using Safari — this won't work in Chrome or Firefox on iPhone.</p>
+                </div>
+
+                <div id="pwaInstallAndroid" style="display:none; text-align: left;">
+                    <ol style="padding-left: 1.2rem; color: #334155; font-size: 0.9rem; line-height: 1.8; margin-bottom: 16px;">
+                        <li>Tap the <strong>three dots menu (&#8942;)</strong> in the top right of Chrome</li>
+                        <li>Tap <strong>"Add to Home screen"</strong></li>
+                        <li>Tap <strong>"Add"</strong> to confirm</li>
+                    </ol>
+                </div>
+
+                <div id="pwaInstallOther" style="display:none; text-align: left;">
+                    <p style="color: #334155; font-size: 0.9rem; margin-bottom: 16px;">BowlsTrack works best on mobile. Open this page on your iPhone or Android device to install it.</p>
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-top: 8px;">
+                    <button onclick="closePwaInstallModal(true)" style="flex: 1; background: #155e3d;">Got it!</button>
+                    <button onclick="closePwaInstallModal(false)" class="btn-secondary" style="flex: 1;">Remind me later</button>
+                </div>
+            </div>
         </div>
     </div>
 
