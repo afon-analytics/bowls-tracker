@@ -310,18 +310,35 @@ function setAnalyticsTab(tab) {
 // ===== HOME SCREEN =====
 
 function updateHomeScreen() {
+  const authenticated = typeof currentUser !== 'undefined' && currentUser !== null;
+
   const nameEl = document.getElementById('homeWelcomeName');
   if (nameEl) {
     const fullName = (typeof playerRecord !== 'undefined' && playerRecord?.name) ||
-                     (typeof currentUser !== 'undefined' && (
+                     (authenticated && (
                        currentUser?.user_metadata?.full_name ||
                        currentUser?.email?.split('@')[0]
                      )) || 'there';
     nameEl.textContent = fullName.split(' ')[0];
   }
+
+  // Show sign-in notice when not authenticated
+  const notice = document.getElementById('homeSignInNotice');
+  if (notice) notice.style.display = authenticated ? 'none' : 'flex';
+
   // Ensure tier class is on body so CSS hiding rules take effect
   if (typeof applyTierClass === 'function') applyTierClass();
-  loadHomeStats();
+
+  if (authenticated) loadHomeStats();
+}
+
+function showLoginScreen() {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('loginScreen').classList.add('active');
+  const userBar = document.getElementById('userBar');
+  if (userBar) userBar.style.display = 'none';
+  const tierBanner = document.getElementById('tierBanner');
+  if (tierBanner) tierBanner.style.display = 'none';
 }
 
 async function loadHomeStats() {
