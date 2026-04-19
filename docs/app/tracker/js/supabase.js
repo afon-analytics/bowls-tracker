@@ -588,6 +588,9 @@ async function handleLogin() {
     // Process any pending offline queue
     await processQueue();
 
+    // Apply subscription tier class before showing UI
+    await applyTierClass();
+
     // Show appropriate view based on role
     showAuthenticatedUI(role);
   } catch (err) {
