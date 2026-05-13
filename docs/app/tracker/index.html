@@ -58,8 +58,52 @@
                 </div>
                 <button class="btn-block" id="loginBtn" onclick="handleLogin()">Sign In</button>
                 <div id="loginSpinner" class="login-spinner" style="display: none;">Signing in...</div>
-                <button class="btn-secondary btn-block" style="margin-top: 10px;" onclick="continueOffline()">Continue Offline</button>
+                <p style="text-align: center; margin-top: 12px;">
+                    <a href="#" onclick="showForgotPasswordScreen(); return false;" style="color: var(--primary-light); font-size: 13px; text-decoration: none;">Forgot your password?</a>
+                </p>
+                <button class="btn-secondary btn-block" style="margin-top: 6px;" onclick="continueOffline()">Continue Offline</button>
                 <p style="text-align: center; color: var(--text-muted); font-size: 11px; margin-top: 15px;">Offline mode uses local storage only</p>
+            </div>
+        </div>
+
+        <!-- Forgot Password Screen -->
+        <div id="forgotPasswordScreen" class="screen">
+            <div class="login-container">
+                <div style="font-size: 48px; text-align: center; margin-bottom: 10px;">&#127923;</div>
+                <h2 style="margin-bottom: 5px;">Reset Password</h2>
+                <p style="text-align: center; color: var(--text-secondary); font-size: 13px; margin-bottom: 20px;">Enter your email and we'll send you a reset link</p>
+                <div id="forgotError" class="login-error" style="display: none;"></div>
+                <div id="forgotSuccess" class="login-success" style="display: none;"></div>
+                <div class="form-group">
+                    <label for="forgotEmail">Email</label>
+                    <input type="email" id="forgotEmail" placeholder="your@email.com" autocomplete="email">
+                </div>
+                <button class="btn-block" id="forgotBtn" onclick="handleForgotPassword()">Send Reset Link</button>
+                <div id="forgotSpinner" class="login-spinner" style="display: none;">Sending...</div>
+                <p style="text-align: center; margin-top: 15px;">
+                    <a href="#" onclick="showLoginScreen(); return false;" style="color: var(--primary-light); font-size: 13px; text-decoration: none;">Back to Sign In</a>
+                </p>
+            </div>
+        </div>
+
+        <!-- Reset Password Screen -->
+        <div id="resetPasswordScreen" class="screen">
+            <div class="login-container">
+                <div style="font-size: 48px; text-align: center; margin-bottom: 10px;">&#127923;</div>
+                <h2 style="margin-bottom: 5px;">New Password</h2>
+                <p style="text-align: center; color: var(--text-secondary); font-size: 13px; margin-bottom: 20px;">Enter your new password below</p>
+                <div id="resetError" class="login-error" style="display: none;"></div>
+                <div id="resetSuccess" class="login-success" style="display: none;"></div>
+                <div class="form-group">
+                    <label for="resetPassword">New Password</label>
+                    <input type="password" id="resetPassword" placeholder="New password" autocomplete="new-password">
+                </div>
+                <div class="form-group">
+                    <label for="resetPasswordConfirm">Confirm Password</label>
+                    <input type="password" id="resetPasswordConfirm" placeholder="Confirm new password" autocomplete="new-password">
+                </div>
+                <button class="btn-block" id="resetBtn" onclick="handleResetPassword()">Update Password</button>
+                <div id="resetSpinner" class="login-spinner" style="display: none;">Updating...</div>
             </div>
         </div>
 

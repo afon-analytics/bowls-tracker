@@ -143,6 +143,16 @@ async function initApp() {
     // Setup PWA install prompt
     setupInstallPrompt();
 
+    // Handle password recovery redirect (Supabase appends #type=recovery to the URL)
+    const hashParams = new URLSearchParams(window.location.hash.slice(1));
+    if (hashParams.get('type') === 'recovery') {
+      history.replaceState(null, '', window.location.pathname + window.location.search);
+      document.getElementById('tierBanner').style.display = 'none';
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById('resetPasswordScreen').classList.add('active');
+      return;
+    }
+
     // Show appropriate screen
     if (sessionResult) {
       // Already authenticated — show the right view

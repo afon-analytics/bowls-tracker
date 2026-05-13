@@ -1274,6 +1274,16 @@ canvas {
   font-size: 14px;
 }
 
+.login-success {
+  background: #E8F5E9;
+  color: #2E7D32;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  margin-bottom: 12px;
+  text-align: center;
+}
+
 .user-bar {
   display: flex;
   align-items: center;

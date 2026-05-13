@@ -562,6 +562,103 @@ function unsubscribeAll() {
 
 // ===== LOGIN / LOGOUT UI HANDLERS =====
 
+function showForgotPasswordScreen() {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('forgotPasswordScreen').classList.add('active');
+  document.getElementById('forgotEmail').value = '';
+  document.getElementById('forgotError').style.display = 'none';
+  document.getElementById('forgotSuccess').style.display = 'none';
+}
+
+async function handleForgotPassword() {
+  const email = document.getElementById('forgotEmail').value.trim();
+  const errorEl = document.getElementById('forgotError');
+  const successEl = document.getElementById('forgotSuccess');
+  const spinner = document.getElementById('forgotSpinner');
+  const btn = document.getElementById('forgotBtn');
+
+  if (!email) {
+    errorEl.textContent = 'Please enter your email address';
+    errorEl.style.display = 'block';
+    return;
+  }
+
+  errorEl.style.display = 'none';
+  successEl.style.display = 'none';
+  spinner.style.display = 'block';
+  btn.disabled = true;
+
+  try {
+    const redirectTo = window.location.href.split('#')[0];
+    const { error } = await db.auth.resetPasswordForEmail(email, { redirectTo });
+    if (error) throw error;
+    successEl.textContent = 'Check your email for a password reset link';
+    successEl.style.display = 'block';
+  } catch (err) {
+    errorEl.textContent = err.message || 'Failed to send reset email';
+    errorEl.style.display = 'block';
+  } finally {
+    spinner.style.display = 'none';
+    btn.disabled = false;
+  }
+}
+
+function showResetPasswordScreen() {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('resetPasswordScreen').classList.add('active');
+  document.getElementById('resetError').style.display = 'none';
+  document.getElementById('resetSuccess').style.display = 'none';
+}
+
+async function handleResetPassword() {
+  const password = document.getElementById('resetPassword').value;
+  const confirm = document.getElementById('resetPasswordConfirm').value;
+  const errorEl = document.getElementById('resetError');
+  const successEl = document.getElementById('resetSuccess');
+  const spinner = document.getElementById('resetSpinner');
+  const btn = document.getElementById('resetBtn');
+
+  if (!password || !confirm) {
+    errorEl.textContent = 'Please enter and confirm your new password';
+    errorEl.style.display = 'block';
+    return;
+  }
+  if (password !== confirm) {
+    errorEl.textContent = 'Passwords do not match';
+    errorEl.style.display = 'block';
+    return;
+  }
+  if (password.length < 6) {
+    errorEl.textContent = 'Password must be at least 6 characters';
+    errorEl.style.display = 'block';
+    return;
+  }
+
+  errorEl.style.display = 'none';
+  spinner.style.display = 'block';
+  btn.disabled = true;
+
+  try {
+    const { error } = await db.auth.updateUser({ password });
+    if (error) throw error;
+    successEl.textContent = 'Password updated! Redirecting to sign in...';
+    successEl.style.display = 'block';
+    btn.style.display = 'none';
+    setTimeout(() => {
+      document.getElementById('resetPassword').value = '';
+      document.getElementById('resetPasswordConfirm').value = '';
+      btn.style.display = '';
+      showLoginScreen();
+    }, 2500);
+  } catch (err) {
+    errorEl.textContent = err.message || 'Failed to update password';
+    errorEl.style.display = 'block';
+  } finally {
+    spinner.style.display = 'none';
+    btn.disabled = false;
+  }
+}
+
 async function handleLogin() {
   const email = document.getElementById('loginEmail').value.trim();
   const password = document.getElementById('loginPassword').value;
